@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ForgeTrace — Local Repository</title>
+<style>
+:root{--bg:#07090d;--panel:#10151d;--panel2:#151b25;--line:#283141;--text:#f4f7fb;--muted:#91a0b5;--accent:#79f2d0;--accent2:#9b8cff;--danger:#ff7687;--warn:#f1c96a;--shadow:0 22px 60px #0008}*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:radial-gradient(circle at 15% 0,#14312b55,transparent 28%),radial-gradient(circle at 100% 0,#29204d55,transparent 25%),var(--bg);color:var(--text);font:14px Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;overflow:hidden}button,input,textarea{font:inherit}button{color:inherit}.hidden{display:none!important}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.muted{color:var(--muted)}
+.shell{height:100%;display:grid;grid-template-rows:64px minmax(0,1fr)}header{display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:1px solid var(--line);background:#090c12dd;backdrop-filter:blur(16px);z-index:4}.mark{width:34px;height:34px;border:1px solid #79f2d066;border-radius:10px;display:grid;place-items:center;background:linear-gradient(145deg,#79f2d020,#9b8cff18);font-weight:900;color:var(--accent)}.brand strong{display:block;font-size:15px}.brand small{color:var(--muted)}.repo-title{margin-left:18px;min-width:0}.repo-title strong{font-size:15px}.repo-title span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}.head-actions{margin-left:auto;display:flex;align-items:center;gap:8px}.author{width:150px}
+.btn,.input{border:1px solid var(--line);background:#121822;color:var(--text);border-radius:9px;min-height:36px;padding:8px 11px}.btn{cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:650}.btn:hover{border-color:#526078;background:#17202d}.btn.primary{background:linear-gradient(135deg,#79f2d0,#78c9ec);border:0;color:#06110e}.btn.danger{color:#ff98a5}.btn.ghost{background:transparent}.btn:disabled{opacity:.5;cursor:not-allowed}.input:focus,textarea:focus{outline:2px solid #79f2d066;border-color:var(--accent)}
+.main{display:grid;grid-template-columns:280px minmax(0,1fr) 330px;min-height:0}.sidebar,.inspector{background:#0b0f16;border-right:1px solid var(--line);min-height:0;display:flex;flex-direction:column}.inspector{border-right:0;border-left:1px solid var(--line)}.side-head,.pane-head{padding:14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}.side-head strong,.pane-head strong{font-size:13px}.tree{padding:8px;overflow:auto;flex:1}.tree-row{height:36px;display:flex;align-items:center;gap:8px;padding:0 9px;border-radius:7px;cursor:pointer;color:#d8e0eb;user-select:none}.tree-row:hover{background:#151c27}.tree-row.active{background:#79f2d015;color:var(--accent)}.tree-row .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tree-row .meta{margin-left:auto;color:#627086;font-size:11px}.empty{padding:32px 18px;text-align:center;color:var(--muted)}
+.content{min-width:0;min-height:0;display:flex;flex-direction:column}.toolbar{min-height:58px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0d121a}.crumb{min-width:0;flex:1;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dirty{font-size:11px;color:var(--warn);border:1px solid #f1c96a44;background:#f1c96a11;padding:4px 7px;border-radius:999px}.workspace{min-height:0;flex:1;position:relative;overflow:auto}.welcome{height:100%;display:grid;place-items:center;padding:30px}.welcome-card{width:min(720px,100%);border:1px solid var(--line);background:linear-gradient(145deg,#121923dd,#0e141ddd);border-radius:18px;padding:34px;box-shadow:var(--shadow)}.welcome-card h1{font-size:32px;margin:0 0 10px;letter-spacing:-.04em}.welcome-card p{color:var(--muted);line-height:1.6}.dropzone{margin-top:22px;border:1px dashed #79f2d066;border-radius:14px;padding:28px;text-align:center;background:#79f2d008}.dropzone.drag{background:#79f2d018;border-color:var(--accent)}
+.editor{height:100%;display:flex;flex-direction:column}.filebar{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:#0b1017}.filebar .path{font-family:ui-monospace,monospace;font-size:12px;color:#c6d0dd;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.filebar .size{margin-left:auto;color:var(--muted);font-size:12px}.code{flex:1;width:100%;resize:none;border:0;background:#090d13;color:#e8edf5;padding:18px 22px;font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2;outline:0}.binary{height:100%;display:grid;place-items:center;padding:30px}.binary-card{max-width:520px;text-align:center;border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:30px}.binary-card h2{margin-top:0}.preview{max-width:100%;max-height:50vh;border-radius:10px;border:1px solid var(--line);margin:14px 0}
+.tabs{display:flex;border-bottom:1px solid var(--line)}.tab{flex:1;border:0;background:transparent;color:var(--muted);padding:13px 8px;cursor:pointer;border-bottom:2px solid transparent}.tab.active{color:var(--accent);border-color:var(--accent)}.panel{min-height:0;overflow:auto;padding:14px}.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{border:1px solid var(--line);border-radius:10px;padding:11px;background:#111721}.stat b{display:block;font-size:20px}.stat span{color:var(--muted);font-size:11px}.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#6f7e92;margin:20px 0 8px}.activity{display:grid;gap:8px}.event{border-left:2px solid #79f2d055;padding:2px 0 2px 10px}.event strong{font-size:12px;display:block}.event p{margin:3px 0;color:var(--muted);font-size:11px;line-height:1.45}.event time{font-size:10px;color:#647187}.commit{border:1px solid var(--line);border-radius:10px;padding:11px;background:#111721;margin-bottom:8px}.commit-head{display:flex;gap:8px;align-items:start}.commit code{color:var(--accent);font-size:11px}.commit strong{font-size:12px}.commit p{margin:6px 0;color:var(--muted);font-size:11px}.commit .btn{width:100%;min-height:30px;font-size:11px;margin-top:7px}
+.modal-backdrop{position:fixed;inset:0;background:#000a;display:grid;place-items:center;z-index:20;padding:20px}.modal{width:min(500px,100%);border:1px solid var(--line);background:#111721;border-radius:16px;box-shadow:var(--shadow);padding:20px}.modal h2{margin:0 0 15px}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:12px;color:var(--muted)}.field input,.field textarea{width:100%;border:1px solid var(--line);background:#0b1017;color:var(--text);border-radius:8px;padding:10px}.field textarea{min-height:80px;resize:vertical}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.toast{position:fixed;right:18px;bottom:18px;z-index:30;background:#17202c;border:1px solid #45536a;border-radius:10px;padding:11px 14px;box-shadow:var(--shadow);max-width:380px}.toast.error{border-color:#ff768766;color:#ffc0c8}
+.setup{position:fixed;inset:0;z-index:50;background:radial-gradient(circle at 30% 0,#153d3555,transparent 35%),#07090d;display:grid;place-items:center;padding:24px}.setup-card{width:min(580px,100%);background:#10161f;border:1px solid var(--line);border-radius:20px;padding:34px;box-shadow:var(--shadow)}.setup-card h1{font-size:36px;letter-spacing:-.05em;margin:0 0 8px}.setup-card p{color:var(--muted);line-height:1.6}.setup-card form{margin-top:24px}.server-error{color:#ffc0c8;background:#ff768712;border:1px solid #ff768744;padding:12px;border-radius:9px;margin-top:14px}
+@media(max-width:1050px){.main{grid-template-columns:240px minmax(0,1fr)}.inspector{position:fixed;right:0;top:64px;bottom:0;width:330px;z-index:5;box-shadow:-20px 0 50px #0007}.inspector.closed{display:none}.mobile-panel{display:inline-flex!important}}@media(max-width:720px){body{overflow:auto}.shell{min-height:100%;height:auto}.main{grid-template-columns:1fr;min-height:calc(100vh - 64px)}.sidebar{position:fixed;left:0;top:64px;bottom:0;width:88vw;max-width:300px;z-index:8;box-shadow:20px 0 50px #0008}.sidebar.closed{display:none}.content{min-height:calc(100vh - 64px)}.repo-title{display:none}.head-actions .author,.head-actions .export-label{display:none}.mobile-tree{display:inline-flex!important}.toolbar{flex-wrap:wrap}.toolbar .btn{min-height:34px}.welcome-card{padding:24px}.welcome-card h1{font-size:27px}.inspector{width:88vw}.code{font-size:12px;padding:14px}.head-actions{gap:5px}header{padding:0 10px}}
+.mobile-tree,.mobile-panel{display:none}
+</style>
+</head>
+<body>
+<div id="setup" class="setup hidden">
+  <div class="setup-card">
+    <div class="mark">FT</div>
+    <h1>Build a real repository.</h1>
+    <p>ForgeTrace stores actual files on your machine, records every change as a contribution, creates restorable snapshots, and exports the repository as a ZIP.</p>
+    <form id="setupForm">
+      <div class="field"><label>Repository name</label><input id="setupName" required placeholder="my-project"></div>
+      <div class="field"><label>Description</label><input id="setupDescription" placeholder="What are you building?"></div>
+      <div class="field"><label>Your name</label><input id="setupAuthor" required value="Rooke Poole"></div>
+      <button class="btn primary" type="submit">Create repository</button>
+    </form>
+    <div id="serverError" class="server-error hidden"></div>
+  </div>
+</div>
+<div class="shell">
+<header>
+  <div class="mark">FT</div><div class="brand"><strong>ForgeTrace</strong><small>local repository</small></div>
+  <div class="repo-title"><strong id="repoName">Repository</strong><span id="repoDescription"></span></div>
+  <div class="head-actions">
+    <input id="author" class="input author" value="Rooke Poole" aria-label="Contributor name">
+    <button id="treeToggle" class="btn ghost mobile-tree">Files</button>
+    <button id="panelToggle" class="btn ghost mobile-panel">History</button>
+    <a class="btn" href="/api/export?history=1"><span class="export-label">Export ZIP</span><span>↓</span></a>
+  </div>
+</header>
+<div class="main">
+  <aside id="sidebar" class="sidebar">
+    <div class="side-head"><strong>Repository files</strong><button id="refreshBtn" class="btn ghost" style="margin-left:auto;min-height:28px;padding:4px 8px">↻</button></div>
+    <div id="tree" class="tree"></div>
+    <div class="side-head" style="border-top:1px solid var(--line);border-bottom:0">
+      <button id="uploadBtn" class="btn primary" style="flex:1">Upload files</button>
+      <button id="uploadFolderBtn" class="btn" title="Upload folder">Folder</button>
+      <input id="fileInput" type="file" multiple hidden>
+      <input id="folderInput" type="file" webkitdirectory multiple hidden>
+    </div>
+  </aside>
+  <main class="content">
+    <div class="toolbar">
+      <button id="treeToggle2" class="btn ghost mobile-tree">☰</button>
+      <div id="crumb" class="crumb">Repository workspace</div>
+      <span id="dirtyBadge" class="dirty hidden"></span>
+      <button id="newFileBtn" class="btn">+ File</button>
+      <button id="newFolderBtn" class="btn">+ Folder</button>
+      <button id="renameBtn" class="btn" disabled>Rename</button>
+      <button id="deleteBtn" class="btn danger" disabled>Delete</button>
+      <button id="commitBtn" class="btn primary">Snapshot</button>
+    </div>
+    <section id="workspace" class="workspace">
+      <div id="welcome" class="welcome">
+        <div class="welcome-card">
+          <h1>Your files are the repository.</h1>
+          <p>Upload files, create folders, edit source code, and save restorable snapshots. Every operation is written to the contribution history automatically.</p>
+          <div id="dropzone" class="dropzone"><strong>Drop files here</strong><p>or use “Upload files” in the sidebar</p></div>
+        </div>
+      </div>
+      <div id="editor" class="editor hidden">
+        <div class="filebar"><span id="filePath" class="path"></span><span id="fileSize" class="size"></span><a id="downloadFile" class="btn" href="#">Download</a><button id="saveBtn" class="btn primary">Save</button></div>
+        <textarea id="code" class="code" spellcheck="false"></textarea>
+      </div>
+      <div id="binary" class="binary hidden"><div class="binary-card"><h2 id="binaryName"></h2><p class="muted">This binary file is stored in the repository and can be downloaded.</p><div id="previewWrap"></div><a id="binaryDownload" class="btn primary" href="#">Download file</a></div></div>
+    </section>
+  </main>
+  <aside id="inspector" class="inspector">
+    <div class="tabs"><button class="tab active" data-tab="activity">Activity</button><button class="tab" data-tab="commits">Snapshots</button></div>
+    <div id="activityPanel" class="panel"><div id="stats" class="statgrid"></div><div class="section-title">Contribution history</div><div id="activity" class="activity"></div></div>
+    <div id="commitsPanel" class="panel hidden"><div id="commits"></div></div>
+  </aside>
+</div>
+</div>
+<div id="modalRoot"></div><div id="toast" class="toast hidden"></div>
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const app={state:null,selected:null,file:null,editorDirty:false};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtBytes=n=>{if(!n)return'0 B';const u=['B','KB','MB','GB'];const i=Math.min(Math.floor(Math.log(n)/Math.log(1024)),3);return `${(n/1024**i).toFixed(i?1:0)} ${u[i]}`};
+const ago=s=>{const d=(Date.now()-new Date(s))/1000;if(d<60)return'just now';if(d<3600)return`${Math.floor(d/60)}m ago`;if(d<86400)return`${Math.floor(d/3600)}h ago`;return`${Math.floor(d/86400)}d ago`};
+function author(){return $('#author').value.trim()||'Unknown Contributor'}
+function toast(msg,error=false){const el=$('#toast');el.textContent=msg;el.className='toast'+(error?' error':'');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.add('hidden'),3500)}
+async function api(url,opts={}){const r=await fetch(url,opts);let data;try{data=await r.json()}catch{data=null}if(!r.ok)throw new Error(data?.error||`${r.status} ${r.statusText}`);return data}
+function json(method,body){return{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}}
+async function boot(){try{const status=await api('/api/status');if(!status.initialized){$('#setup').classList.remove('hidden');return}await load()}catch(e){$('#setup').classList.remove('hidden');$('#serverError').textContent='ForgeTrace must be opened through server.py. Start run_local.bat or run_local.sh, then open the displayed address.';$('#serverError').classList.remove('hidden')}}
+async function load(preserve=true){try{app.state=await api('/api/state');render();if(preserve&&app.selected){const exists=app.state.tree.some(x=>x.path===app.selected);if(!exists)clearSelection()}}catch(e){toast(e.message,true)}}
+function render(){const s=app.state.summary;$('#repoName').textContent=s.repository.name;$('#repoDescription').textContent=s.repository.description||'A real local-first repository';document.title=`${s.repository.name} — ForgeTrace`;$('#author').value=localStorage.ftAuthor||s.repository.defaultAuthor||'Rooke Poole';renderTree();renderStats();renderActivity();renderCommits();const d=s.stats.dirtyFiles;$('#dirtyBadge').textContent=`${d} unsnapshotted change${d===1?'':'s'}`;$('#dirtyBadge').classList.toggle('hidden',!d)}
+function renderTree(){const tree=$('#tree'),items=app.state.tree;if(!items.length){tree.innerHTML='<div class="empty">No files yet.<br>Upload one to begin.</div>';return}tree.innerHTML=items.map(x=>{const depth=x.path.split('/').length-1;return `<div class="tree-row ${app.selected===x.path?'active':''}" data-path="${esc(x.path)}" data-type="${x.type}" style="padding-left:${9+depth*15}px"><span>${x.type==='folder'?'▸':'◇'}</span><span class="name">${esc(x.name)}</span><span class="meta">${x.type==='file'?fmtBytes(x.size):''}</span></div>`}).join('');$$('.tree-row').forEach(el=>el.onclick=()=>selectPath(el.dataset.path,el.dataset.type))}
+async function selectPath(path,type){app.selected=path;$('#renameBtn').disabled=false;$('#deleteBtn').disabled=false;$('#crumb').textContent=path;renderTree();if(type==='folder'){showWelcome(`Folder: ${path}`);return}try{const f=await api('/api/file?path='+encodeURIComponent(path));app.file=f;if(f.editable)showEditor(f);else showBinary(f)}catch(e){toast(e.message,true)}}
+function showWelcome(label='Repository workspace'){$('#welcome').classList.remove('hidden');$('#editor').classList.add('hidden');$('#binary').classList.add('hidden');$('#crumb').textContent=label;app.file=null;app.editorDirty=false}
+function showEditor(f){$('#welcome').classList.add('hidden');$('#binary').classList.add('hidden');$('#editor').classList.remove('hidden');$('#filePath').textContent=f.path;$('#fileSize').textContent=fmtBytes(f.size);$('#downloadFile').href=f.downloadUrl;$('#code').value=f.content;app.editorDirty=false;$('#saveBtn').disabled=false}
+function showBinary(f){$('#welcome').classList.add('hidden');$('#editor').classList.add('hidden');$('#binary').classList.remove('hidden');$('#binaryName').textContent=f.name;$('#binaryDownload').href=f.downloadUrl;const wrap=$('#previewWrap');wrap.innerHTML=f.mime?.startsWith('image/')?`<img class="preview" src="${f.rawUrl}" alt="${esc(f.name)}">`:''}
+function clearSelection(){app.selected=null;app.file=null;$('#renameBtn').disabled=true;$('#deleteBtn').disabled=true;showWelcome();renderTree()}
+function renderStats(){const s=app.state.summary.stats;$('#stats').innerHTML=[['Files',s.files],['Folders',s.folders],['Snapshots',s.commits],['Contributors',s.contributors]].map(x=>`<div class="stat"><b>${x[1]}</b><span>${x[0]}</span></div>`).join('')}
+function renderActivity(){const a=app.state.contributions.slice(0,40);$('#activity').innerHTML=a.length?a.map(x=>`<div class="event"><strong>${esc(x.title)}</strong><p>${esc(x.author)}${x.path?' · '+esc(x.path):''}<br>${esc(x.description||'')}</p><time>${ago(x.timestamp)} · impact ${x.impact}</time></div>`).join(''):'<div class="empty">No activity yet.</div>'}
+function renderCommits(){const c=app.state.commits;$('#commits').innerHTML=c.length?c.map(x=>`<div class="commit"><div class="commit-head"><code>${x.id}</code><strong>${esc(x.message)}</strong></div><p>${esc(x.author)} · ${ago(x.timestamp)}<br>${x.fileCount} files · ${fmtBytes(x.totalBytes)}</p><button class="btn restore" data-id="${x.id}">Restore this snapshot</button></div>`).join(''):'<div class="empty">No snapshots yet.</div>';$$('.restore').forEach(b=>b.onclick=()=>restoreCommit(b.dataset.id))}
+async function upload(files,folder=false){files=[...files];if(!files.length)return;let done=0;for(const file of files){const path=(folder&&file.webkitRelativePath)||file.name;try{await api(`/api/upload?path=${encodeURIComponent(path)}&author=${encodeURIComponent(author())}&message=${encodeURIComponent('Uploaded through ForgeTrace')}`,{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:file});done++}catch(e){toast(`${path}: ${e.message}`,true)}}toast(`Uploaded ${done} of ${files.length} file${files.length===1?'':'s'}`);await load(false)}
+function modal(title,fields,onSubmit,submit='Save'){const root=$('#modalRoot');root.innerHTML=`<div class="modal-backdrop"><form class="modal"><h2>${esc(title)}</h2>${fields.map(f=>`<div class="field"><label>${esc(f.label)}</label>${f.type==='textarea'?`<textarea name="${f.name}" ${f.required?'required':''}>${esc(f.value||'')}</textarea>`:`<input name="${f.name}" value="${esc(f.value||'')}" ${f.required?'required':''} ${f.placeholder?`placeholder="${esc(f.placeholder)}"`:''}>`}</div>`).join('')}<div class="modal-actions"><button type="button" class="btn cancel">Cancel</button><button type="submit" class="btn primary">${esc(submit)}</button></div></form></div>`;root.querySelector('.cancel').onclick=()=>root.innerHTML='';root.querySelector('.modal-backdrop').onclick=e=>{if(e.target===e.currentTarget)root.innerHTML=''};root.querySelector('form').onsubmit=async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));try{await onSubmit(data);root.innerHTML=''}catch(err){toast(err.message,true)}};setTimeout(()=>root.querySelector('input,textarea')?.focus(),0)}
+async function saveFile(){if(!app.file)return;try{await api('/api/file',json('PUT',{path:app.file.path,content:$('#code').value,author:author(),message:'Edited in ForgeTrace'}));toast('File saved');app.editorDirty=false;await load(false);await selectPath(app.file.path,'file')}catch(e){toast(e.message,true)}}
+function createFile(){modal('Create file',[{label:'Path',name:'path',required:true,placeholder:'src/app.js'},{label:'Initial content',name:'content',type:'textarea'}],async d=>{await api('/api/file',json('PUT',{path:d.path,content:d.content||'',author:author(),message:'Created a new file'}));toast('File created');await load(false);await selectPath(d.path,'file')},'Create')}
+function createFolder(){modal('Create folder',[{label:'Folder path',name:'path',required:true,placeholder:'src/components'}],async d=>{await api('/api/folder',json('POST',{path:d.path,author:author()}));toast('Folder created');await load(false)},'Create')}
+function renameSelected(){if(!app.selected)return;modal('Rename path',[{label:'New path',name:'newPath',required:true,value:app.selected}],async d=>{await api('/api/rename',json('POST',{path:app.selected,newPath:d.newPath,author:author()}));toast('Path renamed');app.selected=d.newPath;await load(false)},'Rename')}
+async function deleteSelected(){if(!app.selected||!confirm(`Delete ${app.selected}? This removes it from the working repository.`))return;try{await api(`/api/path?path=${encodeURIComponent(app.selected)}&author=${encodeURIComponent(author())}`,{method:'DELETE'});toast('Path deleted');clearSelection();await load(false)}catch(e){toast(e.message,true)}}
+function commit(){modal('Create snapshot',[{label:'Commit message',name:'message',required:true,placeholder:'Describe this version'}],async d=>{await api('/api/commit',json('POST',{message:d.message,author:author()}));toast('Restorable snapshot created');await load(false)},'Create snapshot')}
+async function restoreCommit(id){if(!confirm(`Restore snapshot ${id}? Current working files will be replaced.`))return;try{await api('/api/checkout',json('POST',{commitId:id,author:author()}));toast(`Restored ${id}`);clearSelection();await load(false)}catch(e){toast(e.message,true)}}
+$('#setupForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/repository',json('POST',{name:$('#setupName').value,description:$('#setupDescription').value,author:$('#setupAuthor').value}));localStorage.ftAuthor=$('#setupAuthor').value;$('#setup').classList.add('hidden');await load(false)}catch(err){toast(err.message,true)}};
+$('#author').onchange=e=>localStorage.ftAuthor=e.target.value;$('#refreshBtn').onclick=()=>load();$('#uploadBtn').onclick=()=>$('#fileInput').click();$('#uploadFolderBtn').onclick=()=>$('#folderInput').click();$('#fileInput').onchange=e=>{upload(e.target.files);e.target.value=''};$('#folderInput').onchange=e=>{upload(e.target.files,true);e.target.value=''};$('#newFileBtn').onclick=createFile;$('#newFolderBtn').onclick=createFolder;$('#renameBtn').onclick=renameSelected;$('#deleteBtn').onclick=deleteSelected;$('#commitBtn').onclick=commit;$('#saveBtn').onclick=saveFile;$('#code').oninput=()=>{app.editorDirty=true;$('#saveBtn').disabled=false};
+$$('.tab').forEach(t=>t.onclick=()=>{$$('.tab').forEach(x=>x.classList.toggle('active',x===t));$('#activityPanel').classList.toggle('hidden',t.dataset.tab!=='activity');$('#commitsPanel').classList.toggle('hidden',t.dataset.tab!=='commits')});
+const dz=$('#dropzone');['dragenter','dragover'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add('drag')}));['dragleave','drop'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove('drag')}));dz.ondrop=e=>upload(e.dataTransfer.files);dz.onclick=()=>$('#fileInput').click();
+function mobileToggle(el){el.classList.toggle('closed')}$('#treeToggle').onclick=$('#treeToggle2').onclick=()=>mobileToggle($('#sidebar'));$('#panelToggle').onclick=()=>mobileToggle($('#inspector'));
+window.addEventListener('beforeunload',e=>{if(app.editorDirty){e.preventDefault();e.returnValue=''}});window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'&&!$('#editor').classList.contains('hidden')){e.preventDefault();saveFile()}if(e.key==='Escape')$('#modalRoot').innerHTML=''});
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "version": "0.4.0",
+  "python_tests": 76,
+  "python_tests_status": "PASS",
+  "coverage_percent": 76,
+  "native_picker_coverage_percent": 87,
+  "browser": {
+    "browser_smoke_test.py": "PASS",
+    "browser_deep_folder_test.py": "PASS",
+    "browser_folder_retry_test.py": "PASS",
+    "browser_native_import_test.py": "PASS",
+    "browser_blackbox_test.py": "PASS",
+    "browser_collaboration_test.py": "SKIP_ENVIRONMENT_POLICY; equivalent HTTP integration tests PASS"
+  },
+  "python_compilation": "PASS",
+  "javascript_syntax": "PASS",
+  "audit_findings": {
+    "total": 29,
+    "closed": 29
+  },
+  "manual_release_gate": "Physical Windows picker acceptance checklist"
+}

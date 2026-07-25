@@ -1,0 +1,23 @@
+{
+  "project": "ForgeTrace",
+  "version": "0.4.0",
+  "creator": "Rooke Poole",
+  "license": "MIT",
+  "baseline": "v0.4.0 Audit Stabilization and Transactional Recovery",
+  "audit_findings_closed": 29,
+  "python_tests": 76,
+  "coverage_percent": 76,
+  "native_picker_coverage_percent": 87,
+  "browser_workflows_passed": [
+    "browser_smoke_test.py",
+    "browser_deep_folder_test.py",
+    "browser_folder_retry_test.py",
+    "browser_native_import_test.py",
+    "browser_blackbox_test.py"
+  ],
+  "environment_skipped": [
+    "browser_collaboration_test.py: managed Chromium localhost policy"
+  ],
+  "manual_release_gate": "tests/WINDOWS_NATIVE_PICKER_ACCEPTANCE.md",
+  "next_target": "v0.4.1 review, audit, and recovery UX"
+}

@@ -1,0 +1,7 @@
+ForgeTrace v0.4.0 validation environment
+Generated: 2026-07-25
+Platform: Linux-6.12.13-x86_64-with-glibc2.41
+Python: 3.13.5 (main, May  5 2026, 21:05:52) [GCC 14.2.0]
+Node: v22.16.0
+Chromium: Chromium 144.0.7559.96 built on Debian GNU/Linux 13 (trixie)
+Working source: /mnt/data/forgetrace-v037-stabilization

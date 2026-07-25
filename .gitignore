@@ -2,3 +2,10 @@
 Thumbs.db
 __pycache__/
 *.pyc
+
+# ForgeTrace runtime data
+workspace/
+forgetrace-data/
+*.log
+*.sqlite-shm
+*.sqlite-wal

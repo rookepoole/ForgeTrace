@@ -1,8 +1,8 @@
 # ForgeTrace Working Repository Delivery Report
 
-## Delivered
+## Current working application
 
-- Python local repository server with no third-party dependencies
+- Python local repository server with no third-party runtime dependencies
 - Real disk-backed repository workspace
 - Multi-file and folder uploads
 - Text/source editing and saving
@@ -16,9 +16,16 @@
 - Path traversal protection and protected metadata directory
 - Responsive browser UI
 
-## End-to-end validation
+## Planning and open-source update
 
-Validated in a disposable workspace:
+- Added an authoritative expansive roadmap in `BUILD_PLAN.md`.
+- Defined multiple repository paths as the next foundational release.
+- Added architecture for repositories across local drives, removable drives, UNC/mounted network locations, and temporarily offline paths.
+- Defined SQLite schemas, repository-scoped APIs, Git interoperability, search, issues, reviews, releases, contribution lineage, backup, LAN collaboration, plugins, packaging, testing, and security gates.
+- Added `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `NOTICE.md`, and `CHANGELOG.md`.
+- Made creator credit to Rooke Poole explicit in the MIT license header and README without restricting the MIT open-source permissions.
+
+## Previously validated end-to-end workflow
 
 1. Repository initialization
 2. File upload
@@ -30,3 +37,7 @@ Validated in a disposable workspace:
 8. ZIP export and archive inspection
 
 Result: PASS. The restored file matched the saved snapshot, and the exported ZIP contained repository files plus `FORGETRACE_HISTORY.json`.
+
+## Immediate next build target
+
+Implement Phase 0 and the first Phase 1 vertical slice: one ForgeTrace process managing at least two real repository paths through a persistent SQLite registry with strict repository isolation.

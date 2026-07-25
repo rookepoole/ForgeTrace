@@ -1,6 +1,21 @@
 # ForgeTrace — Working Local Repository
 
+**Created by Rooke Poole. Open-source under the MIT License.**
+
 ForgeTrace is a **real local-first repository application**, not a static demo. It stores uploaded and edited files on disk, records contribution history, creates restorable content-addressed snapshots, and exports the complete repository as a ZIP.
+
+
+## Development roadmap
+
+The authoritative expansion plan is [`BUILD_PLAN.md`](BUILD_PLAN.md). Its first priority is safe multi-repository support: one ForgeTrace instance managing many repository paths across local drives, removable storage, and trusted network locations.
+
+Project governance and safety documents:
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- [`SECURITY.md`](SECURITY.md)
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+- [`NOTICE.md`](NOTICE.md)
+- [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Run
 

@@ -1,10 +1,11 @@
 # ForgeTrace Expansive Build Plan
 
-**Project:** ForgeTrace  
-**Creator and project lead:** Rooke Poole  
-**License:** MIT  
-**Document status:** Authoritative development roadmap  
-**Baseline:** Working local repository v0.1.x  
+**Project:** ForgeTrace
+**Creator and project lead:** Rooke Poole
+**License:** MIT
+**Document status:** Authoritative development roadmap
+**Baseline:** Audit stabilization and transactional recovery v0.4.0
+**Last implementation update:** 2026-07-25
 **Target:** A polished, local-first alternative to cloud repository platforms
 
 ---
@@ -97,44 +98,137 @@ Every architectural and product decision should be checked against these princip
 
 ---
 
+## v0.3.4 implementation checkpoint — Comprehensive recursive folder import
+
+**Status:** Complete and validated
+
+This release closes the deep-folder import failure without changing repository identity, storage, collaboration, or upgrade behavior.
+
+- [x] Add a File System Access API directory walker that recursively enumerates every file at arbitrary nesting depth.
+- [x] Keep the `webkitdirectory` browser input as a compatibility fallback and preserve every supplied `webkitRelativePath`.
+- [x] Use the same recursive import engine when adding a folder to an existing repository and when creating a new repository from a selected folder.
+- [x] Preserve the selected root folder for uploads into an existing repository.
+- [x] Strip only the selected outer root when the folder creates a new managed repository.
+- [x] Preserve empty leaf folders when the modern directory picker exposes them.
+- [x] Keep uploads disk-backed and repository-scoped, with per-file progress and partial-failure reporting.
+- [x] Verify folder expansion through every nested level in the real interface.
+- [x] Add a live API fixture with six files across up to six subfolder levels.
+- [x] Add Chromium coverage for recursive existing-repository upload and recursive new-repository onboarding.
+- [x] Run the complete regression suite: 39 unit/integration tests, JavaScript/Python validation, core Chromium smoke testing, and recursive-folder Chromium testing.
+
+---
+
+## v0.3.3 implementation checkpoint — Team onboarding and upgrade continuity
+
+**Status:** Complete and validated
+
+This release closes four usability failures discovered during real team onboarding without weakening the quarantined collaboration boundary.
+
+- [x] Add **Fork shared link** to the empty state and Add Repository dialog; it works before any local repository exists.
+- [x] Validate the fragment token through the restricted contributor gateway and stream a source-only ZIP into a managed local fork.
+- [x] Reject cross-origin redirects, unsafe ZIP paths, symlinks, protected VCS/ForgeTrace metadata, encrypted entries, excessive file counts, and archive expansion beyond the safety ceiling.
+- [x] Keep raw invitation tokens out of the registry and repository metadata; store only non-secret upstream provenance and a short token fingerprint.
+- [x] Raise repository uploads to 1 GB, default invite files to 100 MB, default pull requests to 1 GB, maximum pull requests to 4 GB, and streamed source/fork archives to 2 GB.
+- [x] Stream repository uploads, pull-request uploads, raw repository downloads, repository exports, source downloads, and fork downloads through temporary application-data files instead of loading complete transfers into memory.
+- [x] Replace the always-expanded flat path display with an expandable/collapsible repository tree whose state persists per repository.
+- [x] Scan the stable managed-repository root on startup and repopulate missing registry entries by embedded UUID.
+- [x] Automatically relink an offline managed repository when startup discovery finds the same UUID at a moved path.
+- [x] Inspect only bounded, known legacy ForgeTrace workspace locations rather than recursively scanning a user home or Downloads directory.
+- [x] Add direct-service, live owner-API, continuity, security-surface, JavaScript, and Chromium coverage.
+- [x] Run the complete regression suite: 37 unit/integration tests plus Chromium file-tree/onboarding flow.
+
+---
+
+## v0.3.2 implementation checkpoint — Repository onboarding usability
+
+**Status:** Complete and validated
+
+This patch is intentionally narrow and regression-sensitive. It improves the new-repository workflow without replacing the proven absolute-path registration flow.
+
+- [x] Add a dedicated **Upload files** option to the Add Repository dialog.
+- [x] Add a separate **Upload folder** option that preserves relative folder paths beneath the selected root.
+- [x] Keep explicit absolute-path creation and existing-folder registration.
+- [x] Create uploaded repositories as normal on-disk workspaces in a documented ForgeTrace-managed folder.
+- [x] Make partial upload failures visible without hiding successfully imported files.
+- [x] Add API, registry, static, and Chromium coverage for all three onboarding routes.
+- [x] Run the complete existing repository and collaboration regression suite: 27 tests plus static and Chromium flows.
+
+---
+
 ## 3. Current baseline
 
-The current working build already provides:
+ForgeTrace v0.3.4 now provides:
 
 - a Python local server with no third-party runtime dependencies;
-- one disk-backed workspace;
-- repository initialization;
-- file and folder upload;
-- drag-and-drop upload;
-- file browsing;
-- text/source editing;
-- binary storage and download;
-- create, rename, and delete operations;
+- a platform-specific global application-data directory;
+- a persistent SQLite repository registry and migration framework;
+- stable UUID identity for every repository;
+- one running process managing many repository paths;
+- repository creation and existing-folder registration;
+- path-free repository creation from individual files or a recursively enumerated selected folder;
+- empty-state and Add Repository onboarding from a secure ForgeTrace collaboration link;
+- streamed, safety-validated source import into a normal managed local fork;
+- expandable/collapsible nested repository folders with per-repository expansion persistence;
+- startup recovery that repopulates managed repositories from embedded UUID metadata after registry loss or package replacement;
+- streamed large-file upload, pull-request upload, export, source download, and fork-transfer paths;
+- a documented managed-repository root containing ordinary movable local folders;
+- recursive descendant discovery at arbitrary folder depth, with outer-folder stripping only during new-repository onboarding;
+- repository switching, favorites, and recent-order tracking;
+- offline-path detection and UUID-verified relinking;
+- non-destructive unregister that leaves all project files and history intact;
+- repository-scoped v1 APIs for file, snapshot, restore, export, and metadata operations;
+- file and folder upload, browsing, editing, rename, and deletion;
 - automatic contribution events;
 - SHA-256 content-addressed snapshot objects;
 - snapshot creation and restoration;
 - ZIP export with portable history;
-- path traversal protection;
-- a responsive browser interface.
+- atomic state writes with a parseable backup copy;
+- shared in-process repository mutation locks;
+- path traversal and protected-metadata defenses;
+- a responsive multi-repository browser interface;
+- automated two-repository isolation, 100-repository registry, recovery, security, API, and Chromium UI tests;
+- normalized repository tags and many-to-many collections;
+- searchable repository-library filters and persistent saved filters;
+- repository settings synchronized into embedded metadata;
+- repository-scoped upload limits enforced before request bodies are read;
+- path capability reporting for availability, directory type, read/write access, free space, and UNC/network-path classification;
+- online SQLite registry backups with retention;
+- portable registry JSON export and non-destructive merge import;
+- `server.py doctor` plus browser doctor controls for integrity, identity, path, metadata-drift, and unregistered-repository checks;
+- safe doctor repair actions that create a pre-repair registry backup;
+- migration `0002_registry_organization_and_limits` with tested v0.2.0 upgrade behavior;
+- formal deprecation headers on temporary unscoped compatibility routes;
+- a secure external contribution gateway with repository-scoped, expiring invitation tokens;
+- source-only repository ZIP downloads that exclude ForgeTrace history, registry data, and machine paths;
+- quarantined pull-request drafts stored outside the live repository workspace;
+- explicit changed-file uploads and requested deletions with protected-path and size enforcement;
+- owner-side exact diffs, binary hashes, risky-file warnings, approvals, change requests, and comments;
+- conflict detection against a captured baseline plus revision checks at merge time;
+- atomic local merges with a safety snapshot and rollback backup;
+- localhost-only owner APIs and merge actions even when the contribution gateway is network-bound;
+- remote blocking for registry, repository browsing, file editing, snapshots, exports, and settings APIs;
+- token hashing, request throttling, security headers, active-content download protection, and no server-side code execution;
+- a single normal launcher with UI-controlled start/stop of a second restricted contributor listener;
+- listener-level contributor isolation that denies owner APIs even when the contributor port is accessed from loopback;
+- automatic LAN-address detection and in-UI token-link generation, with an optional advanced private-VPN/tunnel URL override;
+- deprecated `server.py share` compatibility retained without separate user-facing share launchers.
 
 ### Current limitations
 
-- only one workspace is active per server process;
-- metadata is JSON rather than a queryable database;
-- there is no global repository registry;
+- repository contribution/snapshot metadata remains JSON rather than per-repository SQLite;
+- external metadata mode is reserved but not implemented;
+- there is no background job manager or filesystem watcher;
 - there is no branch model beyond snapshots;
 - no Git integration, diff engine, staging area, or remote support;
-- no repository-wide search index;
-- no issue tracker, review workflow, release manager, or project boards;
-- no users, roles, sessions, or LAN collaboration;
+- no repository-wide or cross-repository search index;
+- no issue tracker, release manager, project boards, or inline review comments;
+- pull requests are ForgeTrace snapshot-native change sets rather than Git branches or hosted Git protocol;
+- there are no persistent user accounts, roles, or authenticated full-workspace LAN sessions;
 - no plugin architecture;
 - no packaged desktop application or automatic updates;
-- limited automated test coverage;
-- no crash recovery journal or structured migration framework.
+- operation journals, snapshot-object verification, and automated metadata-backup restoration are not yet implemented.
 
-The next phases should evolve this baseline instead of discarding it.
-
----
+The next phases should evolve this tested baseline instead of discarding it.
 
 ## 4. Target user groups
 
@@ -274,8 +368,8 @@ Recommended long-term process model:
 
 ### 6.2 Technology progression
 
-**Near term:** Keep Python and the browser UI to move quickly.  
-**Middle term:** Add a small dependency set, SQLite, typed models, and a framework with safer routing.  
+**Near term:** Keep Python and the browser UI to move quickly.
+**Middle term:** Add a small dependency set, SQLite, typed models, and a framework with safer routing.
 **Long term:** Package the UI and local API as a desktop application while preserving headless/server mode.
 
 A practical path is:
@@ -345,17 +439,19 @@ ForgeTrace must support:
 
 ### 7.3 Add repository workflows
 
-Provide four primary actions:
+Provide six primary actions:
 
-1. **Create repository** — create a new folder and initialize ForgeTrace metadata.
-2. **Add existing folder** — register a normal folder without moving it.
-3. **Add existing Git repository** — detect `.git`, preserve it, and enable Git features.
-4. **Import archive** — extract a ZIP/TAR into a selected destination after preview and safety checks.
+1. **Upload files** — implemented in v0.3.2; create a managed local repository from one or more selected files.
+2. **Upload folder** — implemented in v0.3.2; create a managed local repository while preserving nested paths beneath the selected root.
+3. **Create repository at path** — implemented; create a new folder and initialize ForgeTrace metadata.
+4. **Add existing folder by path** — implemented; register a normal folder without moving it.
+5. **Add existing Git repository** — detect `.git`, preserve it, and enable Git features.
+6. **Import archive** — extract a ZIP/TAR into a selected destination after preview and safety checks.
 
 Later add:
 
-5. **Clone Git remote** — clone with standard Git and register automatically.
-6. **Discover repositories** — scan selected roots for `.git` or `.forgetrace` markers.
+7. **Clone Git remote** — clone with standard Git and register automatically.
+8. **Discover repositories** — scan selected roots for `.git` or `.forgetrace` markers.
 
 ### 7.4 Repository switcher
 
@@ -396,7 +492,7 @@ project/
 └── .forgetrace/
 ```
 
-Benefits: portable with the project.  
+Benefits: portable with the project.
 Risks: metadata appears in backups or Git unless ignored.
 
 **External mode**
@@ -406,7 +502,7 @@ ForgeTrace data root/
 └── repositories/<repo-uuid>/
 ```
 
-Benefits: repository remains untouched.  
+Benefits: repository remains untouched.
 Risks: metadata must be relinked if the project moves.
 
 The registry must record the mode. Export should be able to create a portable package regardless of mode.
@@ -1056,7 +1152,8 @@ Large artifacts should support external storage pointers to avoid bloating repos
 ### 17.1 Network modes
 
 - **Local-only:** bind to loopback; no login required by default.
-- **LAN trusted:** bind to selected interface; authentication required.
+- **Scoped contribution gateway:** bind a deliberately restricted surface for expiring pull-request invitations while owner APIs remain loopback-only.
+- **LAN trusted:** bind the complete workspace to a selected interface only after authentication and authorization are implemented.
 - **Reverse-proxy/server:** advanced deployment with TLS and explicit configuration.
 
 ### 17.2 Identity and authentication
@@ -1122,6 +1219,61 @@ LAN mode must not ship until:
 - security headers are set;
 - audit logs are protected;
 - a security review is completed.
+
+### 17.7 Secure external contribution gateway — v0.3.0 implemented slice
+
+This is intentionally narrower than full trusted-LAN mode. Remote invitees receive no general repository browser, shell, registry access, owner session, or direct write capability.
+
+- [x] Keep the normal owner workspace bound to loopback by default.
+- [x] Add the initial dedicated share launcher for the restricted contribution surface (superseded by the v0.3.1 one-launch UI controller).
+- [x] Block every remote route except the contributor page and token-scoped collaboration API.
+- [x] Use repository-scoped, expiring, revocable, maximum-use invitation tokens.
+- [x] Store only SHA-256 token hashes and place the raw token in the URL fragment.
+- [x] Allow optional source-only ZIP download without ForgeTrace metadata or machine paths.
+- [x] Allow source download to be disabled per invitation.
+- [x] Allow a new teammate to paste the invitation link into an empty ForgeTrace installation and create a managed local fork.
+- [x] Stream source archives and fork downloads with ZIP path, symlink, metadata, expansion-size, and redirect validation.
+- [x] Stage all submitted files under application-data quarantine, never in the live workspace.
+- [x] Reject `.git`, `.forgetrace`, traversal paths, oversized files, oversized pull requests, and excessive file counts.
+- [x] Never extract contributor archives and never execute contributor code.
+- [x] Generate owner-visible text diffs, binary hashes, deletion notices, and risky-file warnings.
+- [x] Support approval, change requests, comments, revisions, token-scoped draft recovery, closure, and merge status.
+- [x] Detect baseline conflicts and revalidate affected hashes under the repository merge lock.
+- [x] Require a typed merge phrase and separate confirmation for executable/script-like files.
+- [x] Create a safety snapshot and rollback backup before applying an atomic local merge.
+- [x] Attribute the submitted change to the external contributor and the merge action to the local owner.
+- [x] Add security headers, active-content attachment enforcement, origin checks, and remote request throttling.
+- [x] Add service, route-boundary, API end-to-end, conflict, limit, source-download, and merge tests.
+- [ ] Add persistent audit-log retention and an owner-visible security event viewer.
+- [ ] Add line-level review comments and contributor responses.
+- [ ] Add a visual merge-conflict resolver.
+- [ ] Add optional antivirus/content-scanner hooks without making them mandatory.
+- [ ] Add TLS/Tailscale/WireGuard deployment guides and safe tunnel presets.
+- [ ] Add signed invitation metadata and optional contributor identity verification.
+- [ ] Add Git-native fork/branch/patch interoperability while preserving the quarantine model.
+
+**Security position:** the UI-enabled restricted contribution listener is appropriate for a trusted LAN or private VPN. Direct router port-forwarding to the public internet remains unsupported and should be blocked in documentation and UI warnings until TLS, persistent authentication, audit review, and adversarial testing are complete.
+
+### 17.8 One-launch gateway control — v0.3.1 implemented slice
+
+The v0.3.0 security model was correct, but requiring a separate launcher made collaboration easy to misunderstand and difficult for nontechnical users. v0.3.1 consolidates operation without weakening the trust boundary.
+
+- [x] Keep the owner listener bound to loopback throughout the process lifetime.
+- [x] Start ForgeTrace through one normal Windows launcher and one platform-equivalent shell launcher.
+- [x] Remove the separate local/share batch and shell launchers from the package.
+- [x] Add a runtime gateway manager that starts and stops a second HTTP listener from the owner process.
+- [x] Label each HTTP listener as `owner`, `gateway`, or legacy `combined` and enforce policy from that listener identity.
+- [x] Deny owner routes on the gateway listener even when the client address is loopback.
+- [x] Default sharing to disabled after every process start.
+- [x] Add owner-only status, start, and stop APIs for the contributor listener.
+- [x] Add in-UI sharing status, port selection, LAN-address detection, and Stop Sharing controls.
+- [x] Automatically enable sharing when the owner explicitly generates a token link while sharing is off.
+- [x] Generate the final fragment-token URL in the UI without requiring users to type their LAN address.
+- [x] Keep an optional advanced private-VPN/tunnel base-URL override without claiming to configure a tunnel or TLS.
+- [x] Close the gateway when the owner clicks Stop Sharing or when the ForgeTrace process exits.
+- [x] Add lifecycle, port-conflict, socket-closure, gateway-boundary, token-route, JavaScript, and Chromium UI tests.
+
+**Usability position:** enabling sharing remains an explicit owner action, but it is now part of the same visible workflow as invitation creation. A user should never need to understand process binding or launch a second terminal to accept a pull request.
 
 ---
 
@@ -1797,19 +1949,19 @@ Compatibility commitments for 1.0:
 
 ### Work
 
-- [ ] Split `server.py` into repository, storage, API, export, and utility modules.
+- [x] Split `server.py` into repository, registry, API, application, error, constant, and utility modules.
 - [ ] Add typed data models and centralized validation.
-- [ ] Add structured error codes.
-- [ ] Replace ad hoc prints with structured logging.
-- [ ] Add configuration loading and platform data directories.
-- [ ] Add atomic state writes and backup copies.
+- [x] Add structured error codes.
+- [x] Replace ad hoc request prints with centralized logging.
+- [x] Add environment/CLI configuration and platform data directories.
+- [x] Add atomic repository state writes and backup copies.
 - [ ] Add operation journals for upload, rename, delete, restore, and export.
-- [ ] Add repository lock to prevent conflicting writers.
-- [ ] Add test fixtures and unit test runner.
-- [ ] Add adversarial path and archive tests.
-- [ ] Add browser end-to-end smoke test.
-- [ ] Add version endpoint and migration placeholder.
-- [ ] Add `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`, and `NOTICE.md`.
+- [x] Add shared per-workspace in-process repository locks to prevent conflicting request writers.
+- [x] Add multi-repository, API, security, recovery, and 100-repository fixtures with `unittest`.
+- [x] Add traversal, protected metadata, duplicate identity/path, backup, and export-boundary tests.
+- [x] Add Chromium UI smoke testing for repository switching and file editing.
+- [x] Add application version endpoint and numbered SQLite migration framework.
+- [x] Add `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`, and `NOTICE.md`.
 
 ### Exit gate
 
@@ -1826,26 +1978,33 @@ Compatibility commitments for 1.0:
 
 ### Work
 
-- [ ] Create global application data directory.
-- [ ] Create SQLite registry and migration framework.
-- [ ] Add repository UUIDs.
-- [ ] Add create/add existing/unregister/relink workflows.
-- [ ] Support repositories on different local drives.
-- [ ] Support removable and network paths with offline states.
-- [ ] Add repository switcher, favorites, recents, tags, and collections.
-- [ ] Add duplicate path detection.
-- [ ] Add embedded and external metadata modes.
-- [ ] Make every API route repository-scoped.
-- [ ] Make background jobs repository-scoped.
-- [ ] Add repository settings and per-repository limits.
-- [ ] Add multi-repository integration tests.
+- [x] Create global platform-specific application data directory.
+- [x] Create SQLite registry and migration `0001_repository_registry`.
+- [x] Add stable repository UUIDs embedded in repository metadata.
+- [x] Add create, add existing, managed file/folder import, initialize, unregister, and relink workflows.
+- [x] Support arbitrary absolute repository paths, including different local drives.
+- [x] Support browser-created managed repositories without requiring users to know an absolute path.
+- [x] Fork a shared repository from a collaboration link before any local repository exists.
+- [x] Automatically repopulate valid managed repositories by embedded UUID during startup recovery.
+- [x] Render nested repository paths as an expandable and persistent folder tree.
+- [x] Preserve unavailable removable/mounted paths as offline registry entries with recovery actions.
+- [x] Add repository switcher, favorites, and recency ordering.
+- [x] Add complete tags and collections workflows.
+- [x] Add canonical duplicate-path and duplicate-identity detection.
+- [ ] Complete metadata placement modes. Embedded mode is working; external mode remains pending.
+- [x] Add repository-scoped `/api/v1/repositories/{id}/...` routes for every file and snapshot operation.
+- [ ] Make future background jobs repository-scoped; no background job system exists yet.
+- [x] Add repository settings and per-repository limits.
+- [x] Add live API and direct-service multi-repository integration tests.
 
 ### Exit gate
 
-- One process reliably manages at least 100 registered repositories.
-- Switching repositories cannot mix files or history.
-- Missing paths are recoverable through relink.
-- Unregister and delete are clearly separate operations.
+- [x] One process reliably manages at least 100 registered repositories in the automated fixture.
+- [x] Switching repositories cannot mix files or snapshot history in live API tests.
+- [x] Missing paths are recoverable through UUID-verified relink.
+- [x] Unregister and file deletion are separate operations; unregister deletes no files.
+
+**Phase status:** The repository-library product layer is green. Phase 1 remains open only for external metadata mode, deeper removable/network capability classification, and future background-job scoping.
 
 ---
 
@@ -1943,8 +2102,10 @@ Compatibility commitments for 1.0:
 - [ ] Add issue dependencies and duplicate relationships.
 - [ ] Add project table, kanban, and roadmap views.
 - [ ] Add decision records and optional Markdown ADR generation.
-- [ ] Add change sets for Git ranges and snapshot comparisons.
-- [ ] Add inline review comments and approval states.
+- [x] Add snapshot-native quarantined pull-request change sets with exact text diffs and binary hashes.
+- [ ] Add Git-range and branch-backed change sets.
+- [ ] Add inline review comments.
+- [x] Add pull-request approval, change-request, comment, revision, conflict, close, and merge states.
 - [ ] Link issues, decisions, reviews, commits, snapshots, tests, and releases.
 - [ ] Add Markdown import/export.
 - [ ] Add cross-repository boards.
@@ -1987,13 +2148,18 @@ Compatibility commitments for 1.0:
 
 ### Work
 
-- [ ] Add network bind configuration.
+- [x] Add an explicit restricted contribution-gateway network bind while preserving loopback owner access.
+- [x] Add one-launch owner UI controls for gateway status, start, stop, port, and detected share address.
+- [x] Enforce contributor-only routing by listener identity, including for loopback requests to the gateway port.
+- [ ] Add configurable trusted-LAN full-workspace bind after authentication exists.
 - [ ] Add users, password hashing, sessions, and recovery owner.
 - [ ] Add repository roles and permissions.
-- [ ] Add CSRF protection, security headers, rate limits, and audit logs.
+- [x] Add origin protection, security headers, and request throttling to the contribution gateway.
+- [ ] Add session CSRF tokens and protected persistent audit logs for full trusted-LAN mode.
 - [ ] Add real-time events and job updates.
 - [ ] Add stale-edit detection and advisory locks.
-- [ ] Add invitations and account management.
+- [x] Add expiring, revocable, repository-scoped contribution invitations.
+- [ ] Add persistent account management and role-bearing invitations.
 - [ ] Add TLS/reverse-proxy documentation.
 - [ ] Complete threat model and security review.
 - [ ] Add LAN penetration/adversarial test suite.
@@ -2058,9 +2224,9 @@ Compatibility commitments for 1.0:
 
 ---
 
-## 30. Immediate next implementation sprint
+## 30. Completed implementation sprint — v0.2.0
 
-The next sprint should be narrowly focused on **Phase 0 + the smallest vertical slice of Phase 1**.
+This sprint delivered **Phase 0 hardening plus the smallest vertical slice of Phase 1**.
 
 ### Sprint objective
 
@@ -2068,34 +2234,58 @@ Run one ForgeTrace server that can register, display, switch between, and operat
 
 ### Ordered task list
 
-1. [ ] Create a new development branch and tag the current working baseline.
-2. [ ] Add `APP_VERSION` and schema version constants.
-3. [ ] Introduce `forgetrace/` Python package structure.
-4. [ ] Move current `ForgeTraceRepository` into a repository service module.
-5. [ ] Add platform-specific application data directory helper.
-6. [ ] Create SQLite global registry with migration `0001_repository_registry`.
-7. [ ] Add repository UUID and path normalization.
-8. [ ] Add `GET/POST /api/v1/repositories`.
-9. [ ] Add repository-scoped state endpoint.
-10. [ ] Add active-repository switcher in the UI.
-11. [ ] Refactor all file/snapshot operations to accept repository context.
-12. [ ] Add two-repository integration fixture.
-13. [ ] Prove upload/edit/snapshot/export in repository A does not affect B.
-14. [ ] Add unregister and relink; do not add destructive repository deletion yet.
-15. [ ] Update migration, recovery, and test documentation.
+1. [x] Create a new development branch and tag the current working baseline.
+2. [x] Add `APP_VERSION` and schema version constants.
+3. [x] Introduce `forgetrace/` Python package structure.
+4. [x] Move current `ForgeTraceRepository` into a repository service module.
+5. [x] Add platform-specific application data directory helper.
+6. [x] Create SQLite global registry with migration `0001_repository_registry`.
+7. [x] Add repository UUID and path normalization.
+8. [x] Add `GET/POST /api/v1/repositories`.
+9. [x] Add repository-scoped state endpoint.
+10. [x] Add active-repository switcher in the UI.
+11. [x] Refactor all file/snapshot operations to accept repository context.
+12. [x] Add two-repository integration fixture.
+13. [x] Prove upload/edit/snapshot/export in repository A does not affect B.
+14. [x] Add unregister and relink; do not add destructive repository deletion yet.
+15. [x] Update migration, recovery, and test documentation.
+
+### Sprint completion record — v0.2.0
+
+**Status:** Complete on 2026-07-24.
+
+Implemented evidence:
+
+- branch `feature/multi-repository-registry`;
+- rollback tag `v0.1.0-roadmap-baseline`;
+- `APP_VERSION = 0.2.0`;
+- `forgetrace/` package boundaries;
+- platform application-data helper;
+- SQLite registry migration `0001_repository_registry`;
+- UUID and canonical-path enforcement;
+- repository-scoped API v1;
+- real repository switcher and path management UI;
+- live two-repository API isolation test;
+- 100-repository registry fixture;
+- restart, offline detection, relink, and unregister tests;
+- path/archive/recovery tests;
+- Chromium UI switching and editing test;
+- architecture, API, migration, recovery, and testing documentation.
+
+**Known carryover:** This sprint completes the narrow vertical slice, not all of Phase 0 or Phase 1. Typed models, operation journals, external metadata, tags/collections, repository settings, and background jobs remain open.
 
 ### Sprint acceptance test
 
-1. Start ForgeTrace once.
-2. Add two existing folders on different paths.
-3. Upload a file to repository A.
-4. Switch to repository B and confirm it is absent.
-5. Create a file and snapshot in repository B.
-6. Switch to repository A and confirm its state is unchanged.
-7. Stop and restart ForgeTrace.
-8. Confirm both repositories remain registered and open correctly.
-9. Temporarily rename/move repository B.
-10. Confirm it becomes “offline,” then relink it and recover all history.
+1. [x] Start ForgeTrace once.
+2. [x] Add two folders on different paths.
+3. [x] Upload a file to repository A.
+4. [x] Switch to repository B and confirm it is absent.
+5. [x] Create a file and snapshot in repository B.
+6. [x] Switch to repository A and confirm its state is unchanged.
+7. [x] Recreate the registry service to simulate restart.
+8. [x] Confirm both repositories remain registered and open correctly.
+9. [x] Temporarily rename/move repository B.
+10. [x] Confirm it becomes `offline`, then relink it and recover all history.
 
 Do not begin Git, issues, or LAN networking until this test is consistently green.
 
@@ -2234,6 +2424,223 @@ That scenario—not visual resemblance to GitHub—is the standard for success.
 
 ---
 
-## 36. Next best move
+## 36. Completed implementation checkpoint — v0.2.1
 
-Begin **Phase 0 / Sprint 1** by restructuring the backend and creating the SQLite repository registry. The first new user-visible release should do one thing exceptionally well: manage multiple real repository paths safely from a single ForgeTrace instance.
+The Registry Reliability and Organization release completed and validated:
+
+- [x] Editable name, description, default author, and upload limit.
+- [x] Repository metadata synchronization with offline-state protection.
+- [x] Normalized tags and many-to-many collections.
+- [x] Pinned repositories, client-side library search, and persistent saved filters.
+- [x] Registry backup creation with bounded retention.
+- [x] Portable registry JSON export and non-destructive merge import.
+- [x] CLI and browser doctor checks.
+- [x] UUID-based discovery and safe re-registration of embedded repositories.
+- [x] Availability, access, free-space, and UNC/network-path capability probes.
+- [x] Migration from the v0.2.0 registry schema with legacy organization backfill.
+- [x] Formal deprecation headers on unscoped compatibility API responses.
+- [x] Direct-service, live API, CLI, migration, security, isolation, and Chromium UI tests.
+
+External metadata mode was deliberately not marked complete. Its relink and identity model must be as trustworthy as embedded UUID verification before release.
+
+---
+
+## 37. Completed implementation checkpoint — v0.3.0
+
+The Secure Quarantined Collaboration release completed and validated:
+
+- [x] Restricted network share launcher with remote owner-route denial.
+- [x] Repository-scoped expiring, revocable, maximum-use invites.
+- [x] Hash-only token persistence and fragment-based share links.
+- [x] Optional source-only repository download with metadata exclusion.
+- [x] Application-data quarantine and protected-path containment.
+- [x] Snapshot-native pull requests with changed files and requested deletions.
+- [x] Exact text diffs, binary hashes, risky-file warnings, and conflict evidence.
+- [x] Approval, change request, comment, revision, resubmission, close, and merge states.
+- [x] Typed merge confirmation, risky-file approval, safety snapshot, under-lock revalidation, atomic application, and rollback path.
+- [x] External contributor and local merger attribution.
+- [x] Request/body/file/count limits, remote throttling, security headers, origin protection, and active-content attachment enforcement.
+- [x] Owner and contributor browser interfaces.
+- [x] Direct-service, remote-boundary, source-download, API end-to-end, conflict, merge, regression, and Chromium interface tests.
+
+The release does not claim GitHub protocol compatibility or full authenticated LAN hosting. Those remain separate roadmap gates.
+
+---
+
+## 38. Completed implementation checkpoint — v0.3.1
+
+The One-Launch Secure Sharing release completed and validated:
+
+- [x] One obvious Windows launcher and one platform-equivalent shell launcher.
+- [x] Automatic opening of the localhost owner workspace from the packaged launchers.
+- [x] Runtime contributor-gateway manager inside the normal ForgeTrace process.
+- [x] Sharing disabled by default after every fresh start.
+- [x] Owner-only sharing status, start, and stop endpoints.
+- [x] Separate owner and contributor `ThreadingHTTPServer` surfaces.
+- [x] Gateway denial of owner APIs even when reached through loopback.
+- [x] In-UI sharing toggle, contributor port, detected LAN address, and optional advanced URL override.
+- [x] Automatic sharing startup plus token-link generation from one explicit form action.
+- [x] In-UI Stop Sharing that closes the contributor socket without stopping the owner workspace.
+- [x] Process shutdown cleanup for both listeners.
+- [x] Removal of separate local/share batch and shell launcher pairs.
+- [x] Updated security, architecture, API, startup, testing, product, and roadmap documentation.
+- [x] Full 24-test regression suite plus Chromium one-launch invite-generation coverage.
+
+The release preserves the v0.3.0 quarantine, review, conflict, and atomic-merge model. It changes how the gateway is operated, not what remote contributors are trusted to do.
+
+---
+
+## 39. Completed implementation checkpoint — v0.3.2
+
+The Repository Onboarding Usability release completed and validated:
+
+- [x] Three distinct Add Repository choices: **Upload files**, **Upload folder**, and **Use a local path**.
+- [x] Owner-only managed-repository creation API for browsers that cannot provide absolute host paths.
+- [x] Cross-platform-safe managed directory naming with collision suffixes.
+- [x] Ordinary on-disk repository workspaces under platform application data.
+- [x] Automatic repository-name inference and selected-file count/size/path preview.
+- [x] Folder import that strips one selected root and preserves nested relative paths.
+- [x] Existing absolute-path create and existing-folder registration preserved.
+- [x] Partial failure reporting that retains successful imports and the created repository.
+- [x] Direct registry, live API, static, and Chromium tests for all onboarding routes.
+- [x] Full 27-test registry, recovery, collaboration, security, and unified-sharing regression suite.
+
+This release adds an easier path to a normal local repository; it does not introduce virtual files, cloud storage, archive extraction, or remote owner access.
+
+---
+
+## 40. Completed implementation checkpoint — v0.3.3
+
+The Team Onboarding and Upgrade Continuity release completed and validated:
+
+- [x] Local fork creation from a pasted secure collaboration link with no active repository requirement.
+- [x] Source-only gateway validation and streamed managed-repository import.
+- [x] Non-secret upstream provenance retained inside the fork; raw bearer tokens are never persisted.
+- [x] Streamed transfer path and increased configurable limits for practical team repository sizes.
+- [x] Expandable/collapsible nested repository tree with per-repository local persistence.
+- [x] Stable application-data registry reuse plus startup UUID rediscovery and safe managed-repository relinking.
+- [x] 37-test regression suite and Chromium onboarding/tree validation.
+
+This release implements a ForgeTrace-native local fork, not Git wire-protocol cloning or a GitHub-compatible fork network.
+
+---
+
+## 41. Completed implementation checkpoint — v0.3.4
+
+The Comprehensive Recursive Folder Import release completed and validated:
+
+- [x] Recursive directory-handle enumeration for every descendant file.
+- [x] Compatibility fallback for browsers that expose only `webkitdirectory` file lists.
+- [x] Existing-repository upload retains the selected target-folder root.
+- [x] New-repository onboarding removes only that outer root and retains every descendant path.
+- [x] Empty leaf-folder preservation where the browser exposes directory handles.
+- [x] Deep repository tree expansion verified through six levels.
+- [x] 39-test regression suite plus dedicated Chromium recursive-folder validation.
+
+This patch changes folder discovery and presentation only. It does not alter the collaboration trust boundary, registry location, repository UUID model, or snapshot format.
+
+---
+
+## 42. Completed implementation checkpoint — v0.3.5
+
+The Verified Native Folder Import release completed and validated:
+
+- [x] Real Chromium `webkitdirectory` selection used as the primary recursive folder path.
+- [x] File objects are snapshotted and retained until asynchronous uploads finish; inputs are cleared only afterward.
+- [x] Every selected file path is verified against the server-side repository tree after upload.
+- [x] Missing descendant files receive one automatic upload retry before the import is declared incomplete.
+- [x] Import results show discovered, verified, and missing path counts directly in the workspace.
+- [x] Every imported parent folder is automatically expanded so nested files appear immediately.
+- [x] Manual **Expand all** and **Collapse all** controls are available for large trees.
+- [x] New-repository folder onboarding and existing-repository folder upload share the same verification guarantees.
+- [x] One-launch startup opens the browser only after the new package successfully binds its server port, preventing an older running package from being mistaken for the update.
+- [x] Native on-disk directory input, automatic retry, JavaScript syntax, Python compilation, and complete regression coverage.
+
+This checkpoint fixes both failure modes reported by users: nested files that were not retained through an asynchronous fallback upload, and nested files that uploaded successfully but remained hidden inside collapsed folders.
+
+---
+
+## 43. Completed implementation checkpoint — v0.3.6
+
+The Direct-Disk Complete Folder Import release completed and validated:
+
+- [x] The primary complete-folder action opens a local operating-system folder chooser rather than relying on a browser-generated `FileList`.
+- [x] Windows uses a PowerShell STA `FolderBrowserDialog`; macOS uses AppleScript; Linux uses Zenity or KDialog when available.
+- [x] Owner-only picker and import APIs remain inaccessible from the contributor gateway and non-loopback clients.
+- [x] The server enumerates the selected source with `os.walk`, follows no symbolic links, and raises visible errors for unreadable directories.
+- [x] Every readable descendant file is copied through a temporary file and atomic replacement.
+- [x] Empty directories and arbitrary nesting depth are preserved.
+- [x] Existing-repository import retains the selected outer folder; new managed-repository onboarding imports only its contents.
+- [x] Root `.forgetrace` metadata is excluded to prevent repository-identity collisions while ordinary hidden files and Git metadata remain importable.
+- [x] The resulting repository tree is verified before success is returned.
+- [x] Browser upload remains available as a clearly labeled fallback.
+- [x] Browser fallback prefers explicit `showDirectoryPicker()` recursion over `webkitdirectory` and sends a complete bulk folder manifest to the server.
+- [x] 48 Python unit/integration tests plus deep-folder, interrupted-upload, owner-workspace, and direct native-import Chromium tests pass.
+
+This checkpoint addresses the repeated real-world report that nested files were still absent even when synthetic browser tests passed. The primary workflow no longer depends on browser directory enumeration.
+
+---
+
+---
+
+## 44. Completed implementation checkpoint — v0.4.0
+
+The Audit Stabilization and Transactional Recovery release closes the full 29-item v0.3.6 bug audit.
+
+### Critical integrity
+
+- [x] Validate every snapshot object before workspace mutation.
+- [x] Recompute SHA-256 for restore, export, Doctor, and safety paths.
+- [x] Serialize repository writers across processes and enforce one owner instance per application-data directory.
+- [x] Couple filesystem and metadata changes through rollback journals.
+
+### Imports and repository presentation
+
+- [x] Stage folder imports outside the live repository.
+- [x] Preview conflicts and require abort, skip, overwrite, or rename behavior.
+- [x] Preflight total bytes and free space; expose persistent progress and cancellation.
+- [x] Verify committed file size and SHA-256.
+- [x] Make new managed-repository imports atomic with no orphan repository on failure.
+- [x] Reject nested `.forgetrace` metadata.
+- [x] Render a true depth-first parent-child tree with virtualization.
+- [x] Enable transactional folder rename and delete.
+- [x] Keep successful imports successful when browser storage is unavailable.
+
+### Recovery, performance, and metadata
+
+- [x] Restore valid `state.json.bak` through Doctor.
+- [x] Recover pending filesystem journals at startup.
+- [x] Relink moved managed repositories by UUID despite stale old paths.
+- [x] Cache unchanged file digests.
+- [x] Preserve empty directories, modes, and timestamps in snapshots.
+- [x] Hold the repository mutation lock throughout export.
+
+### Collaboration and HTTP
+
+- [x] Clean terminal/stale quarantine and expose storage metrics.
+- [x] Add sensitive-file previews and explicit inclusion controls.
+- [x] Add request timeouts, HEAD support, and bounded rate maps.
+- [x] Split monolithic route/import functions into bounded units.
+
+### Test quality and release evidence
+
+- [x] Add a real-server, real-disk Chromium workflow.
+- [x] Add Windows picker process/PowerShell contract tests and a physical Windows acceptance harness.
+- [x] Pass 76 Python tests with 76% total coverage and 87% native-picker coverage.
+- [x] Produce one-to-one audit closure evidence and a complete new-chat handoff package.
+
+See `AUDIT_CLOSURE.md` for the evidence attached to every finding.
+
+---
+
+## 45. Next best move — v0.4.1 review, audit, and recovery UX
+
+1. Add an append-only security-event audit log and owner-visible filter/export UI without raw token storage.
+2. Add inline file/line review threads, contributor replies, and resolution state.
+3. Add a visual conflict resolver that writes only to quarantine until explicit owner confirmation.
+4. Add validated registry backup restore with preview and rollback through the UI.
+5. Add explicit read-only repository mode enforced in service and interface layers.
+6. Add repository health/integrity dashboards driven by Doctor and object verification results.
+7. Run the included physical Windows native-picker acceptance checklist and record evidence in the next release.
+8. Only after those gates, introduce a read-only Git status/diff adapter; do not begin remote credential or hosting work yet.
+

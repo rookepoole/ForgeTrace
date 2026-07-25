@@ -1,36 +1,45 @@
-# Security Policy
+# ForgeTrace Security Policy — v0.4.0
 
-ForgeTrace manages real local files and repository history. Security reports should be handled carefully and should not include private repository contents unless they are essential to reproduce the issue.
+ForgeTrace manages real local files. Keep independent backups for irreplaceable data and report vulnerabilities privately.
 
-## Current support status
+## Trust surfaces
 
-The current build is an early local-first development release. It should bind only to `127.0.0.1` and is not approved for exposure to the public internet.
+- **Owner workspace:** loopback-only administration and repository access.
+- **Contributor gateway:** separately bound, disabled by default, token-scoped, and permanently denied owner routes.
+- **Quarantine:** application-data staging for untrusted submitted bytes.
+- **Repository transaction service:** local, locked, verified mutation boundary.
 
-## Report a vulnerability
+## v0.4.0 protections
 
-Until a private security channel is established, contact the project maintainer through the repository’s designated private contact method. Do not publish a working exploit before a fix or mitigation is available.
+- OS-backed repository and application instance locks
+- Transaction journals and startup rollback recovery
+- Snapshot SHA-256 verification before restore/export
+- Staged imports with containment, free-space, conflict, sensitive-file, and hash checks
+- Protected `.forgetrace` paths at every depth
+- Symlink/junction avoidance in import and source archive paths
+- Sensitive source exclusion by default and explicit export inclusion
+- Request/file/count/total limits and bounded remote rate maps
+- Contributor route isolation, token hashing, expiry, revocation, and maximum use
+- Quarantine cleanup after terminal pull requests
+- HTTP timeouts, HEAD handling, security headers, and active-content attachment behavior
 
-Include:
+## Deployment guidance
 
-- affected version;
-- operating system;
-- minimal reproduction steps;
-- expected and actual behavior;
-- security impact;
-- whether path traversal, command execution, credential exposure, unauthorized access, or data loss is involved.
+Use contributor sharing over a trusted LAN, Tailscale, WireGuard, or a properly configured TLS reverse proxy. Do not directly port-forward the gateway to the public internet. The owner workspace must remain loopback-only.
 
-Avoid attaching unrelated private files or credentials.
+## Remaining limitations
 
-## Security priorities
+- No persistent users, roles, sessions, MFA, or identity attestation
+- No built-in TLS certificate lifecycle
+- No integrated malware execution sandbox
+- No public-internet adversarial certification
+- No Git credential storage or Git remote server
+- No persistent owner-visible security-event audit viewer yet
 
-- path containment and symlink/junction safety;
-- protected `.forgetrace` metadata;
-- archive extraction safety;
-- upload and resource limits;
-- atomic writes and recovery;
-- safe subprocess invocation;
-- secret redaction;
-- local-only network binding by default;
-- authenticated and authorized LAN mode before network collaboration ships.
+## Windows native-picker acceptance
 
-See the security and testing sections of `BUILD_PLAN.md` for the required threat model and release gates.
+Picker process and PowerShell contracts are automated. Physical Windows UI acceptance must follow `tests/WINDOWS_NATIVE_PICKER_ACCEPTANCE.md` on a release machine.
+
+## Reporting
+
+Include version, OS, minimal reproduction, expected/actual behavior, impact, and whether data loss, traversal, unauthorized access, credential exposure, or command execution is involved. Do not publish an active exploit before a mitigation is available.

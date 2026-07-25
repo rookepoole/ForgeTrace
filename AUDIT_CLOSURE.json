@@ -1,0 +1,470 @@
+{
+  "project": "ForgeTrace",
+  "version": "0.4.0",
+  "creator": "Rooke Poole",
+  "generated_at_utc": "2026-07-25T00:00:00Z",
+  "scope": "Closure of the 29 findings in the v0.3.6 comprehensive bug audit.",
+  "summary": {
+    "total": 29,
+    "closed": 29,
+    "critical": 3,
+    "high": 10,
+    "medium": 13,
+    "low": 3
+  },
+  "environment_note": "All automated tests were run in Linux. Windows picker process/PowerShell contracts are automated; physical Windows dialog acceptance is supplied as a manual release gate.",
+  "findings": [
+    {
+      "id": "FT-AUD-001",
+      "severity": "critical",
+      "category": "snapshot-recovery",
+      "audit_title": "Snapshot restore deletes the live workspace before validating recovery objects",
+      "status": "closed",
+      "closure_title": "Transactional snapshot restore",
+      "resolution": "Restore now validates every required object before workspace mutation, stages the target tree, and rolls back on failure.",
+      "validation_evidence": [
+        "forgetrace/repository.py: verify_snapshot_objects(), restore_commit()",
+        "tests/test_v040_stabilization.py::test_restore_preflight_blocks_missing_or_corrupt_objects_without_touching_workspace"
+      ],
+      "original_impact": "A missing snapshot object causes restore to fail after current files have already been deleted. The working tree can be destroyed or left partially restored.",
+      "original_recommendation": "Preflight every manifest entry, verify object hashes and free space, restore into a staging directory, then atomically swap or roll back."
+    },
+    {
+      "id": "FT-AUD-002",
+      "severity": "critical",
+      "category": "snapshot-integrity",
+      "audit_title": "Corrupted content-addressed snapshot objects are restored without hash verification",
+      "status": "closed",
+      "closure_title": "Cryptographic object verification",
+      "resolution": "Restore, export, Doctor, and safety paths recompute SHA-256 and reject object/manifest mismatches.",
+      "validation_evidence": [
+        "forgetrace/repository.py: verify_snapshot_objects()",
+        "tests/test_v040_stabilization.py::test_restore_preflight_blocks_missing_or_corrupt_objects_without_touching_workspace"
+      ],
+      "original_impact": "A damaged or tampered object is trusted based only on its filename. Restore can silently write corrupted content while reporting success.",
+      "original_recommendation": "Recompute SHA-256 for every object during Doctor, restore, export, and merge safety checks; reject mismatches before touching the workspace."
+    },
+    {
+      "id": "FT-AUD-003",
+      "severity": "critical",
+      "category": "concurrency",
+      "audit_title": "Repository locks work only inside one Python process",
+      "status": "closed",
+      "closure_title": "Cross-process locking and unique state writes",
+      "resolution": "Repository UUID/path locks and an application-data single-instance lock serialize writers across processes; state writes use unique atomic temporary files.",
+      "validation_evidence": [
+        "forgetrace/locks.py",
+        "forgetrace/app.py",
+        "tests/test_v040_stabilization.py::test_cross_process_writes_are_serialized_without_loss",
+        "tests/test_v040_audit_closure.py::test_application_single_instance_lock_is_cross_process_ready"
+      ],
+      "original_impact": "Two ForgeTrace instances or processes editing the same repository race on the fixed state.json.tmp file. Three runs lost 35-37 operations; one run also lost a repository file.",
+      "original_recommendation": "Add an operating-system file lock keyed by repository UUID/path, unique temporary filenames, optimistic revision checks, and a single-instance lock for shared app data."
+    },
+    {
+      "id": "FT-AUD-004",
+      "severity": "high",
+      "category": "file-tree-ui",
+      "audit_title": "Repository paths are sorted globally by depth instead of parent-child order",
+      "status": "closed",
+      "closure_title": "Depth-first parent-child file tree",
+      "resolution": "Repository state is emitted in parent-child order with depth/parent metadata; the browser renders a true nested virtualized tree.",
+      "validation_evidence": [
+        "forgetrace/repository.py: tree construction",
+        "index.html: virtualized depth-first tree",
+        "tests/test_v040_stabilization.py::test_tree_is_depth_first_parent_child_order",
+        "tests/browser_blackbox_test.py"
+      ],
+      "original_impact": "Expanding a folder does not place its children beneath it. The reproduced UI order was Alpha, Beta, root.txt, Alpha/inside. This is the strongest confirmed explanation for users believing subfolder files did not populate.",
+      "original_recommendation": "Return a nested tree or stable depth-first order. Render children recursively inside their parent node rather than filtering a flat globally sorted list."
+    },
+    {
+      "id": "FT-AUD-005",
+      "severity": "high",
+      "category": "folder-import",
+      "audit_title": "Direct folder import silently overwrites existing files",
+      "status": "closed",
+      "closure_title": "Explicit import conflict policy",
+      "resolution": "Imports preview conflicts and require abort, skip, overwrite, or rename behavior. Overwrite creates recovery state.",
+      "validation_evidence": [
+        "forgetrace/importing.py",
+        "forgetrace/repository.py: import_local_folder()",
+        "tests/test_v040_stabilization.py::test_folder_import_abort_is_non_destructive_and_overwrite_creates_safety_snapshot"
+      ],
+      "original_impact": "Existing repository content can be replaced with no conflict preview, confirmation, safety snapshot, or rollback point.",
+      "original_recommendation": "Add explicit conflict policies (abort, skip, overwrite, rename), default to abort, show a preview, and create a safety snapshot before any overwrite."
+    },
+    {
+      "id": "FT-AUD-006",
+      "severity": "high",
+      "category": "folder-import",
+      "audit_title": "Folder import is non-transactional and leaves partial untracked files on failure",
+      "status": "closed",
+      "closure_title": "Staged transactional imports",
+      "resolution": "Folder imports stage outside the live workspace, verify bytes, commit transactionally, and leave no partial untracked tree on failure/cancel.",
+      "validation_evidence": [
+        "forgetrace/importing.py",
+        "forgetrace/transactions.py",
+        "tests/test_v040_audit_closure.py::test_import_preflight_space_and_cancellation_are_non_destructive"
+      ],
+      "original_impact": "Earlier files remain copied when a later conflict/error aborts the import, but no contribution is recorded. Repository contents and ForgeTrace history diverge.",
+      "original_recommendation": "Stage the full import outside the repository, validate all conflicts first, then apply atomically with rollback and one metadata transaction."
+    },
+    {
+      "id": "FT-AUD-007",
+      "severity": "high",
+      "category": "repository-onboarding",
+      "audit_title": "New-repository folder import is split across two requests and can leave an orphan repository",
+      "status": "closed",
+      "closure_title": "Atomic managed-repository creation",
+      "resolution": "New repository creation and folder population are one registry operation; failed imports remove staging and registration artifacts.",
+      "validation_evidence": [
+        "forgetrace/registry.py: atomic managed import",
+        "tests/test_v040_stabilization.py::test_failed_atomic_managed_import_leaves_no_orphan"
+      ],
+      "original_impact": "ForgeTrace registers and activates a managed repository before import. If import fails, a README-only repository remains in the list and can look like the selected folder was empty.",
+      "original_recommendation": "Create-and-import in one server transaction or automatically unregister/delete the new managed repository after a failed import, with a clear recovery prompt."
+    },
+    {
+      "id": "FT-AUD-008",
+      "severity": "high",
+      "category": "metadata-consistency",
+      "audit_title": "Filesystem mutations can succeed even when contribution metadata fails to save",
+      "status": "closed",
+      "closure_title": "Filesystem/metadata transaction coupling",
+      "resolution": "File changes and state updates share rollback journals; metadata-save failure restores the prior filesystem state.",
+      "validation_evidence": [
+        "forgetrace/transactions.py",
+        "forgetrace/repository.py",
+        "tests/test_v040_stabilization.py::test_metadata_save_failure_rolls_back_filesystem_change"
+      ],
+      "original_impact": "A file write can survive while the API returns an error and contribution history remains unchanged. Similar ordering exists in rename, delete, import, and other operations.",
+      "original_recommendation": "Use a write-ahead operation journal or transaction directory, save an intent/revision first, then commit filesystem and metadata together with rollback."
+    },
+    {
+      "id": "FT-AUD-009",
+      "severity": "high",
+      "category": "metadata-recovery",
+      "audit_title": "state.json.bak is created and detected but cannot be restored by Doctor",
+      "status": "closed",
+      "closure_title": "Doctor metadata-backup recovery",
+      "resolution": "Doctor validates state.json.bak, restores it atomically, preserves a repair backup, and verifies repository UUID/schema.",
+      "validation_evidence": [
+        "forgetrace/registry.py: _restore_repository_state_backup()",
+        "tests/test_v040_stabilization.py::test_doctor_restores_valid_state_backup"
+      ],
+      "original_impact": "A repository can become unusable after state.json corruption even though a valid backup is present and Doctor reports backupAvailable=true.",
+      "original_recommendation": "Add previewed backup validation, one-click restore, automatic pre-repair backup, schema/UUID checks, and rollback if recovery fails."
+    },
+    {
+      "id": "FT-AUD-010",
+      "severity": "high",
+      "category": "folder-import-security",
+      "audit_title": "Nested .forgetrace metadata is imported into repositories",
+      "status": "closed",
+      "closure_title": "Nested ForgeTrace metadata exclusion",
+      "resolution": "Import policy rejects .forgetrace at any path depth instead of excluding only the selected root.",
+      "validation_evidence": [
+        "forgetrace/policies.py",
+        "forgetrace/importing.py",
+        "tests/test_v040_stabilization.py::test_import_rejects_nested_forgetrace_and_verifies_bytes"
+      ],
+      "original_impact": "Only a root-level .forgetrace directory is excluded. Nested project histories and object stores can be copied, exposed in the UI/export, and greatly inflate imports.",
+      "original_recommendation": "Reject any path segment named .forgetrace at every depth and report each excluded path."
+    },
+    {
+      "id": "FT-AUD-011",
+      "severity": "high",
+      "category": "upgrade-continuity",
+      "audit_title": "A stale directory at the old path prevents UUID-based startup relinking",
+      "status": "closed",
+      "closure_title": "UUID-first moved-repository relink",
+      "resolution": "Startup discovery compares embedded identities even when the old path still exists with a stale/wrong identity.",
+      "validation_evidence": [
+        "forgetrace/registry.py",
+        "tests/test_v040_stabilization.py::test_stale_old_path_relinks_by_uuid"
+      ],
+      "original_impact": "After moving a repository, an empty/stale old directory causes ForgeTrace to retain an uninitialized record even though the real UUID-bearing repository is discovered elsewhere.",
+      "original_recommendation": "Treat path identity, not path existence, as authoritative. Relink when the old path lacks the expected UUID and exactly one discovered candidate matches."
+    },
+    {
+      "id": "FT-AUD-012",
+      "severity": "high",
+      "category": "folder-import-ui",
+      "audit_title": "A localStorage failure after successful copy is reported as an import failure",
+      "status": "closed",
+      "closure_title": "Storage-failure-tolerant expansion state",
+      "resolution": "UI persistence failures fall back to in-memory expansion and cannot convert a successful disk import into a failed result.",
+      "validation_evidence": [
+        "index.html: expandedMemory and import completion flow",
+        "tests/browser_blackbox_test.py"
+      ],
+      "original_impact": "The server can copy every file successfully, then UI expansion-state persistence throws. ForgeTrace displays \u201cNative folder import failed,\u201d skips refresh, and makes successful files appear absent.",
+      "original_recommendation": "Make expansion-state persistence best-effort and isolated from import success. Always refresh server state after copy, then warn separately if UI preferences could not be saved."
+    },
+    {
+      "id": "FT-AUD-013",
+      "severity": "high",
+      "category": "performance-usability",
+      "audit_title": "Every state refresh repeatedly walks and hashes the entire repository",
+      "status": "closed",
+      "closure_title": "Incremental hash index",
+      "resolution": "A repository-local cache reuses size/mtime/hash metadata for unchanged files and avoids rehashing the full tree on every refresh.",
+      "validation_evidence": [
+        "forgetrace/repository.py: file-index cache",
+        "tests/test_v040_audit_closure.py::test_hash_index_reuses_unchanged_file_digest"
+      ],
+      "original_impact": "api_state calls tree multiple times and hashes every file to compute dirty state. Measured API state time was ~0.87 s at 10,000 tiny files before network/DOM cost; real binaries and slower drives can make imports look stuck or incomplete.",
+      "original_recommendation": "Add an indexed manifest with incremental filesystem changes, cache hashes by size/mtime/file ID, and expose scan progress/cancellation."
+    },
+    {
+      "id": "FT-AUD-014",
+      "severity": "medium",
+      "category": "file-tree-ui",
+      "audit_title": "Folder rename and delete controls are disabled",
+      "status": "closed",
+      "closure_title": "Folder rename and delete enabled",
+      "resolution": "Folder actions are available in the UI and execute through transactional repository APIs.",
+      "validation_evidence": [
+        "index.html",
+        "tests/browser_blackbox_test.py"
+      ],
+      "original_impact": "Selecting a folder clears selectedFile, which disables rename/delete along with file-only actions, despite backend support for folder rename/delete.",
+      "original_recommendation": "Track a selected tree entry separately from selected file content; enable rename/delete for both files and folders."
+    },
+    {
+      "id": "FT-AUD-015",
+      "severity": "medium",
+      "category": "folder-import-integrity",
+      "audit_title": "Import verification checks path existence, not byte size or content hash",
+      "status": "closed",
+      "closure_title": "Byte-level import verification",
+      "resolution": "Import manifests verify path, type, size, and SHA-256, not existence alone.",
+      "validation_evidence": [
+        "forgetrace/importing.py",
+        "tests/test_v040_stabilization.py::test_import_rejects_nested_forgetrace_and_verifies_bytes"
+      ],
+      "original_impact": "Truncated, changed, or wrong file contents can pass verification as long as the expected path exists.",
+      "original_recommendation": "Capture source size/hash during enumeration and verify destination content before reporting success."
+    },
+    {
+      "id": "FT-AUD-016",
+      "severity": "medium",
+      "category": "folder-import-capacity",
+      "audit_title": "No total import-size or destination free-space preflight",
+      "status": "closed",
+      "closure_title": "Capacity preflight",
+      "resolution": "Imports calculate total bytes and compare required staging/commit space with destination free space before mutation.",
+      "validation_evidence": [
+        "forgetrace/importing.py",
+        "tests/test_v040_audit_closure.py::test_import_preflight_space_and_cancellation_are_non_destructive"
+      ],
+      "original_impact": "Only individual file limits are checked. A large tree can exhaust disk space midway and trigger the partial-import defect.",
+      "original_recommendation": "Sum bytes before copying, compare with free space plus safety margin, enforce configurable total limits, and fail before creating destination files."
+    },
+    {
+      "id": "FT-AUD-017",
+      "severity": "medium",
+      "category": "folder-import-usability",
+      "audit_title": "Direct import enumerates the complete tree in memory with no progress or cancellation",
+      "status": "closed",
+      "closure_title": "Persistent jobs, progress, and cancellation",
+      "resolution": "Long imports run as persistent jobs with bounded history, progress counters, cancellation, and interrupted-job recovery.",
+      "validation_evidence": [
+        "forgetrace/jobs.py",
+        "forgetrace/web.py: job APIs",
+        "tests/test_v040_audit_closure.py::test_operation_history_persists_and_running_jobs_become_interrupted"
+      ],
+      "original_impact": "Large or network folders can block one request for minutes. The UI cannot show discovery/copy progress or cancel safely.",
+      "original_recommendation": "Use a job model with phases, counters, cancellation tokens, resumable staging, and a persistent operation log."
+    },
+    {
+      "id": "FT-AUD-018",
+      "severity": "medium",
+      "category": "snapshot-fidelity",
+      "audit_title": "Snapshots do not preserve empty directories",
+      "status": "closed",
+      "closure_title": "Empty-directory snapshots",
+      "resolution": "Snapshot manifests record directories and restore empty directory structure.",
+      "validation_evidence": [
+        "forgetrace/repository.py",
+        "tests/test_v040_stabilization.py::test_snapshot_restores_empty_directories_mode_and_timestamp"
+      ],
+      "original_impact": "Restoring a snapshot can produce a structurally different project even when no file content is missing.",
+      "original_recommendation": "Include directory manifests and restore empty directories explicitly."
+    },
+    {
+      "id": "FT-AUD-019",
+      "severity": "medium",
+      "category": "snapshot-fidelity",
+      "audit_title": "Snapshots do not preserve permissions, executable bits, timestamps, or other metadata",
+      "status": "closed",
+      "closure_title": "File metadata snapshots",
+      "resolution": "Snapshot/restore preserves supported mode bits and nanosecond modification timestamps.",
+      "validation_evidence": [
+        "forgetrace/repository.py",
+        "tests/test_v040_stabilization.py::test_snapshot_restores_empty_directories_mode_and_timestamp"
+      ],
+      "original_impact": "Restored scripts/build assets may lose executable or metadata semantics, especially on macOS/Linux.",
+      "original_recommendation": "Store documented portable metadata and restore it where supported, with clear cross-platform fallbacks."
+    },
+    {
+      "id": "FT-AUD-020",
+      "severity": "medium",
+      "category": "export-consistency",
+      "audit_title": "Repository export is not protected by the repository mutation lock",
+      "status": "closed",
+      "closure_title": "Locked immutable exports",
+      "resolution": "Export acquires the repository mutation lock and streams from verified snapshot/object content.",
+      "validation_evidence": [
+        "forgetrace/repository.py: export",
+        "tests/test_v040_audit_closure.py::test_export_waits_for_repository_mutation_lock"
+      ],
+      "original_impact": "Files can be renamed/deleted while an archive is being built, causing inconsistent archives or failures.",
+      "original_recommendation": "Create a stable manifest/snapshot under lock and export from immutable objects or a staging view."
+    },
+    {
+      "id": "FT-AUD-021",
+      "severity": "medium",
+      "category": "collaboration-storage",
+      "audit_title": "Closed/merged pull-request quarantine cleanup exists but is never invoked",
+      "status": "closed",
+      "closure_title": "Quarantine retention enforcement",
+      "resolution": "Merged/closed request quarantine is purged immediately and terminal/stale data is cleaned on collaboration startup.",
+      "validation_evidence": [
+        "forgetrace/collaboration.py: storage_metrics() and cleanup",
+        "tests/test_v040_audit_closure.py::test_storage_metrics_and_retention_cleanup_remove_terminal_quarantine"
+      ],
+      "original_impact": "Submitted files can remain indefinitely in application data, consuming disk and retaining content users may assume was removed.",
+      "original_recommendation": "Add retention policy, owner-visible storage metrics, purge after merge/close, and safe scheduled cleanup."
+    },
+    {
+      "id": "FT-AUD-022",
+      "severity": "medium",
+      "category": "temporary-storage",
+      "audit_title": "Crash leftovers in transfers and merge-backups have no startup cleanup/recovery policy",
+      "status": "closed",
+      "closure_title": "Startup recovery and cleanup",
+      "resolution": "Pending filesystem transactions recover on repository open; stale transfer, merge-backup, and unregistered staging artifacts are bounded/cleaned.",
+      "validation_evidence": [
+        "forgetrace/transactions.py",
+        "forgetrace/registry.py",
+        "tests/test_v040_audit_closure.py::test_pending_filesystem_transaction_recovers_on_repository_open",
+        "tests/test_v040_stabilization.py::test_startup_cleanup_removes_stale_transfer_and_unregistered_staging"
+      ],
+      "original_impact": "Interrupted forks, downloads, or merges can leave large temporary data or ambiguous rollback directories.",
+      "original_recommendation": "Record transfer/merge leases, clean expired safe artifacts at startup, and surface recoverable interrupted operations."
+    },
+    {
+      "id": "FT-AUD-023",
+      "severity": "medium",
+      "category": "privacy",
+      "audit_title": "Import/share/export workflows lack a sensitive-file preview",
+      "status": "closed",
+      "closure_title": "Sensitive-file previews and explicit inclusion",
+      "resolution": "Import/share/export surfaces classify sensitive paths, exclude them by default where appropriate, and require explicit confirmation.",
+      "validation_evidence": [
+        "forgetrace/policies.py",
+        "index.html",
+        "tests/test_v040_audit_closure.py::test_source_archive_excludes_sensitive_files_unless_explicitly_allowed",
+        "tests/test_v040_audit_closure.py::test_sensitive_export_requires_confirmation_and_head_has_no_body"
+      ],
+      "original_impact": "Hidden files, .env files, credentials, build caches, and VCS data can be imported/exported unless a specific source-only path excludes some metadata.",
+      "original_recommendation": "Add ignore rules, secret-name warnings, size previews, and a share/export manifest requiring explicit approval."
+    },
+    {
+      "id": "FT-AUD-024",
+      "severity": "medium",
+      "category": "test-validity",
+      "audit_title": "Browser tests inject mocked transport instead of exercising the packaged server",
+      "status": "closed",
+      "closure_title": "Real server + real disk browser test",
+      "resolution": "A black-box browser flow uses the actual packaged UI, HTTP handler, repository service, and filesystem; mocked UI tests remain supplemental.",
+      "validation_evidence": [
+        "tests/browser_blackbox_test.py",
+        "HANDOFF/EVIDENCE/browser-validation.log"
+      ],
+      "original_impact": "Tests can pass while real routing, filesystem behavior, Windows picker behavior, serialization, or state refresh is broken. This produced false confidence around the recurring folder issue.",
+      "original_recommendation": "Add true black-box tests that launch the packaged server, operate through real HTTP, inspect real disk output, and run on Windows CI."
+    },
+    {
+      "id": "FT-AUD-025",
+      "severity": "medium",
+      "category": "platform-coverage",
+      "audit_title": "Native folder picker has only 23% unit coverage and no real Windows chooser test",
+      "status": "closed",
+      "closure_title": "Picker adapter coverage and Windows acceptance harness",
+      "resolution": "Platform adapters, PowerShell 7/Windows PowerShell STA invocation, Unicode, cancel, and headless contracts are automated. A dedicated Windows physical-dialog acceptance script/checklist is included.",
+      "validation_evidence": [
+        "forgetrace/native_picker.py",
+        "tests/test_v040_audit_closure.py::test_windows_picker_prefers_pwsh_and_runs_sta",
+        "tests/test_v040_audit_closure.py::test_native_picker_run_and_platform_contracts",
+        "tests/WINDOWS_NATIVE_PICKER_ACCEPTANCE.md",
+        "tests/windows_native_picker_fixture.ps1"
+      ],
+      "original_impact": "The primary Windows workflow depends on PowerShell/WinForms but is tested through an environment override or mocked API, not the actual user interaction.",
+      "original_recommendation": "Run Windows 10/11 CI or a manual acceptance harness for PowerShell 5.1 and PowerShell 7, Unicode paths, network drives, cancellation, hidden windows, and long paths."
+    },
+    {
+      "id": "FT-AUD-026",
+      "severity": "medium",
+      "category": "ui-scalability",
+      "audit_title": "The file tree renders all visible rows with no virtualization",
+      "status": "closed",
+      "closure_title": "Virtualized file tree",
+      "resolution": "The browser renders a bounded visible window with spacer rows instead of inserting all expanded paths into the DOM.",
+      "validation_evidence": [
+        "index.html: virtualized tree renderer",
+        "tests/test_v040_stabilization.py::test_ui_has_virtualized_tree_folder_actions_atomic_import_and_sensitive_preview"
+      ],
+      "original_impact": "100,000 rows generated ~23.3 MB of HTML and took ~1.34 s just to assign innerHTML in headless Chromium. Auto-expanding imported trees magnifies memory and responsiveness problems.",
+      "original_recommendation": "Use a real nested virtualized tree, lazy child loading, row recycling, and bounded expansion."
+    },
+    {
+      "id": "FT-AUD-027",
+      "severity": "low",
+      "category": "http-robustness",
+      "audit_title": "HTTP server lacks explicit request/socket timeouts and does not implement HEAD",
+      "status": "closed",
+      "closure_title": "HTTP timeouts and HEAD",
+      "resolution": "Threaded servers have socket timeouts/backlog limits and implement HEAD for health/static/API paths.",
+      "validation_evidence": [
+        "forgetrace/web.py",
+        "tests/test_v040_stabilization.py::test_head_legacy_version_job_cancel_and_rate_map_pruning"
+      ],
+      "original_impact": "Slow clients can occupy threads longer than necessary; standard health/proxy HEAD checks receive 501.",
+      "original_recommendation": "Set connection/read timeouts, body deadlines, bounded thread behavior, and implement HEAD for static/version health resources."
+    },
+    {
+      "id": "FT-AUD-028",
+      "severity": "low",
+      "category": "resource-management",
+      "audit_title": "Remote rate-limit client maps can retain inactive keys",
+      "status": "closed",
+      "closure_title": "Bounded remote rate maps",
+      "resolution": "Inactive rate buckets are pruned and the map is capped to prevent unbounded key retention.",
+      "validation_evidence": [
+        "forgetrace/web.py",
+        "tests/test_v040_stabilization.py::test_head_legacy_version_job_cancel_and_rate_map_pruning"
+      ],
+      "original_impact": "Long-running gateways can accumulate small amounts of per-client bookkeeping.",
+      "original_recommendation": "Evict expired/empty keys periodically and cap map size."
+    },
+    {
+      "id": "FT-AUD-029",
+      "severity": "low",
+      "category": "maintainability",
+      "audit_title": "Core routing and import functions are highly monolithic",
+      "status": "closed",
+      "closure_title": "Bounded route/import units",
+      "resolution": "Monolithic request/import logic was split into scoped dispatchers and services with AST complexity/length guards.",
+      "validation_evidence": [
+        "forgetrace/web.py: _post_global/_post_contributor/_post_owner/_post_repository/_post_legacy",
+        "forgetrace/importing.py",
+        "tests/test_v040_audit_closure.py::test_route_and_import_functions_are_split_into_bounded_units"
+      ],
+      "original_impact": "Large branch-heavy functions increase regression risk and make route-level security/transaction review difficult.",
+      "original_recommendation": "Split handlers into typed route controllers/services, isolate transaction stages, and enforce complexity thresholds in CI."
+    }
+  ]
+}

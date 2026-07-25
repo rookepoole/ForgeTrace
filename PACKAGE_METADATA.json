@@ -1,0 +1,20 @@
+{
+  "project": "ForgeTrace",
+  "version": "0.4.0",
+  "release_name": "Audit Stabilization and Transactional Recovery",
+  "creator": "Rooke Poole",
+  "copyright": "Copyright \u00a9 2026 Rooke Poole",
+  "license": "MIT",
+  "python_requirement": "3.10+",
+  "third_party_runtime_dependencies": [],
+  "application_schema": 3,
+  "repository_schema": 2,
+  "audit_findings_closed": 29,
+  "test_count": 76,
+  "coverage_percent": 76,
+  "entry_point": "server.py",
+  "windows_launcher": "START_FORGETRACE.bat",
+  "unix_launcher": "START_FORGETRACE.sh",
+  "handoff_start": "HANDOFF/00_READ_ME_FIRST.md",
+  "new_chat_prompt": "HANDOFF/01_NEW_CHAT_BOOT_PROMPT.md"
+}

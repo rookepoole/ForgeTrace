@@ -1,132 +1,1343 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ForgeTrace — Local Repository</title>
-<style>
-:root{--bg:#07090d;--panel:#10151d;--panel2:#151b25;--line:#283141;--text:#f4f7fb;--muted:#91a0b5;--accent:#79f2d0;--accent2:#9b8cff;--danger:#ff7687;--warn:#f1c96a;--shadow:0 22px 60px #0008}*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:radial-gradient(circle at 15% 0,#14312b55,transparent 28%),radial-gradient(circle at 100% 0,#29204d55,transparent 25%),var(--bg);color:var(--text);font:14px Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;overflow:hidden}button,input,textarea{font:inherit}button{color:inherit}.hidden{display:none!important}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.muted{color:var(--muted)}
-.shell{height:100%;display:grid;grid-template-rows:64px minmax(0,1fr)}header{display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:1px solid var(--line);background:#090c12dd;backdrop-filter:blur(16px);z-index:4}.mark{width:34px;height:34px;border:1px solid #79f2d066;border-radius:10px;display:grid;place-items:center;background:linear-gradient(145deg,#79f2d020,#9b8cff18);font-weight:900;color:var(--accent)}.brand strong{display:block;font-size:15px}.brand small{color:var(--muted)}.repo-title{margin-left:18px;min-width:0}.repo-title strong{font-size:15px}.repo-title span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}.head-actions{margin-left:auto;display:flex;align-items:center;gap:8px}.author{width:150px}
-.btn,.input{border:1px solid var(--line);background:#121822;color:var(--text);border-radius:9px;min-height:36px;padding:8px 11px}.btn{cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:650}.btn:hover{border-color:#526078;background:#17202d}.btn.primary{background:linear-gradient(135deg,#79f2d0,#78c9ec);border:0;color:#06110e}.btn.danger{color:#ff98a5}.btn.ghost{background:transparent}.btn:disabled{opacity:.5;cursor:not-allowed}.input:focus,textarea:focus{outline:2px solid #79f2d066;border-color:var(--accent)}
-.main{display:grid;grid-template-columns:280px minmax(0,1fr) 330px;min-height:0}.sidebar,.inspector{background:#0b0f16;border-right:1px solid var(--line);min-height:0;display:flex;flex-direction:column}.inspector{border-right:0;border-left:1px solid var(--line)}.side-head,.pane-head{padding:14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}.side-head strong,.pane-head strong{font-size:13px}.tree{padding:8px;overflow:auto;flex:1}.tree-row{height:36px;display:flex;align-items:center;gap:8px;padding:0 9px;border-radius:7px;cursor:pointer;color:#d8e0eb;user-select:none}.tree-row:hover{background:#151c27}.tree-row.active{background:#79f2d015;color:var(--accent)}.tree-row .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tree-row .meta{margin-left:auto;color:#627086;font-size:11px}.empty{padding:32px 18px;text-align:center;color:var(--muted)}
-.content{min-width:0;min-height:0;display:flex;flex-direction:column}.toolbar{min-height:58px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0d121a}.crumb{min-width:0;flex:1;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dirty{font-size:11px;color:var(--warn);border:1px solid #f1c96a44;background:#f1c96a11;padding:4px 7px;border-radius:999px}.workspace{min-height:0;flex:1;position:relative;overflow:auto}.welcome{height:100%;display:grid;place-items:center;padding:30px}.welcome-card{width:min(720px,100%);border:1px solid var(--line);background:linear-gradient(145deg,#121923dd,#0e141ddd);border-radius:18px;padding:34px;box-shadow:var(--shadow)}.welcome-card h1{font-size:32px;margin:0 0 10px;letter-spacing:-.04em}.welcome-card p{color:var(--muted);line-height:1.6}.dropzone{margin-top:22px;border:1px dashed #79f2d066;border-radius:14px;padding:28px;text-align:center;background:#79f2d008}.dropzone.drag{background:#79f2d018;border-color:var(--accent)}
-.editor{height:100%;display:flex;flex-direction:column}.filebar{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:#0b1017}.filebar .path{font-family:ui-monospace,monospace;font-size:12px;color:#c6d0dd;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.filebar .size{margin-left:auto;color:var(--muted);font-size:12px}.code{flex:1;width:100%;resize:none;border:0;background:#090d13;color:#e8edf5;padding:18px 22px;font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2;outline:0}.binary{height:100%;display:grid;place-items:center;padding:30px}.binary-card{max-width:520px;text-align:center;border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:30px}.binary-card h2{margin-top:0}.preview{max-width:100%;max-height:50vh;border-radius:10px;border:1px solid var(--line);margin:14px 0}
-.tabs{display:flex;border-bottom:1px solid var(--line)}.tab{flex:1;border:0;background:transparent;color:var(--muted);padding:13px 8px;cursor:pointer;border-bottom:2px solid transparent}.tab.active{color:var(--accent);border-color:var(--accent)}.panel{min-height:0;overflow:auto;padding:14px}.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{border:1px solid var(--line);border-radius:10px;padding:11px;background:#111721}.stat b{display:block;font-size:20px}.stat span{color:var(--muted);font-size:11px}.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#6f7e92;margin:20px 0 8px}.activity{display:grid;gap:8px}.event{border-left:2px solid #79f2d055;padding:2px 0 2px 10px}.event strong{font-size:12px;display:block}.event p{margin:3px 0;color:var(--muted);font-size:11px;line-height:1.45}.event time{font-size:10px;color:#647187}.commit{border:1px solid var(--line);border-radius:10px;padding:11px;background:#111721;margin-bottom:8px}.commit-head{display:flex;gap:8px;align-items:start}.commit code{color:var(--accent);font-size:11px}.commit strong{font-size:12px}.commit p{margin:6px 0;color:var(--muted);font-size:11px}.commit .btn{width:100%;min-height:30px;font-size:11px;margin-top:7px}
-.modal-backdrop{position:fixed;inset:0;background:#000a;display:grid;place-items:center;z-index:20;padding:20px}.modal{width:min(500px,100%);border:1px solid var(--line);background:#111721;border-radius:16px;box-shadow:var(--shadow);padding:20px}.modal h2{margin:0 0 15px}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:12px;color:var(--muted)}.field input,.field textarea{width:100%;border:1px solid var(--line);background:#0b1017;color:var(--text);border-radius:8px;padding:10px}.field textarea{min-height:80px;resize:vertical}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.toast{position:fixed;right:18px;bottom:18px;z-index:30;background:#17202c;border:1px solid #45536a;border-radius:10px;padding:11px 14px;box-shadow:var(--shadow);max-width:380px}.toast.error{border-color:#ff768766;color:#ffc0c8}
-.setup{position:fixed;inset:0;z-index:50;background:radial-gradient(circle at 30% 0,#153d3555,transparent 35%),#07090d;display:grid;place-items:center;padding:24px}.setup-card{width:min(580px,100%);background:#10161f;border:1px solid var(--line);border-radius:20px;padding:34px;box-shadow:var(--shadow)}.setup-card h1{font-size:36px;letter-spacing:-.05em;margin:0 0 8px}.setup-card p{color:var(--muted);line-height:1.6}.setup-card form{margin-top:24px}.server-error{color:#ffc0c8;background:#ff768712;border:1px solid #ff768744;padding:12px;border-radius:9px;margin-top:14px}
-@media(max-width:1050px){.main{grid-template-columns:240px minmax(0,1fr)}.inspector{position:fixed;right:0;top:64px;bottom:0;width:330px;z-index:5;box-shadow:-20px 0 50px #0007}.inspector.closed{display:none}.mobile-panel{display:inline-flex!important}}@media(max-width:720px){body{overflow:auto}.shell{min-height:100%;height:auto}.main{grid-template-columns:1fr;min-height:calc(100vh - 64px)}.sidebar{position:fixed;left:0;top:64px;bottom:0;width:88vw;max-width:300px;z-index:8;box-shadow:20px 0 50px #0008}.sidebar.closed{display:none}.content{min-height:calc(100vh - 64px)}.repo-title{display:none}.head-actions .author,.head-actions .export-label{display:none}.mobile-tree{display:inline-flex!important}.toolbar{flex-wrap:wrap}.toolbar .btn{min-height:34px}.welcome-card{padding:24px}.welcome-card h1{font-size:27px}.inspector{width:88vw}.code{font-size:12px;padding:14px}.head-actions{gap:5px}header{padding:0 10px}}
-.mobile-tree,.mobile-panel{display:none}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b10">
+  <title>ForgeTrace — Local Repository Workspace</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07090d;
+      --panel: rgba(17, 22, 30, .86);
+      --panel-2: rgba(11, 15, 21, .9);
+      --line: rgba(255,255,255,.09);
+      --line-strong: rgba(255,255,255,.17);
+      --text: #f5f7fb;
+      --muted: #97a3b6;
+      --subtle: #687588;
+      --accent: #73f5d1;
+      --accent-2: #8bb5ff;
+      --danger: #ff7786;
+      --warning: #f5c96d;
+      --success: #73f5d1;
+      --shadow: 0 28px 80px rgba(0,0,0,.35);
+      --radius: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); }
+    body {
+      background:
+        radial-gradient(circle at 8% -8%, rgba(115,245,209,.12), transparent 30%),
+        radial-gradient(circle at 92% 0%, rgba(139,181,255,.10), transparent 26%),
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+        var(--bg);
+      background-size: auto, auto, 32px 32px, 32px 32px, auto;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { color: inherit; }
+    a { color: var(--accent); }
+    .shell { min-height: 100vh; display: grid; grid-template-rows: 64px 1fr; }
+    .topbar {
+      position: sticky; top: 0; z-index: 30;
+      display: grid; grid-template-columns: 270px minmax(0,1fr) auto;
+      align-items: center; gap: 18px; padding: 0 18px;
+      border-bottom: 1px solid var(--line); background: rgba(7,9,13,.82); backdrop-filter: blur(20px);
+    }
+    .brand { display:flex; align-items:center; gap:12px; min-width:0; }
+    .brand-mark { width: 34px; height:34px; display:grid; place-items:center; border:1px solid rgba(115,245,209,.45); border-radius:10px; color:var(--accent); box-shadow: inset 0 0 22px rgba(115,245,209,.08), 0 0 24px rgba(115,245,209,.08); font-family:var(--mono); font-weight:800; }
+    .brand-copy strong { display:block; letter-spacing:.02em; }
+    .brand-copy span { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
+    .repo-select-wrap { min-width:0; display:flex; justify-content:center; }
+    .repo-select { width:min(520px,100%); background:#0d1219; color:var(--text); border:1px solid var(--line-strong); border-radius:10px; padding:9px 12px; }
+    .top-actions { display:flex; align-items:center; gap:8px; }
+    .author-input { width:150px; }
+    .app { display:grid; grid-template-columns:270px minmax(0,1fr); min-height:0; }
+    .sidebar { border-right:1px solid var(--line); background:rgba(8,11,16,.72); padding:16px 12px; min-height:calc(100vh - 64px); }
+    .side-head { display:flex; justify-content:space-between; align-items:center; margin:0 6px 10px; }
+    .eyebrow { color:var(--subtle); text-transform:uppercase; letter-spacing:.16em; font-weight:700; font-size:10px; }
+    .repo-list { display:grid; gap:6px; }
+    .repo-item { width:100%; display:grid; grid-template-columns:9px minmax(0,1fr) auto; align-items:center; gap:10px; text-align:left; border:1px solid transparent; background:transparent; padding:10px; border-radius:11px; cursor:pointer; }
+    .repo-item:hover { background:rgba(255,255,255,.035); border-color:var(--line); }
+    .repo-item.active { background:rgba(115,245,209,.075); border-color:rgba(115,245,209,.25); }
+    .status-dot { width:8px; height:8px; border-radius:50%; background:var(--subtle); box-shadow:0 0 0 3px rgba(255,255,255,.025); }
+    .status-dot.online { background:var(--success); box-shadow:0 0 10px rgba(115,245,209,.4); }
+    .status-dot.offline, .status-dot.invalid { background:var(--danger); }
+    .status-dot.uninitialized { background:var(--warning); }
+    .repo-item > span:nth-child(2) { min-width:0; display:block; }
+    .repo-item strong, .repo-item .repo-path { display:block; }
+    .repo-item strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+    .repo-path { color:var(--subtle); font-family:var(--mono); font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:3px; }
+    .favorite { color:var(--warning); font-size:12px; }
+    .sidebar-foot { margin:18px 8px 0; padding-top:14px; border-top:1px solid var(--line); color:var(--subtle); font-size:11px; line-height:1.55; }
+    .main { min-width:0; padding:24px; }
+    .content { max-width:1500px; margin:0 auto; }
+    .btn { border:1px solid var(--line-strong); background:rgba(255,255,255,.035); color:var(--text); border-radius:9px; padding:9px 12px; cursor:pointer; font-weight:650; font-size:12px; transition:.16s ease; }
+    .btn:hover:not(:disabled) { transform:translateY(-1px); border-color:rgba(255,255,255,.27); background:rgba(255,255,255,.06); }
+    .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .btn.primary { color:#04110d; background:var(--accent); border-color:var(--accent); }
+    .btn.danger { color:#ffdbe0; border-color:rgba(255,119,134,.35); background:rgba(255,119,134,.08); }
+    .btn.warning { color:#fff1c7; border-color:rgba(245,201,109,.35); background:rgba(245,201,109,.08); }
+    .btn.icon { width:36px; height:36px; padding:0; display:grid; place-items:center; }
+    .input, .textarea, .select { width:100%; border:1px solid var(--line-strong); background:#0b1017; color:var(--text); border-radius:9px; padding:9px 11px; outline:none; }
+    .input:focus, .textarea:focus, .select:focus { border-color:rgba(115,245,209,.55); box-shadow:0 0 0 3px rgba(115,245,209,.08); }
+    .repo-hero { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:22px; align-items:start; padding:22px; background:linear-gradient(135deg, rgba(115,245,209,.055), transparent 48%), var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); }
+    .repo-title-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .repo-title { margin:0; font-size:clamp(24px,3vw,38px); letter-spacing:-.04em; }
+    .repo-description { color:var(--muted); margin:9px 0 12px; max-width:800px; }
+    .path-chip { display:inline-flex; align-items:center; gap:8px; max-width:100%; padding:7px 9px; border-radius:8px; background:rgba(0,0,0,.2); border:1px solid var(--line); color:var(--subtle); font:11px var(--mono); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .badge { display:inline-flex; align-items:center; gap:6px; border-radius:999px; border:1px solid var(--line); padding:5px 8px; font-size:10px; font-weight:750; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); }
+    .badge.online { color:var(--success); border-color:rgba(115,245,209,.25); background:rgba(115,245,209,.06); }
+    .badge.offline, .badge.invalid { color:var(--danger); border-color:rgba(255,119,134,.3); background:rgba(255,119,134,.06); }
+    .hero-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; max-width:500px; }
+    .stats { display:grid; grid-template-columns:repeat(6,minmax(110px,1fr)); gap:10px; margin:14px 0; }
+    .stat { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; min-width:0; }
+    .stat strong { display:block; font:700 22px var(--mono); overflow:hidden; text-overflow:ellipsis; }
+    .stat span { display:block; color:var(--muted); font-size:11px; margin-top:5px; }
+    .toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:12px; border:1px solid var(--line); background:var(--panel-2); border-radius:12px; }
+    .toolbar-group { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .import-report { margin-top:10px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--muted); font-size:12px; line-height:1.5; }
+    .import-report strong { color:var(--text); }
+    .import-report.error { border-color:rgba(255,107,107,.55); color:#ffc0c0; }
+    .tabs { display:flex; gap:4px; margin:16px 0 10px; border-bottom:1px solid var(--line); }
+    .tab { border:0; border-bottom:2px solid transparent; background:transparent; padding:11px 14px; color:var(--muted); cursor:pointer; font-weight:700; font-size:12px; }
+    .tab.active { color:var(--text); border-bottom-color:var(--accent); }
+    .panel { border:1px solid var(--line); background:var(--panel); border-radius:var(--radius); overflow:hidden; }
+    .files-layout { display:grid; grid-template-columns:minmax(300px, 38%) minmax(0,1fr); min-height:580px; }
+    .file-pane { border-right:1px solid var(--line); min-width:0; }
+    .pane-head { padding:12px; border-bottom:1px solid var(--line); display:flex; gap:8px; align-items:center; }
+    .file-list { max-height:650px; overflow:auto; position:relative; contain:strict; min-height:220px; }
+    .tree-spacer { width:1px; pointer-events:none; }
+    .job-actions { display:flex; gap:8px; align-items:center; margin-top:8px; }
+    .file-row { width:100%; display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:8px; align-items:center; padding:9px 12px; border:0; border-bottom:1px solid rgba(255,255,255,.045); background:transparent; color:var(--text); text-align:left; cursor:pointer; }
+    .file-row:hover { background:rgba(255,255,255,.03); }
+    .file-row.active { background:rgba(115,245,209,.07); }
+    .file-icon { color:var(--accent-2); font-family:var(--mono); font-size:12px; }
+    .file-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:12px var(--mono); }
+    .file-size { color:var(--subtle); font:10px var(--mono); }
+    .editor-pane { min-width:0; display:flex; flex-direction:column; }
+    .editor-head { min-height:52px; padding:10px 12px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .editor-path { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:12px var(--mono); }
+    .editor-actions { display:flex; gap:7px; flex-shrink:0; }
+    .code-editor { width:100%; flex:1; min-height:525px; resize:none; border:0; outline:0; padding:18px; background:#080c12; color:#dce6f2; font:13px/1.55 var(--mono); tab-size:2; }
+    .editor-empty { flex:1; display:grid; place-items:center; text-align:center; color:var(--muted); padding:50px; }
+    .editor-empty strong { display:block; color:var(--text); margin-bottom:7px; }
+    .binary-card { margin:auto; width:min(480px,calc(100% - 36px)); border:1px solid var(--line); border-radius:14px; padding:24px; text-align:center; background:rgba(255,255,255,.025); }
+    .feed { display:grid; }
+    .feed-item { display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:12px; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.055); align-items:start; }
+    .feed-symbol { width:32px; height:32px; display:grid; place-items:center; border:1px solid var(--line); border-radius:9px; color:var(--accent); font:700 11px var(--mono); }
+    .feed-title { font-weight:700; font-size:13px; }
+    .feed-meta { color:var(--muted); font-size:11px; margin-top:4px; line-height:1.45; }
+    .feed-time { color:var(--subtle); font:10px var(--mono); white-space:nowrap; }
+    .change-list { display:flex; gap:6px; flex-wrap:wrap; margin-top:7px; }
+    .change { border-radius:999px; padding:3px 7px; font:9px var(--mono); border:1px solid var(--line); color:var(--muted); }
+    .change.added { color:var(--success); }.change.modified { color:var(--warning); }.change.deleted { color:var(--danger); }
+    .empty { padding:70px 24px; text-align:center; border:1px dashed var(--line-strong); border-radius:var(--radius); background:rgba(255,255,255,.015); }
+    .empty-mark { width:64px; height:64px; margin:0 auto 18px; display:grid; place-items:center; border:1px solid rgba(115,245,209,.3); border-radius:18px; color:var(--accent); font:800 24px var(--mono); box-shadow:inset 0 0 28px rgba(115,245,209,.08); }
+    .empty h1 { margin:0 0 8px; font-size:32px; letter-spacing:-.04em; }
+    .empty p { color:var(--muted); max-width:650px; margin:0 auto 22px; line-height:1.6; }
+    .offline-card { padding:26px; border:1px solid rgba(255,119,134,.25); border-radius:var(--radius); background:linear-gradient(135deg,rgba(255,119,134,.07),transparent 45%),var(--panel); }
+    .offline-card h2 { margin-top:0; }
+    .hidden { display:none !important; }
+    .modal-backdrop { position:fixed; inset:0; z-index:70; background:rgba(0,0,0,.68); backdrop-filter:blur(8px); display:none; place-items:center; padding:20px; }
+    .modal-backdrop.open { display:grid; }
+    .modal { width:min(620px,100%); max-height:90vh; overflow:auto; background:#0c1118; border:1px solid var(--line-strong); border-radius:18px; box-shadow:var(--shadow); }
+    .modal-head { display:flex; justify-content:space-between; align-items:start; gap:16px; padding:18px 20px; border-bottom:1px solid var(--line); }
+    .modal-head h2 { margin:0; font-size:19px; }
+    .modal-body { padding:20px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .field { display:grid; gap:6px; }
+    .field.full { grid-column:1/-1; }
+    .field label { color:var(--muted); font-size:11px; font-weight:700; }
+    .check { display:flex; align-items:flex-start; gap:9px; color:var(--muted); font-size:12px; line-height:1.45; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+    .repo-source-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; }
+    .repo-source { min-height:88px; padding:12px; border:1px solid var(--line); border-radius:11px; background:rgba(255,255,255,.018); color:var(--text); text-align:left; cursor:pointer; transition:border-color .15s ease,background .15s ease,transform .15s ease; }
+    .repo-source:hover { border-color:var(--line-strong); transform:translateY(-1px); }
+    .repo-source.selected { border-color:rgba(115,245,209,.45); background:rgba(115,245,209,.065); box-shadow:inset 0 0 24px rgba(115,245,209,.035); }
+    .repo-source strong { display:block; margin-bottom:6px; font-size:12px; }
+    .repo-source span { display:block; color:var(--muted); font-size:10px; line-height:1.45; }
+    .import-summary { border:1px solid rgba(115,245,209,.22); border-radius:10px; padding:10px 11px; background:rgba(115,245,209,.045); color:var(--muted); font-size:11px; line-height:1.5; }
+    .field small { color:var(--muted); font-size:10px; line-height:1.4; }
+
+    .library-filters { display:grid; gap:8px; margin:0 4px 12px; padding:10px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.018); }
+    .library-filters .input, .library-filters .select { padding:7px 9px; font-size:11px; }
+    .filter-row { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+    .saved-filters { display:flex; flex-wrap:wrap; gap:5px; }
+    .filter-chip, .meta-chip { border:1px solid var(--line); background:rgba(255,255,255,.025); color:var(--muted); border-radius:999px; padding:4px 7px; font-size:9px; cursor:pointer; }
+    .filter-chip:hover { color:var(--text); border-color:var(--line-strong); }
+    .repo-meta-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+    .meta-chip.tag { color:var(--accent); border-color:rgba(115,245,209,.2); }
+    .meta-chip.collection { color:var(--accent-2); border-color:rgba(139,181,255,.2); }
+    .capability-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:12px; }
+    .capability { border:1px solid var(--line); border-radius:9px; padding:8px; color:var(--muted); font-size:10px; }
+    .capability strong { display:block; color:var(--text); margin-bottom:3px; }
+    .collection-options { display:grid; gap:7px; max-height:190px; overflow:auto; padding:10px; border:1px solid var(--line); border-radius:10px; }
+    .collection-option { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+    .tool-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .tool-card { border:1px solid var(--line); border-radius:12px; padding:13px; background:rgba(255,255,255,.018); }
+    .tool-card h3 { margin:0 0 7px; font-size:13px; }
+    .tool-card p { margin:0 0 10px; color:var(--muted); font-size:11px; line-height:1.45; }
+    .doctor-output { margin-top:12px; max-height:230px; overflow:auto; white-space:pre-wrap; background:#080c12; border:1px solid var(--line); border-radius:10px; padding:12px; color:var(--muted); font:11px/1.5 var(--mono); }
+
+    .pr-layout { display:grid; grid-template-columns:340px minmax(0,1fr); min-height:610px; }
+    .pr-list-pane { border-right:1px solid var(--line); min-width:0; }
+    .pr-list-head { padding:12px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; align-items:center; }
+    .pr-list { max-height:650px; overflow:auto; }
+    .pr-row { width:100%; border:0; border-bottom:1px solid rgba(255,255,255,.05); background:transparent; color:var(--text); text-align:left; padding:13px; cursor:pointer; }
+    .pr-row:hover, .pr-row.active { background:rgba(115,245,209,.055); }
+    .pr-row-title { font-weight:750; font-size:12px; line-height:1.4; }
+    .pr-row-meta { color:var(--muted); font-size:10px; margin-top:5px; }
+    .pr-status { display:inline-flex; margin-top:7px; border:1px solid var(--line); border-radius:999px; padding:3px 6px; color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:.08em; }
+    .pr-status.open, .pr-status.approved { color:var(--success); border-color:rgba(115,245,209,.28); }
+    .pr-status.changes_requested, .pr-status.conflict { color:var(--warning); border-color:rgba(245,201,109,.3); }
+    .pr-status.merged { color:var(--accent-2); border-color:rgba(139,181,255,.3); }
+    .pr-detail { padding:18px; min-width:0; overflow:auto; max-height:700px; }
+    .pr-detail h2 { margin:0 0 6px; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .pr-summary { display:flex; gap:7px; flex-wrap:wrap; margin:12px 0; }
+    .security-banner { border:1px solid rgba(115,245,209,.22); background:rgba(115,245,209,.045); border-radius:11px; padding:12px; color:var(--muted); font-size:11px; line-height:1.5; }
+    .gateway-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+    .gateway-status { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:999px; padding:5px 9px; color:var(--subtle); font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.08em; white-space:nowrap; }
+    .gateway-status.on { color:var(--success); border-color:rgba(115,245,209,.25); background:rgba(115,245,209,.055); }
+    .gateway-status.off { color:var(--warning); border-color:rgba(255,205,113,.24); background:rgba(255,205,113,.045); }
+    .gateway-url { margin-top:9px; border:1px solid var(--line); border-radius:9px; padding:9px 10px; background:rgba(0,0,0,.22); color:var(--accent); font:11px/1.45 var(--mono); overflow-wrap:anywhere; }
+    .advanced-share { margin-top:12px; color:var(--muted); font-size:11px; }
+    .advanced-share summary { cursor:pointer; color:var(--subtle); }
+    .conflict-banner { border-color:rgba(245,201,109,.35); background:rgba(245,201,109,.06); color:#ffe9b0; }
+    .diff-card { border:1px solid var(--line); border-radius:11px; margin-top:12px; overflow:hidden; }
+    .diff-head { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; background:rgba(255,255,255,.025); border-bottom:1px solid var(--line); font:11px var(--mono); }
+    .diff { margin:0; padding:13px; background:#070b10; color:#cbd6e5; max-height:360px; overflow:auto; white-space:pre; font:11px/1.5 var(--mono); }
+    .review-card { border:1px solid var(--line); border-radius:10px; padding:10px; margin-top:8px; color:var(--muted); font-size:11px; }
+    .invite-link { width:100%; min-height:74px; resize:vertical; font:11px/1.45 var(--mono); }
+    .invite-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+    @media (max-width:820px) { .pr-layout { grid-template-columns:1fr; } .pr-list-pane { border-right:0; border-bottom:1px solid var(--line); } .pr-list { max-height:250px; } }
+    .toast-region { position:fixed; right:18px; bottom:18px; z-index:100; display:grid; gap:8px; width:min(390px,calc(100vw - 36px)); }
+    .toast { padding:12px 14px; border-radius:11px; background:#121923; border:1px solid var(--line-strong); box-shadow:var(--shadow); font-size:12px; animation:toast-in .2s ease; }
+    .toast.error { border-color:rgba(255,119,134,.4); color:#ffdce1; }
+    .progress { position:fixed; inset:64px 0 auto 0; z-index:60; height:2px; background:transparent; }
+    .progress span { display:block; height:100%; width:0; background:var(--accent); box-shadow:0 0 12px var(--accent); transition:width .2s ease; }
+    @keyframes toast-in { from { opacity:0; transform:translateY(8px) } }
+    @media (max-width:1100px) {
+      .stats { grid-template-columns:repeat(3,1fr); }
+      .topbar { grid-template-columns:220px minmax(0,1fr) auto; }
+      .author-input { display:none; }
+    }
+    @media (max-width:820px) {
+      .topbar { grid-template-columns:1fr auto; }
+      .repo-select-wrap { grid-column:1/-1; grid-row:2; padding-bottom:9px; }
+      .shell { grid-template-rows:auto 1fr; }
+      .app { grid-template-columns:1fr; }
+      .sidebar { display:none; }
+      .main { padding:14px; }
+      .repo-hero { grid-template-columns:1fr; }
+      .hero-actions { justify-content:flex-start; }
+      .files-layout { grid-template-columns:1fr; }
+      .file-pane { border-right:0; border-bottom:1px solid var(--line); }
+      .file-list { max-height:280px; }
+      .code-editor { min-height:420px; }
+    }
+    @media (max-width:560px) {
+      .brand-copy span { display:none; }
+      .topbar { padding:10px 12px; gap:10px; }
+      .stats { grid-template-columns:repeat(2,1fr); }
+      .toolbar { align-items:stretch; }
+      .toolbar-group { width:100%; }
+      .toolbar-group .btn { flex:1; }
+      .repo-title { font-size:28px; }
+      .form-grid { grid-template-columns:1fr; }
+      .field.full { grid-column:auto; }
+      .repo-source-grid { grid-template-columns:1fr; }
+      .editor-head { align-items:flex-start; flex-direction:column; }
+      .tool-grid, .filter-row { grid-template-columns:1fr; }
+    }
+  </style>
 </head>
 <body>
-<div id="setup" class="setup hidden">
-  <div class="setup-card">
-    <div class="mark">FT</div>
-    <h1>Build a real repository.</h1>
-    <p>ForgeTrace stores actual files on your machine, records every change as a contribution, creates restorable snapshots, and exports the repository as a ZIP.</p>
-    <form id="setupForm">
-      <div class="field"><label>Repository name</label><input id="setupName" required placeholder="my-project"></div>
-      <div class="field"><label>Description</label><input id="setupDescription" placeholder="What are you building?"></div>
-      <div class="field"><label>Your name</label><input id="setupAuthor" required value="Rooke Poole"></div>
-      <button class="btn primary" type="submit">Create repository</button>
-    </form>
-    <div id="serverError" class="server-error hidden"></div>
-  </div>
-</div>
-<div class="shell">
-<header>
-  <div class="mark">FT</div><div class="brand"><strong>ForgeTrace</strong><small>local repository</small></div>
-  <div class="repo-title"><strong id="repoName">Repository</strong><span id="repoDescription"></span></div>
-  <div class="head-actions">
-    <input id="author" class="input author" value="Rooke Poole" aria-label="Contributor name">
-    <button id="treeToggle" class="btn ghost mobile-tree">Files</button>
-    <button id="panelToggle" class="btn ghost mobile-panel">History</button>
-    <a class="btn" href="/api/export?history=1"><span class="export-label">Export ZIP</span><span>↓</span></a>
-  </div>
-</header>
-<div class="main">
-  <aside id="sidebar" class="sidebar">
-    <div class="side-head"><strong>Repository files</strong><button id="refreshBtn" class="btn ghost" style="margin-left:auto;min-height:28px;padding:4px 8px">↻</button></div>
-    <div id="tree" class="tree"></div>
-    <div class="side-head" style="border-top:1px solid var(--line);border-bottom:0">
-      <button id="uploadBtn" class="btn primary" style="flex:1">Upload files</button>
-      <button id="uploadFolderBtn" class="btn" title="Upload folder">Folder</button>
-      <input id="fileInput" type="file" multiple hidden>
-      <input id="folderInput" type="file" webkitdirectory multiple hidden>
-    </div>
-  </aside>
-  <main class="content">
-    <div class="toolbar">
-      <button id="treeToggle2" class="btn ghost mobile-tree">☰</button>
-      <div id="crumb" class="crumb">Repository workspace</div>
-      <span id="dirtyBadge" class="dirty hidden"></span>
-      <button id="newFileBtn" class="btn">+ File</button>
-      <button id="newFolderBtn" class="btn">+ Folder</button>
-      <button id="renameBtn" class="btn" disabled>Rename</button>
-      <button id="deleteBtn" class="btn danger" disabled>Delete</button>
-      <button id="commitBtn" class="btn primary">Snapshot</button>
-    </div>
-    <section id="workspace" class="workspace">
-      <div id="welcome" class="welcome">
-        <div class="welcome-card">
-          <h1>Your files are the repository.</h1>
-          <p>Upload files, create folders, edit source code, and save restorable snapshots. Every operation is written to the contribution history automatically.</p>
-          <div id="dropzone" class="dropzone"><strong>Drop files here</strong><p>or use “Upload files” in the sidebar</p></div>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">FT</div>
+        <div class="brand-copy"><strong>ForgeTrace</strong><span>Local-first repository workspace</span></div>
+      </div>
+      <div class="repo-select-wrap">
+        <select class="repo-select" id="activeRepoSelect" aria-label="Active repository"><option value="">No repositories registered</option></select>
+      </div>
+      <div class="top-actions">
+        <input class="input author-input" id="authorInput" aria-label="Current contributor" placeholder="Contributor name" value="Rooke Poole">
+        <button class="btn" id="registryToolsBtn">Library</button>
+        <button class="btn primary" id="addRepoBtn">+ Repository</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+
+    <div class="app">
+      <aside class="sidebar">
+        <div class="side-head"><span class="eyebrow">Repositories</span><button class="btn icon" id="refreshReposBtn" title="Refresh repositories">↻</button></div>
+        <div class="library-filters">
+          <input class="input" id="repoSearch" placeholder="Search repository library">
+          <div class="filter-row"><select class="select" id="tagFilter"><option value="">All tags</option></select><select class="select" id="collectionFilter"><option value="">All collections</option></select></div>
+          <div class="filter-row"><select class="select" id="statusFilter"><option value="">Any status</option><option value="online">Online</option><option value="offline">Offline</option><option value="uninitialized">Uninitialized</option></select><select class="select" id="favoriteFilter"><option value="">Pinned + unpinned</option><option value="1">Pinned only</option><option value="0">Unpinned only</option></select></div>
+          <button class="btn" id="saveFilterBtn">Save current filter</button>
+          <div class="saved-filters" id="savedFilters"></div>
         </div>
+        <div class="repo-list" id="repoList"></div>
+        <div class="sidebar-foot">
+          One ForgeTrace process can manage repositories on separate local drives, removable storage, and mounted network paths. Repository files stay where you put them.
+          <div style="margin-top:10px">Version <span id="versionLabel">…</span></div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="content">
+          <section class="empty" id="welcomeView">
+            <div class="empty-mark">◇</div>
+            <h1>Your repositories, on your machine.</h1>
+            <p>Upload individual files, import a folder, paste a local path, or fork a repository from a secure collaboration link. ForgeTrace keeps each repository isolated, records contribution history, creates restorable snapshots, and exports portable ZIP archives.</p>
+            <div class="hero-actions" style="justify-content:center"><button class="btn primary" id="welcomeAddBtn">Add your first repository</button><button class="btn" id="welcomeForkBtn">Fork from collaboration link</button></div>
+          </section>
+
+          <section id="offlineView" class="hidden"></section>
+
+          <section id="workspaceView" class="hidden">
+            <article class="repo-hero">
+              <div>
+                <div class="repo-title-row"><h1 class="repo-title" id="repoTitle">Repository</h1><span class="badge" id="repoStatusBadge">online</span></div>
+                <p class="repo-description" id="repoDescription"></p>
+                <div class="path-chip" id="repoPath"></div>
+                <div class="repo-meta-row" id="repoOrganization"></div>
+              </div>
+              <div class="hero-actions">
+                <button class="btn primary" id="collaborationBtn">Collaborate</button>
+                <button class="btn" id="organizeBtn">Organize</button>
+                <button class="btn" id="settingsBtn">Settings</button>
+                <button class="btn" id="favoriteBtn">☆ Favorite</button>
+                <button class="btn" id="relinkBtn">Relink</button>
+                <button class="btn danger" id="unregisterBtn">Unregister</button>
+              </div>
+            </article>
+
+            <div class="stats">
+              <div class="stat"><strong id="statFiles">0</strong><span>Files</span></div>
+              <div class="stat"><strong id="statFolders">0</strong><span>Folders</span></div>
+              <div class="stat"><strong id="statBytes">0 B</strong><span>Stored content</span></div>
+              <div class="stat"><strong id="statCommits">0</strong><span>Snapshots</span></div>
+              <div class="stat"><strong id="statContributions">0</strong><span>Contributions</span></div>
+              <div class="stat"><strong id="statDirty">0</strong><span>Unsnapshotted paths</span></div>
+            </div>
+
+            <div class="toolbar">
+              <div class="toolbar-group">
+                <button class="btn primary" id="uploadFilesBtn">Upload files</button>
+                <button class="btn" id="importLocalFolderBtn" title="Choose a local folder and import it transactionally through the ForgeTrace server">Import complete folder</button>
+                <button class="btn" id="uploadFolderBtn" title="Browser compatibility fallback for recursive folder upload">Browser folder fallback</button>
+                <button class="btn" id="newFileBtn">New file</button>
+                <button class="btn" id="newFolderBtn">New folder</button>
+              </div>
+              <div class="toolbar-group">
+                <button class="btn" id="expandAllBtn">Expand all</button>
+                <button class="btn" id="collapseAllBtn">Collapse all</button>
+                <button class="btn" id="snapshotBtn">Create snapshot</button>
+                <button class="btn" id="exportBtn">Export ZIP</button>
+              </div>
+            </div>
+            <div class="import-report hidden" id="folderImportReport" aria-live="polite"></div>
+            <input id="fileInput" type="file" multiple hidden>
+            <input id="folderInput" type="file" webkitdirectory directory multiple hidden>
+
+            <div class="tabs" role="tablist">
+              <button class="tab active" data-tab="files">Files</button>
+              <button class="tab" data-tab="activity">Contributions</button>
+              <button class="tab" data-tab="snapshots">Snapshots</button>
+              <button class="tab" data-tab="pullrequests">Pull requests <span id="prTabCount"></span></button>
+            </div>
+
+            <section class="tab-panel" id="tab-files">
+              <div class="panel files-layout">
+                <div class="file-pane">
+                  <div class="pane-head"><input class="input" id="fileSearch" placeholder="Filter repository paths" aria-label="Filter repository paths"></div>
+                  <div class="file-list" id="tree"></div>
+                </div>
+                <div class="editor-pane" id="editorPane">
+                  <div class="editor-head">
+                    <div class="editor-path" id="editorPath">Select a file</div>
+                    <div class="editor-actions">
+                      <button class="btn" id="downloadBtn" disabled>Download</button>
+                      <button class="btn" id="renameBtn" disabled>Rename</button>
+                      <button class="btn danger" id="deleteBtn" disabled>Delete</button>
+                      <button class="btn primary" id="saveBtn" disabled>Save</button>
+                    </div>
+                  </div>
+                  <div class="editor-empty" id="editorEmpty"><div><strong>No file selected</strong>Choose a text file to edit, or a binary file to inspect and download.</div></div>
+                  <textarea class="code-editor hidden" id="code" spellcheck="false" aria-label="File editor"></textarea>
+                  <div class="binary-card hidden" id="binaryCard"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="tab-panel hidden" id="tab-activity"><div class="panel feed" id="activity"></div></section>
+            <section class="tab-panel hidden" id="tab-snapshots"><div class="panel feed" id="commits"></div></section>
+            <section class="tab-panel hidden" id="tab-pullrequests">
+              <div class="panel pr-layout">
+                <div class="pr-list-pane">
+                  <div class="pr-list-head"><strong style="font-size:12px">Incoming changes</strong><button class="btn" id="refreshPrBtn">Refresh</button></div>
+                  <div class="pr-list" id="pullRequestList"></div>
+                </div>
+                <div class="pr-detail" id="pullRequestDetail"><div class="editor-empty"><div><strong>No pull request selected</strong>Create an invite or select an incoming pull request to review its exact changes.</div></div></div>
+              </div>
+            </section>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="repoModalBackdrop">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="repoModalTitle">
+      <div class="modal-head">
+        <div><h2 id="repoModalTitle">Add repository</h2><div class="repo-path">Upload files, import a folder, fork a shared repository, or use an absolute path.</div></div>
+        <button class="btn icon" id="closeRepoModalBtn" aria-label="Close">×</button>
       </div>
-      <div id="editor" class="editor hidden">
-        <div class="filebar"><span id="filePath" class="path"></span><span id="fileSize" class="size"></span><a id="downloadFile" class="btn" href="#">Download</a><button id="saveBtn" class="btn primary">Save</button></div>
-        <textarea id="code" class="code" spellcheck="false"></textarea>
-      </div>
-      <div id="binary" class="binary hidden"><div class="binary-card"><h2 id="binaryName"></h2><p class="muted">This binary file is stored in the repository and can be downloaded.</p><div id="previewWrap"></div><a id="binaryDownload" class="btn primary" href="#">Download file</a></div></div>
+      <form class="modal-body" id="repoForm">
+        <div class="form-grid">
+          <div class="field full">
+            <label>Choose how to add the repository</label>
+            <div class="repo-source-grid" role="group" aria-label="Repository source">
+              <button type="button" class="repo-source" id="repoUploadFilesChoice" data-repo-source="files"><strong>Upload files</strong><span>Select one or more individual files.</span></button>
+              <button type="button" class="repo-source" id="repoImportLocalChoice" data-repo-source="localfolder"><strong>Import local folder</strong><span>Use the operating-system chooser and a transactional disk import.</span></button>
+              <button type="button" class="repo-source" id="repoUploadFolderChoice" data-repo-source="folder"><strong>Browser folder fallback</strong><span>Use only when the local folder chooser is unavailable.</span></button>
+              <button type="button" class="repo-source" id="repoForkChoice" data-repo-source="fork"><strong>Fork shared link</strong><span>Paste a ForgeTrace collaboration link.</span></button>
+              <button type="button" class="repo-source selected" id="repoPathChoice" data-repo-source="path"><strong>Use a local path</strong><span>Paste an absolute path as before.</span></button>
+            </div>
+            <input id="newRepoFilesInput" type="file" multiple hidden>
+            <input id="newRepoFolderInput" type="file" webkitdirectory directory multiple hidden>
+            <div class="import-summary hidden" id="repoImportSummary"></div>
+          </div>
+          <div class="field full" id="repoModeField">
+            <label for="repoMode">Path operation</label>
+            <select class="select" id="repoMode"><option value="create">Create a new repository folder at this path</option><option value="existing">Add an existing folder from this path</option></select>
+          </div>
+          <div class="field full hidden" id="repoShareLinkField"><label for="repoShareLinkInput">Collaboration link</label><textarea class="textarea" id="repoShareLinkInput" rows="3" placeholder="http://192.168.1.25:8766/contribute.html#invite-token"></textarea><small>ForgeTrace validates the invite, streams the source-only ZIP, creates a managed local fork, and never stores the raw token.</small></div>
+          <div class="field full" id="repoPathField"><label for="repoPathInput">Absolute folder path</label><input class="input" id="repoPathInput" placeholder="C:\Projects\MyProject or /home/me/projects/my-project"><small>Paste or type a local, removable-drive, or mounted-network path.</small></div>
+          <div class="field"><label for="repoNameInput">Repository name</label><input class="input" id="repoNameInput" placeholder="Defaults to folder name"></div>
+          <div class="field"><label for="repoAuthorInput">Default contributor</label><input class="input" id="repoAuthorInput" value="Rooke Poole"></div>
+          <div class="field full"><label for="repoDescriptionInput">Description</label><textarea class="textarea" id="repoDescriptionInput" rows="3" placeholder="What is this repository for?"></textarea></div>
+          <label class="check full" id="repoInitializeRow"><input type="checkbox" id="repoInitializeInput" checked><span>Initialize ForgeTrace metadata when the folder does not already contain it. This creates only a protected <code>.forgetrace</code> directory and a README when needed.</span></label>
+        </div>
+        <div class="modal-actions"><button type="button" class="btn" id="cancelRepoModalBtn">Cancel</button><button type="submit" class="btn primary" id="repoSubmitBtn">Save repository</button></div>
+      </form>
     </section>
-  </main>
-  <aside id="inspector" class="inspector">
-    <div class="tabs"><button class="tab active" data-tab="activity">Activity</button><button class="tab" data-tab="commits">Snapshots</button></div>
-    <div id="activityPanel" class="panel"><div id="stats" class="statgrid"></div><div class="section-title">Contribution history</div><div id="activity" class="activity"></div></div>
-    <div id="commitsPanel" class="panel hidden"><div id="commits"></div></div>
-  </aside>
-</div>
-</div>
-<div id="modalRoot"></div><div id="toast" class="toast hidden"></div>
-<script>
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const app={state:null,selected:null,file:null,editorDirty:false};
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmtBytes=n=>{if(!n)return'0 B';const u=['B','KB','MB','GB'];const i=Math.min(Math.floor(Math.log(n)/Math.log(1024)),3);return `${(n/1024**i).toFixed(i?1:0)} ${u[i]}`};
-const ago=s=>{const d=(Date.now()-new Date(s))/1000;if(d<60)return'just now';if(d<3600)return`${Math.floor(d/60)}m ago`;if(d<86400)return`${Math.floor(d/3600)}h ago`;return`${Math.floor(d/86400)}d ago`};
-function author(){return $('#author').value.trim()||'Unknown Contributor'}
-function toast(msg,error=false){const el=$('#toast');el.textContent=msg;el.className='toast'+(error?' error':'');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.add('hidden'),3500)}
-async function api(url,opts={}){const r=await fetch(url,opts);let data;try{data=await r.json()}catch{data=null}if(!r.ok)throw new Error(data?.error||`${r.status} ${r.statusText}`);return data}
-function json(method,body){return{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}}
-async function boot(){try{const status=await api('/api/status');if(!status.initialized){$('#setup').classList.remove('hidden');return}await load()}catch(e){$('#setup').classList.remove('hidden');$('#serverError').textContent='ForgeTrace must be opened through server.py. Start run_local.bat or run_local.sh, then open the displayed address.';$('#serverError').classList.remove('hidden')}}
-async function load(preserve=true){try{app.state=await api('/api/state');render();if(preserve&&app.selected){const exists=app.state.tree.some(x=>x.path===app.selected);if(!exists)clearSelection()}}catch(e){toast(e.message,true)}}
-function render(){const s=app.state.summary;$('#repoName').textContent=s.repository.name;$('#repoDescription').textContent=s.repository.description||'A real local-first repository';document.title=`${s.repository.name} — ForgeTrace`;$('#author').value=localStorage.ftAuthor||s.repository.defaultAuthor||'Rooke Poole';renderTree();renderStats();renderActivity();renderCommits();const d=s.stats.dirtyFiles;$('#dirtyBadge').textContent=`${d} unsnapshotted change${d===1?'':'s'}`;$('#dirtyBadge').classList.toggle('hidden',!d)}
-function renderTree(){const tree=$('#tree'),items=app.state.tree;if(!items.length){tree.innerHTML='<div class="empty">No files yet.<br>Upload one to begin.</div>';return}tree.innerHTML=items.map(x=>{const depth=x.path.split('/').length-1;return `<div class="tree-row ${app.selected===x.path?'active':''}" data-path="${esc(x.path)}" data-type="${x.type}" style="padding-left:${9+depth*15}px"><span>${x.type==='folder'?'▸':'◇'}</span><span class="name">${esc(x.name)}</span><span class="meta">${x.type==='file'?fmtBytes(x.size):''}</span></div>`}).join('');$$('.tree-row').forEach(el=>el.onclick=()=>selectPath(el.dataset.path,el.dataset.type))}
-async function selectPath(path,type){app.selected=path;$('#renameBtn').disabled=false;$('#deleteBtn').disabled=false;$('#crumb').textContent=path;renderTree();if(type==='folder'){showWelcome(`Folder: ${path}`);return}try{const f=await api('/api/file?path='+encodeURIComponent(path));app.file=f;if(f.editable)showEditor(f);else showBinary(f)}catch(e){toast(e.message,true)}}
-function showWelcome(label='Repository workspace'){$('#welcome').classList.remove('hidden');$('#editor').classList.add('hidden');$('#binary').classList.add('hidden');$('#crumb').textContent=label;app.file=null;app.editorDirty=false}
-function showEditor(f){$('#welcome').classList.add('hidden');$('#binary').classList.add('hidden');$('#editor').classList.remove('hidden');$('#filePath').textContent=f.path;$('#fileSize').textContent=fmtBytes(f.size);$('#downloadFile').href=f.downloadUrl;$('#code').value=f.content;app.editorDirty=false;$('#saveBtn').disabled=false}
-function showBinary(f){$('#welcome').classList.add('hidden');$('#editor').classList.add('hidden');$('#binary').classList.remove('hidden');$('#binaryName').textContent=f.name;$('#binaryDownload').href=f.downloadUrl;const wrap=$('#previewWrap');wrap.innerHTML=f.mime?.startsWith('image/')?`<img class="preview" src="${f.rawUrl}" alt="${esc(f.name)}">`:''}
-function clearSelection(){app.selected=null;app.file=null;$('#renameBtn').disabled=true;$('#deleteBtn').disabled=true;showWelcome();renderTree()}
-function renderStats(){const s=app.state.summary.stats;$('#stats').innerHTML=[['Files',s.files],['Folders',s.folders],['Snapshots',s.commits],['Contributors',s.contributors]].map(x=>`<div class="stat"><b>${x[1]}</b><span>${x[0]}</span></div>`).join('')}
-function renderActivity(){const a=app.state.contributions.slice(0,40);$('#activity').innerHTML=a.length?a.map(x=>`<div class="event"><strong>${esc(x.title)}</strong><p>${esc(x.author)}${x.path?' · '+esc(x.path):''}<br>${esc(x.description||'')}</p><time>${ago(x.timestamp)} · impact ${x.impact}</time></div>`).join(''):'<div class="empty">No activity yet.</div>'}
-function renderCommits(){const c=app.state.commits;$('#commits').innerHTML=c.length?c.map(x=>`<div class="commit"><div class="commit-head"><code>${x.id}</code><strong>${esc(x.message)}</strong></div><p>${esc(x.author)} · ${ago(x.timestamp)}<br>${x.fileCount} files · ${fmtBytes(x.totalBytes)}</p><button class="btn restore" data-id="${x.id}">Restore this snapshot</button></div>`).join(''):'<div class="empty">No snapshots yet.</div>';$$('.restore').forEach(b=>b.onclick=()=>restoreCommit(b.dataset.id))}
-async function upload(files,folder=false){files=[...files];if(!files.length)return;let done=0;for(const file of files){const path=(folder&&file.webkitRelativePath)||file.name;try{await api(`/api/upload?path=${encodeURIComponent(path)}&author=${encodeURIComponent(author())}&message=${encodeURIComponent('Uploaded through ForgeTrace')}`,{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:file});done++}catch(e){toast(`${path}: ${e.message}`,true)}}toast(`Uploaded ${done} of ${files.length} file${files.length===1?'':'s'}`);await load(false)}
-function modal(title,fields,onSubmit,submit='Save'){const root=$('#modalRoot');root.innerHTML=`<div class="modal-backdrop"><form class="modal"><h2>${esc(title)}</h2>${fields.map(f=>`<div class="field"><label>${esc(f.label)}</label>${f.type==='textarea'?`<textarea name="${f.name}" ${f.required?'required':''}>${esc(f.value||'')}</textarea>`:`<input name="${f.name}" value="${esc(f.value||'')}" ${f.required?'required':''} ${f.placeholder?`placeholder="${esc(f.placeholder)}"`:''}>`}</div>`).join('')}<div class="modal-actions"><button type="button" class="btn cancel">Cancel</button><button type="submit" class="btn primary">${esc(submit)}</button></div></form></div>`;root.querySelector('.cancel').onclick=()=>root.innerHTML='';root.querySelector('.modal-backdrop').onclick=e=>{if(e.target===e.currentTarget)root.innerHTML=''};root.querySelector('form').onsubmit=async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));try{await onSubmit(data);root.innerHTML=''}catch(err){toast(err.message,true)}};setTimeout(()=>root.querySelector('input,textarea')?.focus(),0)}
-async function saveFile(){if(!app.file)return;try{await api('/api/file',json('PUT',{path:app.file.path,content:$('#code').value,author:author(),message:'Edited in ForgeTrace'}));toast('File saved');app.editorDirty=false;await load(false);await selectPath(app.file.path,'file')}catch(e){toast(e.message,true)}}
-function createFile(){modal('Create file',[{label:'Path',name:'path',required:true,placeholder:'src/app.js'},{label:'Initial content',name:'content',type:'textarea'}],async d=>{await api('/api/file',json('PUT',{path:d.path,content:d.content||'',author:author(),message:'Created a new file'}));toast('File created');await load(false);await selectPath(d.path,'file')},'Create')}
-function createFolder(){modal('Create folder',[{label:'Folder path',name:'path',required:true,placeholder:'src/components'}],async d=>{await api('/api/folder',json('POST',{path:d.path,author:author()}));toast('Folder created');await load(false)},'Create')}
-function renameSelected(){if(!app.selected)return;modal('Rename path',[{label:'New path',name:'newPath',required:true,value:app.selected}],async d=>{await api('/api/rename',json('POST',{path:app.selected,newPath:d.newPath,author:author()}));toast('Path renamed');app.selected=d.newPath;await load(false)},'Rename')}
-async function deleteSelected(){if(!app.selected||!confirm(`Delete ${app.selected}? This removes it from the working repository.`))return;try{await api(`/api/path?path=${encodeURIComponent(app.selected)}&author=${encodeURIComponent(author())}`,{method:'DELETE'});toast('Path deleted');clearSelection();await load(false)}catch(e){toast(e.message,true)}}
-function commit(){modal('Create snapshot',[{label:'Commit message',name:'message',required:true,placeholder:'Describe this version'}],async d=>{await api('/api/commit',json('POST',{message:d.message,author:author()}));toast('Restorable snapshot created');await load(false)},'Create snapshot')}
-async function restoreCommit(id){if(!confirm(`Restore snapshot ${id}? Current working files will be replaced.`))return;try{await api('/api/checkout',json('POST',{commitId:id,author:author()}));toast(`Restored ${id}`);clearSelection();await load(false)}catch(e){toast(e.message,true)}}
-$('#setupForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/repository',json('POST',{name:$('#setupName').value,description:$('#setupDescription').value,author:$('#setupAuthor').value}));localStorage.ftAuthor=$('#setupAuthor').value;$('#setup').classList.add('hidden');await load(false)}catch(err){toast(err.message,true)}};
-$('#author').onchange=e=>localStorage.ftAuthor=e.target.value;$('#refreshBtn').onclick=()=>load();$('#uploadBtn').onclick=()=>$('#fileInput').click();$('#uploadFolderBtn').onclick=()=>$('#folderInput').click();$('#fileInput').onchange=e=>{upload(e.target.files);e.target.value=''};$('#folderInput').onchange=e=>{upload(e.target.files,true);e.target.value=''};$('#newFileBtn').onclick=createFile;$('#newFolderBtn').onclick=createFolder;$('#renameBtn').onclick=renameSelected;$('#deleteBtn').onclick=deleteSelected;$('#commitBtn').onclick=commit;$('#saveBtn').onclick=saveFile;$('#code').oninput=()=>{app.editorDirty=true;$('#saveBtn').disabled=false};
-$$('.tab').forEach(t=>t.onclick=()=>{$$('.tab').forEach(x=>x.classList.toggle('active',x===t));$('#activityPanel').classList.toggle('hidden',t.dataset.tab!=='activity');$('#commitsPanel').classList.toggle('hidden',t.dataset.tab!=='commits')});
-const dz=$('#dropzone');['dragenter','dragover'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add('drag')}));['dragleave','drop'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove('drag')}));dz.ondrop=e=>upload(e.dataTransfer.files);dz.onclick=()=>$('#fileInput').click();
-function mobileToggle(el){el.classList.toggle('closed')}$('#treeToggle').onclick=$('#treeToggle2').onclick=()=>mobileToggle($('#sidebar'));$('#panelToggle').onclick=()=>mobileToggle($('#inspector'));
-window.addEventListener('beforeunload',e=>{if(app.editorDirty){e.preventDefault();e.returnValue=''}});window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'&&!$('#editor').classList.contains('hidden')){e.preventDefault();saveFile()}if(e.key==='Escape')$('#modalRoot').innerHTML=''});
-boot();
-</script>
+  </div>
+
+
+
+  <div class="modal-backdrop" id="settingsModalBackdrop">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+      <div class="modal-head"><div><h2 id="settingsModalTitle">Repository settings</h2><div class="repo-path">Settings are scoped to this repository.</div></div><button class="btn icon" data-close-modal="settingsModalBackdrop">×</button></div>
+      <form class="modal-body" id="settingsForm">
+        <div class="form-grid">
+          <div class="field"><label for="settingsName">Name</label><input class="input" id="settingsName" required></div>
+          <div class="field"><label for="settingsAuthor">Default contributor</label><input class="input" id="settingsAuthor" required></div>
+          <div class="field full"><label for="settingsDescription">Description</label><textarea class="textarea" id="settingsDescription" rows="3"></textarea></div>
+          <div class="field"><label for="settingsUploadLimit">Upload limit (MB)</label><input class="input" id="settingsUploadLimit" type="number" min="1" max="1024" step="1"></div>
+          <div class="field"><label>Metadata placement</label><input class="input" value="Embedded (.forgetrace)" disabled></div>
+        </div>
+        <div class="capability-grid" id="capabilityGrid"></div>
+        <div class="modal-actions"><button type="button" class="btn" data-close-modal="settingsModalBackdrop">Cancel</button><button class="btn primary" type="submit">Save settings</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="organizeModalBackdrop">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="organizeModalTitle">
+      <div class="modal-head"><div><h2 id="organizeModalTitle">Organize repository</h2><div class="repo-path">Apply searchable tags and multiple collections.</div></div><button class="btn icon" data-close-modal="organizeModalBackdrop">×</button></div>
+      <form class="modal-body" id="organizeForm">
+        <div class="field"><label for="tagsInput">Tags (comma separated)</label><input class="input" id="tagsInput" placeholder="python, client, active"></div>
+        <div class="field" style="margin-top:14px"><label>Collections</label><div class="collection-options" id="collectionOptions"></div></div>
+        <div class="tool-card" style="margin-top:14px"><h3>Create collection</h3><div class="filter-row"><input class="input" id="newCollectionName" placeholder="Collection name"><input class="input" id="newCollectionDescription" placeholder="Description"></div><button class="btn" type="button" id="createCollectionBtn" style="margin-top:8px">Create collection</button></div>
+        <div class="modal-actions"><button type="button" class="btn" data-close-modal="organizeModalBackdrop">Cancel</button><button class="btn primary" type="submit">Save organization</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="registryToolsBackdrop">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="registryToolsTitle">
+      <div class="modal-head"><div><h2 id="registryToolsTitle">Repository library tools</h2><div class="repo-path">Backup, transport, diagnose, and recover the local registry.</div></div><button class="btn icon" data-close-modal="registryToolsBackdrop">×</button></div>
+      <div class="modal-body">
+        <div class="tool-grid">
+          <div class="tool-card"><h3>SQLite backup</h3><p>Create an online backup without stopping ForgeTrace.</p><button class="btn" id="backupRegistryBtn">Create backup</button></div>
+          <div class="tool-card"><h3>Portable registry</h3><p>Export or merge repository registrations, tags, collections, and filters.</p><button class="btn" id="exportRegistryBtn">Export JSON</button> <button class="btn" id="importRegistryBtn">Import JSON</button><input id="registryImportInput" type="file" accept="application/json,.json" hidden></div>
+          <div class="tool-card" style="grid-column:1/-1"><h3>ForgeTrace doctor</h3><p>Validate SQLite, identities, paths, and metadata. Add a scan root to discover unregistered embedded repositories.</p><input class="input" id="doctorScanRoot" placeholder="Optional absolute folder to scan"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" id="doctorCheckBtn">Run check</button><button class="btn warning" id="doctorRepairBtn">Safe repair</button></div></div>
+        </div>
+        <div class="doctor-output" id="doctorOutput">No diagnostic run yet.</div>
+      </div>
+    </section>
+  </div>
+
+
+  <div class="modal-backdrop" id="collaborationModalBackdrop">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="collaborationModalTitle">
+      <div class="modal-head"><div><h2 id="collaborationModalTitle">Secure collaboration</h2><div class="repo-path">Create expiring repository-scoped invitations. Tokens are shown once.</div></div><button class="btn icon" data-close-modal="collaborationModalBackdrop">×</button></div>
+      <div class="modal-body">
+        <div class="security-banner"><strong style="color:var(--accent)">One launch, two isolated surfaces.</strong><br>The owner workspace stays on localhost. When you enable sharing here, ForgeTrace opens a second restricted listener that can serve only the contribution portal and token-scoped pull-request endpoints.</div>
+        <div class="tool-card" style="margin-top:14px">
+          <div class="gateway-head">
+            <div><h3>Contribution sharing</h3><p id="gatewayStatusText">Checking sharing status…</p></div>
+            <span class="gateway-status off" id="gatewayStatusPill">Off</span>
+          </div>
+          <div id="gatewayOffControls">
+            <div class="filter-row"><input class="input" id="gatewayPort" type="number" min="1024" max="65535" value="8766" aria-label="Contributor port"><button class="btn primary" id="startSharingBtn" type="button">Enable secure sharing</button></div>
+            <div class="repo-path" style="margin-top:7px">Port 8766 is recommended. Your operating system may ask whether Python can use the private network.</div>
+          </div>
+          <div class="hidden" id="gatewayOnControls">
+            <div class="gateway-url" id="gatewayBaseUrl">Detecting contributor address…</div>
+            <div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap"><button class="btn danger" id="stopSharingBtn" type="button">Stop sharing</button><button class="btn" id="refreshSharingBtn" type="button">Refresh address</button></div>
+          </div>
+          <details class="advanced-share">
+            <summary>Advanced: custom VPN or tunnel address</summary>
+            <div class="field" style="margin-top:9px"><label for="shareAddressOverride">Optional contributor base URL</label><input class="input" id="shareAddressOverride" placeholder="https://your-private-tunnel.example"><span class="repo-path">Leave blank to use the detected LAN address. This changes only the copied link; it does not configure TLS or a tunnel.</span></div>
+          </details>
+        </div>
+        <form id="inviteForm">
+          <div class="form-grid" style="margin-top:14px">
+            <div class="field full"><label for="inviteLabel">Invite label</label><input class="input" id="inviteLabel" placeholder="Alex — documentation changes"></div>
+            <div class="field"><label for="inviteHours">Expires after (hours)</label><input class="input" id="inviteHours" type="number" min="1" max="720" value="72"></div>
+            <div class="field"><label for="inviteUses">Maximum pull requests</label><input class="input" id="inviteUses" type="number" min="1" max="100" value="1"></div>
+            <div class="field"><label for="inviteFileMb">Maximum file size (MB)</label><input class="input" id="inviteFileMb" type="number" min="1" max="1024" value="100"></div>
+            <div class="field"><label for="inviteTotalMb">Maximum PR size (MB)</label><input class="input" id="inviteTotalMb" type="number" min="1" max="4096" value="1024"></div>
+            <label class="check full"><input type="checkbox" id="inviteAllowSource" checked><span>Permit a source-only ZIP of normal repository files. ForgeTrace/VCS metadata and machine paths are excluded.</span></label>
+            <label class="check full"><input type="checkbox" id="inviteAllowSensitiveSource"><span>Also include files flagged as potentially sensitive. Leave disabled unless the preview has been reviewed.</span></label>
+            <label class="check full"><input type="checkbox" id="inviteAllowDeletes" checked><span>Permit the contributor to request file deletions. Deletions still require local review and merge confirmation.</span></label>
+          </div>
+          <div class="modal-actions"><button class="btn primary" id="createInviteBtn" type="submit">Enable sharing + generate token link</button></div>
+        </form>
+        <div class="tool-card hidden" id="createdInviteCard" style="margin-top:14px"><h3>Copy this link now</h3><p>The raw token is not stored and cannot be shown again.</p><textarea class="input invite-link" id="createdInviteLink" readonly></textarea><button class="btn" id="copyInviteBtn" type="button" style="margin-top:8px">Copy link</button></div>
+        <div style="margin-top:18px"><div class="eyebrow">Existing invitations</div><div id="inviteList"></div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+  <script>
+    'use strict';
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => [...document.querySelectorAll(selector)];
+    const appState = { repositories: [], library: {collections:[],tags:[],savedFilters:[]}, filters: {query:'',tag:'',collectionId:'',status:'',favorite:''}, activeId: '', record: null, data: null, selectedPath: '', selectedFile: null, tab: 'files', busy: 0, pullRequests: [], selectedPr: null, invites: [], gateway: {enabled:false,baseUrls:[],publicBaseUrl:''}, newRepositorySource:'path', pendingRepositoryFiles:[], pendingEmptyFolders:[], pendingFolderRoot:'', expandedFolders:new Set(), selectedEntry:null, treeRows:[], treeRenderPending:false, currentJob:null, pendingLocalFolder:null, expandedMemory:new Map() };
+
+    function escapeHtml(value='') { return String(value).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
+    function encodePath(value) { return encodeURIComponent(value).replace(/%2F/g, '%2F'); }
+    function repoBase(id=appState.activeId) { return `/api/v1/repositories/${encodeURIComponent(id)}`; }
+    function author() { return ($('#authorInput').value || 'Repository Owner').trim(); }
+    function formatBytes(bytes=0) { if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'; const units=['B','KB','MB','GB','TB']; const i=Math.min(Math.floor(Math.log(bytes)/Math.log(1024)),units.length-1); return `${(bytes/1024**i).toFixed(i?1:0)} ${units[i]}`; }
+    function formatDate(value) { if (!value) return '—'; const date=new Date(value); return Number.isNaN(date.valueOf()) ? value : new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(date); }
+    function toast(message, error=false) { const el=document.createElement('div'); el.className=`toast${error?' error':''}`; el.textContent=message; $('#toastRegion').append(el); setTimeout(()=>el.remove(),4500); }
+    function setBusy(active, progress=0) { appState.busy += active ? 1 : -1; appState.busy=Math.max(0,appState.busy); $('#progressBar').style.width=appState.busy ? `${Math.max(12,progress)}%` : '0'; }
+
+    async function api(path, options={}) {
+      const init={...options,headers:{...(options.headers||{})}};
+      if (init.body && typeof init.body !== 'string' && !(init.body instanceof Blob) && !(init.body instanceof ArrayBuffer)) {
+        init.headers['Content-Type']='application/json'; init.body=JSON.stringify(init.body);
+      }
+      setBusy(true,20);
+      try {
+        const response=await fetch(path,init);
+        const contentType=response.headers.get('content-type')||'';
+        const payload=contentType.includes('application/json') ? await response.json() : await response.text();
+        if (!response.ok) throw new Error(payload?.error || `Request failed (${response.status})`);
+        return payload;
+      } finally { setBusy(false); }
+    }
+
+    async function loadVersion() {
+      try { const data=await api('/api/v1/version'); $('#versionLabel').textContent=data.version; } catch { $('#versionLabel').textContent='unknown'; }
+    }
+
+
+
+    async function loadLibrary() {
+      try { appState.library=await api('/api/v1/library'); }
+      catch { appState.library={collections:[],tags:[],savedFilters:[]}; }
+      renderLibraryControls();
+    }
+
+    function renderLibraryControls() {
+      const selectedTag=appState.filters.tag; const selectedCollection=appState.filters.collectionId;
+      $('#tagFilter').innerHTML='<option value="">All tags</option>'+appState.library.tags.map(item=>`<option value="${escapeHtml(item.tag)}" ${item.tag===selectedTag?'selected':''}>${escapeHtml(item.tag)} (${item.repositoryCount})</option>`).join('');
+      $('#collectionFilter').innerHTML='<option value="">All collections</option>'+appState.library.collections.map(item=>`<option value="${item.id}" ${item.id===selectedCollection?'selected':''}>${escapeHtml(item.name)} (${item.repositoryCount})</option>`).join('');
+      $('#savedFilters').innerHTML=appState.library.savedFilters.map(item=>`<span><button class="filter-chip" data-saved-filter-id="${item.id}" title="Apply ${escapeHtml(item.name)}">${escapeHtml(item.name)}</button><button class="filter-chip" data-delete-filter-id="${item.id}" title="Delete saved filter">×</button></span>`).join('');
+    }
+
+    function filteredRepositories() {
+      const query=appState.filters.query.trim().toLowerCase();
+      return appState.repositories.filter(record=>{
+        const haystack=[record.name,record.description,record.path,...(record.tags||[]),...(record.collections||[]).map(item=>item.name)].join(' ').toLowerCase();
+        if(query&&!haystack.includes(query))return false;
+        if(appState.filters.tag&&!(record.tags||[]).includes(appState.filters.tag))return false;
+        if(appState.filters.collectionId&&!(record.collections||[]).some(item=>item.id===appState.filters.collectionId))return false;
+        if(appState.filters.status&&record.status!==appState.filters.status)return false;
+        if(appState.filters.favorite!==''&&record.favorite!==(appState.filters.favorite==='1'))return false;
+        return true;
+      });
+    }
+
+    function applyLibraryFilters() {
+      appState.filters={query:$('#repoSearch').value,tag:$('#tagFilter').value,collectionId:$('#collectionFilter').value,status:$('#statusFilter').value,favorite:$('#favoriteFilter').value};
+      renderRepositoryNavigation();
+    }
+
+    async function loadRepositories(preferredId='') {
+      const data=await api('/api/v1/repositories');
+      appState.repositories=data.repositories||[];
+      appState.activeId=preferredId || data.activeRepositoryId || appState.repositories[0]?.id || '';
+      if (appState.activeId && !appState.repositories.some(r=>r.id===appState.activeId)) appState.activeId=appState.repositories[0]?.id||'';
+      renderRepositoryNavigation();
+      if (appState.activeId && appState.activeId !== data.activeRepositoryId) await api('/api/v1/active-repository',{method:'POST',body:{repositoryId:appState.activeId}});
+      await loadActiveRepository();
+    }
+
+    function renderRepositoryNavigation() {
+      $('#activeRepoSelect').innerHTML = appState.repositories.length
+        ? appState.repositories.map(r=>`<option value="${r.id}" ${r.id===appState.activeId?'selected':''}>${r.favorite?'★ ':''}${escapeHtml(r.name)} — ${r.status}</option>`).join('')
+        : '<option value="">No repositories registered</option>';
+      const visible=filteredRepositories();
+      $('#repoList').innerHTML = visible.length ? visible.map(r=>`
+        <button class="repo-item ${r.id===appState.activeId?'active':''}" data-repository-id="${r.id}">
+          <span class="status-dot ${r.status}"></span>
+          <span><strong>${escapeHtml(r.name)}</strong><span class="repo-path">${escapeHtml(r.path)}</span>${r.tags?.length?`<span class="repo-path">${r.tags.map(escapeHtml).join(' · ')}</span>`:''}</span>
+          <span class="favorite">${r.favorite?'★':''}</span>
+        </button>`).join('') : '<div class="repo-path" style="padding:12px">No repositories match this filter.</div>';
+    }
+
+    async function activateRepository(id) {
+      if (!id || id===appState.activeId) return;
+      await api('/api/v1/active-repository',{method:'POST',body:{repositoryId:id}});
+      appState.activeId=id; appState.selectedPath=''; appState.selectedFile=null; appState.selectedEntry=null; appState.pullRequests=[]; appState.selectedPr=null;
+      renderRepositoryNavigation();
+      await loadActiveRepository();
+    }
+
+    async function loadActiveRepository() {
+      $('#welcomeView').classList.toggle('hidden', Boolean(appState.activeId));
+      $('#workspaceView').classList.add('hidden'); $('#offlineView').classList.add('hidden');
+      appState.data=null; appState.record=appState.repositories.find(r=>r.id===appState.activeId)||null;
+      loadExpandedFolders();
+      if (!appState.record) return;
+      if (appState.record.status!=='online') { renderOffline(); return; }
+      try {
+        appState.data=await api(`${repoBase()}/state`);
+        await loadPullRequests(false);
+        renderWorkspace();
+      } catch (error) {
+        toast(error.message,true);
+        await refreshRegistryStatus();
+      }
+    }
+
+    async function refreshRegistryStatus() {
+      const data=await api('/api/v1/repositories');
+      appState.repositories=data.repositories||[];
+      appState.record=appState.repositories.find(r=>r.id===appState.activeId)||null;
+      renderRepositoryNavigation();
+      if (appState.record?.status==='online') await loadActiveRepository(); else renderOffline();
+    }
+
+    function renderOffline() {
+      const r=appState.record;
+      $('#offlineView').innerHTML=`<article class="offline-card"><div class="repo-title-row"><h2>${escapeHtml(r.name)}</h2><span class="badge ${r.status}">${escapeHtml(r.status)}</span></div><p>${escapeHtml(r.statusMessage||'This repository is unavailable.')}</p><div class="path-chip">${escapeHtml(r.path)}</div><div class="hero-actions" style="justify-content:flex-start;margin-top:18px">${r.status==='uninitialized'?'<button class="btn primary" data-offline-action="initialize">Initialize repository</button>':'<button class="btn primary" data-offline-action="relink">Relink repository</button>'}<button class="btn" data-offline-action="refresh">Check again</button><button class="btn danger" data-offline-action="unregister">Unregister only</button></div></article>`;
+      $('#offlineView').classList.remove('hidden');
+    }
+
+    function renderWorkspace() {
+      const summary=appState.data.summary; const meta=summary.repository; const stats=summary.stats;
+      $('#workspaceView').classList.remove('hidden');
+      $('#repoTitle').textContent=meta.name||appState.record.name;
+      $('#repoDescription').textContent=meta.description||'No repository description yet.';
+      $('#repoPath').textContent=appState.record.path;
+      $('#repoStatusBadge').textContent=appState.record.status; $('#repoStatusBadge').className=`badge ${appState.record.status}`;
+      $('#favoriteBtn').textContent=appState.record.favorite?'★ Favorited':'☆ Favorite';
+      $('#repoOrganization').innerHTML=[...(appState.record.collections||[]).map(item=>`<span class="meta-chip collection">${escapeHtml(item.name)}</span>`),...(appState.record.tags||[]).map(item=>`<span class="meta-chip tag">#${escapeHtml(item)}</span>`)].join('') || '<span class="meta-chip">No tags or collections</span>';
+      $('#statFiles').textContent=stats.files; $('#statFolders').textContent=stats.folders; $('#statBytes').textContent=formatBytes(stats.bytes);
+      $('#statCommits').textContent=stats.commits; $('#statContributions').textContent=stats.contributions; $('#statDirty').textContent=stats.dirtyFiles;
+      renderFiles(); renderActivity(); renderSnapshots(); renderPullRequests(); renderEditor(); setTab(appState.tab);
+    }
+
+    function expandedFolderKey(){return `forgetrace-expanded-folders:${appState.activeId||'none'}`;}
+    function loadExpandedFolders(){
+      const key=expandedFolderKey();
+      const memory=appState.expandedMemory.get(key)||new Set();
+      try{
+        const raw=localStorage.getItem(key);
+        const stored=raw===null?null:JSON.parse(raw);
+        appState.expandedFolders=new Set(Array.isArray(stored)?stored:[...memory]);
+      }catch{appState.expandedFolders=new Set(memory);}
+      appState.expandedMemory.set(key,new Set(appState.expandedFolders));
+    }
+    function saveExpandedFolders(){
+      const key=expandedFolderKey();
+      appState.expandedMemory.set(key,new Set(appState.expandedFolders));
+      try{localStorage.setItem(key,JSON.stringify([...appState.expandedFolders]));return true;}
+      catch(error){toast(`Folder expansion could not be remembered after restart: ${error.message}`,true);return false;}
+    }
+    function parentPaths(path){const parts=path.split('/');const parents=[];for(let i=1;i<parts.length;i++)parents.push(parts.slice(0,i).join('/'));return parents;}
+    function visibleTreeRows(){
+      const filter=$('#fileSearch').value.trim().toLowerCase(); const tree=appState.data?.tree||[];
+      if(filter){const included=new Set();tree.forEach(item=>{if(item.path.toLowerCase().includes(filter)){included.add(item.path);parentPaths(item.path).forEach(parent=>included.add(parent));if(item.type==='folder')tree.forEach(child=>{if(child.path.startsWith(item.path+'/'))included.add(child.path);});}});return tree.filter(item=>included.has(item.path));}
+      return tree.filter(item=>parentPaths(item.path).every(parent=>appState.expandedFolders.has(parent)));
+    }
+    function renderFiles() {
+      const container=$('#tree'); const rows=visibleTreeRows(); appState.treeRows=rows;
+      if(!rows.length){container.innerHTML='<div class="editor-empty" style="min-height:220px"><div><strong>No matching paths</strong>Import files or create a new file to begin.</div></div>';return;}
+      const rowHeight=38; const viewport=Math.max(220,container.clientHeight||650); const overscan=20;
+      const start=Math.max(0,Math.floor(container.scrollTop/rowHeight)-overscan); const count=Math.ceil(viewport/rowHeight)+overscan*2; const end=Math.min(rows.length,start+count);
+      const body=rows.slice(start,end).map(item=>{
+        const depth=Number.isFinite(item.depth)?item.depth:(item.path.match(/\//g)||[]).length; const expanded=appState.expandedFolders.has(item.path); const icon=item.type==='folder'?(expanded?'▾':'▸'):'·';
+        return `<button class="file-row ${item.path===appState.selectedPath?'active':''}" data-file-path="${escapeHtml(item.path)}" data-file-type="${item.type}" ${item.type==='folder'?`aria-expanded="${expanded}"`:''} style="height:${rowHeight}px;padding-left:${12+depth*14}px"><span class="file-icon">${icon}</span><span class="file-name">${escapeHtml(item.name)}</span><span class="file-size">${item.type==='file'?formatBytes(item.size):''}</span></button>`;
+      }).join('');
+      container.innerHTML=`<div class="tree-spacer" style="height:${start*rowHeight}px"></div>${body}<div class="tree-spacer" style="height:${(rows.length-end)*rowHeight}px"></div>`;
+    }
+
+    function renderEditor() {
+      const file=appState.selectedFile; const entry=appState.selectedEntry;
+      $('#editorPath').textContent=appState.selectedPath||'Select a file or folder';
+      $('#renameBtn').disabled=!entry; $('#deleteBtn').disabled=!entry; $('#downloadBtn').disabled=!file; $('#saveBtn').disabled=!file?.editable;
+      $('#editorEmpty').classList.toggle('hidden',Boolean(file)); $('#code').classList.add('hidden'); $('#binaryCard').classList.add('hidden');
+      if (!file) {
+        $('#editorEmpty').innerHTML=entry?.type==='folder'
+          ? `<div><strong>${escapeHtml(entry.name)}</strong>Folder selected. Rename or delete it using the controls above.</div>`
+          : '<div><strong>Select a file or folder</strong>Choose an entry from the repository tree to inspect or edit it.</div>';
+        return;
+      }
+      if (file.editable) { $('#code').value=file.content||''; $('#code').classList.remove('hidden'); }
+      else { $('#binaryCard').innerHTML=`<div class="empty-mark" style="width:52px;height:52px">↓</div><h3>${escapeHtml(file.name)}</h3><p style="color:var(--muted)">${escapeHtml(file.mime||'Binary file')} · ${formatBytes(file.size)}</p><button class="btn primary" data-binary-download>Download file</button>`; $('#binaryCard').classList.remove('hidden'); }
+    }
+
+    async function selectPath(path,type) {
+      appState.selectedPath=path; appState.selectedEntry=(appState.data?.tree||[]).find(item=>item.path===path)||{path,type,name:path.split('/').pop()};
+      if (type==='folder') {
+        if(appState.expandedFolders.has(path))appState.expandedFolders.delete(path);else appState.expandedFolders.add(path);
+        saveExpandedFolders(); appState.selectedFile=null; renderFiles(); renderEditor(); return;
+      }
+      try { appState.selectedFile=await api(`${repoBase()}/file?path=${encodePath(path)}`); renderFiles(); renderEditor(); }
+      catch(error){ toast(error.message,true); }
+    }
+
+    function actionSymbol(action='') { const map={repository_created:'R',file_uploaded:'↑',file_saved:'✎',file_created:'+',folder_created:'▸',path_renamed:'↔',path_deleted:'×',commit_created:'◆',commit_restored:'↶',pull_request_merged:'⇢'}; return map[action]||'·'; }
+    function renderActivity() {
+      const list=appState.data?.contributions||[];
+      $('#activity').innerHTML=list.length?list.map(item=>`<article class="feed-item"><div class="feed-symbol">${actionSymbol(item.action)}</div><div><div class="feed-title">${escapeHtml(item.title||item.action)}</div><div class="feed-meta">${escapeHtml(item.description||'')}<br>${escapeHtml(item.author||'Unknown')} ${item.path?'· '+escapeHtml(item.path):''}</div></div><time class="feed-time">${formatDate(item.timestamp)}</time></article>`).join(''):'<div class="editor-empty"><div><strong>No contributions yet</strong>File operations and snapshots will appear here.</div></div>';
+    }
+    function renderSnapshots() {
+      const commits=appState.data?.commits||[];
+      $('#commits').innerHTML=commits.length?commits.map(commit=>`<article class="feed-item"><div class="feed-symbol">◆</div><div><div class="feed-title">${escapeHtml(commit.message)}</div><div class="feed-meta"><span style="font-family:var(--mono)">${escapeHtml(commit.id)}</span> · ${escapeHtml(commit.author)} · ${commit.fileCount} files · ${formatBytes(commit.totalBytes)}</div><div class="change-list"><span class="change added">+${commit.changes?.added?.length||0}</span><span class="change modified">~${commit.changes?.modified?.length||0}</span><span class="change deleted">−${commit.changes?.deleted?.length||0}</span></div></div><div><time class="feed-time">${formatDate(commit.timestamp)}</time><br><button class="btn warning" style="margin-top:8px" data-restore-id="${commit.id}">Restore</button></div></article>`).join(''):'<div class="editor-empty"><div><strong>No snapshots yet</strong>Create a snapshot to preserve the current repository state.</div></div>';
+    }
+
+    async function loadPullRequests(showToast=false) {
+      if(!appState.activeId || appState.record?.status!=='online'){appState.pullRequests=[];renderPullRequests();return;}
+      try {
+        const payload=await api(`${repoBase()}/pull-requests`);
+        appState.pullRequests=payload.pullRequests||[];
+        if(appState.selectedPr){
+          const stillExists=appState.pullRequests.some(item=>item.id===appState.selectedPr.id);
+          if(stillExists) await selectPullRequest(appState.selectedPr.id,false); else appState.selectedPr=null;
+        }
+        renderPullRequests();
+        if(showToast)toast('Pull requests refreshed.');
+      } catch(error){appState.pullRequests=[];renderPullRequests();if(showToast)toast(error.message,true);}
+    }
+
+    function renderPullRequests() {
+      const list=appState.pullRequests||[];
+      const openCount=list.filter(item=>['open','approved','changes_requested','conflict'].includes(item.status)).length;
+      $('#prTabCount').textContent=openCount?`(${openCount})`:'';
+      $('#pullRequestList').innerHTML=list.length?list.map(item=>`<button class="pr-row ${appState.selectedPr?.id===item.id?'active':''}" data-pr-id="${item.id}"><div class="pr-row-title">#${item.number} ${escapeHtml(item.title)}</div><div class="pr-row-meta">${escapeHtml(item.authorName)} · ${item.changeCount} changes · ${formatDate(item.updatedAt)}</div><span class="pr-status ${item.status}">${escapeHtml(item.status.replaceAll('_',' '))}</span></button>`).join(''):'<div class="editor-empty" style="min-height:220px"><div><strong>No pull requests</strong>Create a secure invite to accept quarantined contributions.</div></div>';
+      if(!appState.selectedPr)$('#pullRequestDetail').innerHTML='<div class="editor-empty"><div><strong>No pull request selected</strong>Create an invite or select an incoming pull request to review its exact changes.</div></div>';
+    }
+
+    async function selectPullRequest(id,showErrors=true) {
+      try { appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(id)}`); renderPullRequests(); renderPullRequestDetail(); }
+      catch(error){if(showErrors)toast(error.message,true);}
+    }
+
+    function renderPullRequestDetail() {
+      const pr=appState.selectedPr;if(!pr)return;
+      const status=pr.effectiveStatus||pr.status;
+      const conflicts=(pr.conflicts||[]).map(item=>`<div class="review-card"><strong>${escapeHtml(item.path)}</strong><br>${escapeHtml(item.reason)}<br><span style="font-family:var(--mono)">base ${escapeHtml((item.baseHash||'new').slice(0,12))} · current ${escapeHtml((item.currentHash||'missing').slice(0,12))}</span></div>`).join('');
+      const files=(pr.files||[]).map(file=>`<article class="diff-card"><div class="diff-head"><span>${escapeHtml(file.path)}</span><span>${file.risky?'<strong style="color:var(--warning)">RISKY FILE</strong> · ':''}${formatBytes(file.size)}</span></div>${file.diff?`<pre class="diff">${escapeHtml(file.diff)}</pre>`:`<div class="feed-meta" style="padding:14px">Binary, large, or unchanged text preview. SHA-256: <span style="font-family:var(--mono)">${escapeHtml(file.sha256)}</span></div>`}</article>`).join('');
+      const deletions=(pr.deletions||[]).map(item=>`<article class="diff-card"><div class="diff-head"><span>${escapeHtml(item.path)}</span><strong style="color:var(--danger)">DELETE</strong></div><div class="feed-meta" style="padding:14px">This baseline file will be deleted only if the pull request is merged locally.</div></article>`).join('');
+      const reviews=(pr.reviews||[]).map(review=>`<div class="review-card"><strong>${escapeHtml(review.reviewer)}</strong> · ${escapeHtml(review.verdict.replaceAll('_',' '))}<br>${escapeHtml(review.comment||'No comment')}<br><span class="feed-time">${formatDate(review.created_at)}</span></div>`).join('')||'<div class="feed-meta">No reviews yet.</div>';
+      const reviewable=['open','approved','changes_requested'].includes(pr.status);const mergeable=pr.status==='approved'&&!(pr.conflicts||[]).length;
+      $('#pullRequestDetail').innerHTML=`
+        <div class="repo-title-row"><h2>#${pr.number} ${escapeHtml(pr.title)}</h2><span class="pr-status ${status}">${escapeHtml(status.replaceAll('_',' '))}</span></div>
+        <div class="feed-meta">Opened by ${escapeHtml(pr.authorName)} · base snapshot <span style="font-family:var(--mono)">${escapeHtml(pr.baseCommitId)}</span> · revision ${pr.revision}</div>
+        <p style="color:var(--muted);line-height:1.55">${escapeHtml(pr.description||'No description provided.')}</p>
+        <div class="pr-summary"><span class="meta-chip">${pr.fileCount} uploads</span><span class="meta-chip">${pr.deletionCount} deletions</span><span class="meta-chip">${formatBytes(pr.totalBytes)}</span>${pr.riskyFileCount?`<span class="meta-chip" style="color:var(--warning)">${pr.riskyFileCount} risky files</span>`:''}</div>
+        <div class="security-banner">The files below are in ForgeTrace’s application-data quarantine, not the live repository. Merge creates a safety snapshot, rechecks baseline hashes, applies changes under the repository lock, and creates a merge snapshot.</div>
+        ${(pr.conflicts||[]).length?`<div class="security-banner conflict-banner" style="margin-top:10px"><strong>Merge conflict detected.</strong> The owner changed one or more affected paths after this pull request began.${conflicts}</div>`:''}
+        <div class="actions" style="margin-top:12px">${reviewable?'<button class="btn primary" data-pr-review="approved">Approve</button><button class="btn warning" data-pr-review="changes_requested">Request changes</button><button class="btn" data-pr-review="comment">Comment</button>':''}${mergeable?'<button class="btn primary" data-pr-merge>Merge locally</button>':''}${!['merged','closed'].includes(pr.status)?'<button class="btn danger" data-pr-close>Close</button>':''}</div>
+        <h3 style="margin-top:20px">Changes</h3>${files}${deletions||''}${!files&&!deletions?'<div class="editor-empty"><div>No staged changes.</div></div>':''}
+        <h3 style="margin-top:20px">Reviews</h3>${reviews}`;
+    }
+
+    async function reviewPullRequest(verdict) {
+      const pr=appState.selectedPr;if(!pr)return;const promptText=verdict==='approved'?'Approval note (optional):':verdict==='changes_requested'?'What must the contributor change?':'Review comment:';const comment=prompt(promptText,'');if(comment===null)return;
+      try{appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/review`,{method:'POST',body:{reviewer:author(),verdict,comment}});await loadPullRequests(false);renderPullRequestDetail();toast(`Review recorded: ${verdict.replaceAll('_',' ')}.`);}catch(error){toast(error.message,true);}
+    }
+
+    async function mergePullRequest() {
+      const pr=appState.selectedPr;if(!pr)return;const phrase=`MERGE #${pr.number}`;const confirmation=prompt(`Type ${phrase} to merge this quarantined change set into the local repository:`);if(confirmation===null)return;const allowRisky=pr.riskyFileCount?confirm(`This pull request contains ${pr.riskyFileCount} executable or script-like file(s). ForgeTrace will not run them. Approve these files for merge?`):false;
+      try{appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/merge`,{method:'POST',body:{mergedBy:author(),confirmation,expectedRevision:pr.revision,allowRiskyFiles:allowRisky}});await loadRepositories(appState.activeId);appState.tab='pullrequests';setTab('pullrequests');toast(`Pull request #${pr.number} merged with a safety snapshot.`);}catch(error){toast(error.message,true);await selectPullRequest(pr.id,false);}
+    }
+
+    async function closePullRequest() { const pr=appState.selectedPr;if(!pr||!confirm(`Close pull request #${pr.number} without merging?`))return;try{appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/close`,{method:'POST'});await loadPullRequests(false);renderPullRequestDetail();toast(`Pull request #${pr.number} closed.`);}catch(error){toast(error.message,true);} }
+
+    function renderSharingStatus(){const gateway=appState.gateway||{enabled:false};const enabled=Boolean(gateway.enabled);$('#gatewayStatusPill').textContent=enabled?'On':'Off';$('#gatewayStatusPill').className=`gateway-status ${enabled?'on':'off'}`;$('#gatewayOffControls').classList.toggle('hidden',enabled);$('#gatewayOnControls').classList.toggle('hidden',!enabled);$('#createInviteBtn').textContent=enabled?'Generate secure token link':'Enable sharing + generate token link';if(enabled){const base=gateway.publicBaseUrl||gateway.baseUrls?.[0]||'';$('#gatewayStatusText').textContent=`Restricted contributor listener is active on port ${gateway.port}. Owner APIs remain unreachable from this port.`;$('#gatewayBaseUrl').textContent=base||'Sharing is active, but ForgeTrace could not detect a LAN address. Add a custom VPN/tunnel address below.';$('#gatewayPort').value=gateway.port||8766;}else{$('#gatewayStatusText').textContent='Sharing is off. No contributor listener is accepting network connections.';$('#gatewayBaseUrl').textContent='';}}
+    async function loadSharingStatus(){appState.gateway=await api('/api/v1/sharing');renderSharingStatus();return appState.gateway;}
+    async function startSharing(showMessage=true){const port=Number($('#gatewayPort').value||8766);appState.gateway=await api('/api/v1/sharing/start',{method:'POST',body:{port}});renderSharingStatus();if(showMessage)toast('Secure contribution sharing enabled.');return appState.gateway;}
+    async function stopSharing(){if(!confirm('Stop accepting contributor connections? Existing invitations and pull requests remain stored, but links will be unreachable until sharing is enabled again.'))return;try{appState.gateway=await api('/api/v1/sharing/stop',{method:'POST',body:{}});renderSharingStatus();toast('Contribution sharing stopped.');}catch(error){toast(error.message,true);}}
+    function sharingBaseUrl(){const override=$('#shareAddressOverride').value.trim().replace(/\/$/,'');if(override){localStorage.setItem('forgetrace-share-override',override);return override;}localStorage.removeItem('forgetrace-share-override');const detected=appState.gateway?.publicBaseUrl||appState.gateway?.baseUrls?.[0]||'';if(!detected)throw new Error('Sharing is running, but no LAN address was detected. Open Advanced and enter a private VPN or tunnel base URL.');return detected.replace(/\/$/,'');}
+    async function openCollaboration() { if(!appState.activeId)return;$('#inviteAllowSensitiveSource').checked=false;$('#shareAddressOverride').value=localStorage.getItem('forgetrace-share-override')||'';$('#createdInviteCard').classList.add('hidden');openModal('collaborationModalBackdrop');try{await Promise.all([loadInvites(),loadSharingStatus()]);}catch(error){toast(error.message,true);} }
+    async function loadInvites(){try{const result=await api(`${repoBase()}/collaboration/invites`);appState.invites=result.invites||[];renderInvites();}catch(error){toast(error.message,true);} }
+    function renderInvites(){const list=appState.invites||[];$('#inviteList').innerHTML=list.length?list.map(item=>`<div class="invite-row"><div><strong>${escapeHtml(item.label||'Unnamed invite')}</strong><div class="feed-meta">${item.active?'Active':item.revoked?'Revoked':item.expired?'Expired':'Exhausted'} · ${item.uses}/${item.maxUses} used · expires ${formatDate(item.expiresAt)} · ${formatBytes(item.maxFileBytes)} per file · source ${item.allowSourceDownload?'enabled':'blocked'}</div></div>${item.active?`<button class="btn danger" data-revoke-invite="${item.id}">Revoke</button>`:''}</div>`).join(''):'<div class="feed-meta" style="padding:12px 0">No invitations created for this repository.</div>';}
+    async function createInvite(event){
+      event.preventDefault();
+      try{
+        const allowSource=$('#inviteAllowSource').checked;
+        const allowSensitive=allowSource&&$('#inviteAllowSensitiveSource').checked;
+        if(allowSensitive){
+          const preview=await api(`${repoBase()}/export-preview?vcs=0`);
+          const sensitive=preview.sensitiveFiles||[];
+          if(sensitive.length){
+            const sample=sensitive.slice(0,8).map(item=>item.path).join('\n');
+            if(!confirm(`This invitation can download ${sensitive.length} potentially sensitive file(s):\n\n${sample}${sensitive.length>8?'\n…':''}\n\nCreate the invitation with sensitive-source access?`))return;
+          }
+        }
+        if(!appState.gateway?.enabled)await startSharing(false);
+        const base=sharingBaseUrl();
+        const result=await api(`${repoBase()}/collaboration/invites`,{method:'POST',body:{
+          label:$('#inviteLabel').value,
+          expiresInHours:Number($('#inviteHours').value),
+          maxUses:Number($('#inviteUses').value),
+          maxFileBytes:Number($('#inviteFileMb').value)*1024*1024,
+          maxTotalBytes:Number($('#inviteTotalMb').value)*1024*1024,
+          allowDeletes:$('#inviteAllowDeletes').checked,
+          allowSourceDownload:allowSource,
+          allowSensitiveSource:allowSensitive,
+        }});
+        const link=`${base}${result.sharePath}`;
+        $('#createdInviteLink').value=link;
+        $('#createdInviteCard').classList.remove('hidden');
+        await loadInvites();
+        toast('Secure sharing is active and the token link is ready. Copy it now; the raw token is not stored.');
+      }catch(error){toast(error.message,true);}
+    }
+    async function copyInvite(){try{await navigator.clipboard.writeText($('#createdInviteLink').value);toast('Invite link copied.');}catch{ $('#createdInviteLink').select();document.execCommand('copy');toast('Invite link copied.');}}
+    async function revokeInvite(id){if(!confirm('Revoke this invitation? Existing pull requests remain reviewable, but the token can no longer create new requests.'))return;try{await api(`${repoBase()}/collaboration/invites/${encodeURIComponent(id)}`,{method:'DELETE'});await loadInvites();toast('Invite revoked.');}catch(error){toast(error.message,true);}}
+
+    function setTab(name) { appState.tab=name; $$('.tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===name)); $$('.tab-panel').forEach(panel=>panel.classList.toggle('hidden',panel.id!==`tab-${name}`)); }
+    async function refreshState(message='') { if (message) toast(message); appState.selectedFile=null; appState.selectedEntry=null; await loadRepositories(appState.activeId); }
+
+    function normalizeRepositoryRelativePath(value='') {
+      return String(value||'').replace(/\\/g,'/').replace(/^\/+|\/+$/g,'').split('/').filter(part=>part&&part!=='.').join('/');
+    }
+    function uploadItem(file, relativePath='') {
+      return {file,relativePath:normalizeRepositoryRelativePath(relativePath||file?.webkitRelativePath||file?.name||'')};
+    }
+    function selectionFromFileList(files, folderSelection=false) {
+      // Snapshot the File objects before the input is reset. Some browsers revoke or
+      // truncate directory selections when the input value is cleared too early.
+      const snapshot=Array.from(files||[]).filter(Boolean);
+      const items=snapshot.map(file=>uploadItem(file,file.webkitRelativePath||file.name));
+      const relativePaths=items.map(item=>item.relativePath).filter(Boolean);
+      const rootName=folderSelection?normalizeRepositoryRelativePath(relativePaths[0]||'').split('/')[0]:'';
+      if(folderSelection){
+        if(!items.length)throw new Error('No files were discovered inside that folder.');
+        const missingRelative=items.filter(item=>!String(item.file?.webkitRelativePath||item.relativePath||'').includes('/'));
+        if(missingRelative.length===items.length)throw new Error('This browser did not provide recursive folder paths. Use Chrome or Edge, or choose the files individually.');
+        const duplicatePaths=relativePaths.filter((path,index)=>relativePaths.indexOf(path)!==index);
+        if(duplicatePaths.length)throw new Error(`The folder selection contained duplicate paths, including ${duplicatePaths[0]}.`);
+      }
+      return {items,emptyFolders:[],folderSelection,rootName};
+    }
+    async function collectDirectoryRecursively(rootHandle) {
+      const items=[]; const emptyFolders=[]; const rootName=normalizeRepositoryRelativePath(rootHandle?.name||'Imported folder');
+      async function walk(directoryHandle, parts) {
+        const entries=[];
+        for await (const pair of directoryHandle.entries()) entries.push(pair);
+        entries.sort((a,b)=>String(a[0]).localeCompare(String(b[0]),undefined,{numeric:true,sensitivity:'base'}));
+        if(!entries.length){emptyFolders.push(parts.join('/'));return;}
+        for(const [name,entry] of entries){
+          const next=[...parts,name];
+          if(entry.kind==='directory')await walk(entry,next);
+          else if(entry.kind==='file')items.push(uploadItem(await entry.getFile(),next.join('/')));
+        }
+      }
+      await walk(rootHandle,[rootName]);
+      return {items,emptyFolders,folderSelection:true,rootName};
+    }
+    async function chooseDirectoryRecursively(fallbackInput,onSelected) {
+      // Prefer the explicit directory-handle walker because ForgeTrace controls the recursion
+      // and can preserve empty folders. webkitdirectory remains the broad compatibility path.
+      if(typeof window.showDirectoryPicker==='function'){
+        try{
+          const handle=await window.showDirectoryPicker({mode:'read'});
+          const selection=await collectDirectoryRecursively(handle);
+          if(!selection.items.length&&!selection.emptyFolders.length)throw new Error('The selected folder is empty.');
+          await onSelected(selection);
+          return;
+        }catch(error){
+          if(error?.name==='AbortError')return;
+          toast(`The recursive folder picker could not read that folder: ${error.message}`,true);
+          return;
+        }
+      }
+      if('webkitdirectory' in fallbackInput){fallbackInput.click();return;}
+      toast('Recursive folder selection is not supported by this browser. Use Chrome or Edge.',true);
+    }
+    function repositoryImportPath(item, source) {
+      const file=item?.file||item; const relative=normalizeRepositoryRelativePath(item?.relativePath||file?.webkitRelativePath||file?.name||'');
+      if(source==='folder'&&relative.includes('/'))return relative.split('/').slice(1).join('/');
+      return source==='files'?(file?.name||relative):relative;
+    }
+    function repositoryImportFolderPath(path,source){
+      const relative=normalizeRepositoryRelativePath(path);
+      if(source==='folder'&&relative.includes('/'))return relative.split('/').slice(1).join('/');
+      return source==='folder'?'':relative;
+    }
+    function expectedRepositoryPaths(items,source='preserve'){
+      return (items||[]).map(item=>repositoryImportPath(item,source)).filter(Boolean);
+    }
+    function expectedRepositoryFolders(emptyFolders,source='preserve'){
+      return (emptyFolders||[]).map(path=>repositoryImportFolderPath(path,source)).filter(Boolean);
+    }
+    function folderParents(paths){
+      const parents=new Set();
+      for(const path of paths||[])parentPaths(path).forEach(parent=>parents.add(parent));
+      return [...parents];
+    }
+    function rememberExpandedImport(repositoryId,paths){
+      const key=`forgetrace-expanded-folders:${repositoryId}`;
+      let saved=[];try{saved=JSON.parse(localStorage.getItem(key)||'[]');}catch{}
+      const expanded=new Set(Array.isArray(saved)?saved:[]);
+      folderParents(paths).forEach(path=>expanded.add(path));
+      appState.expandedMemory.set(key,new Set(expanded));
+      try{localStorage.setItem(key,JSON.stringify([...expanded]));}catch(error){toast(`Import succeeded; folder expansion will remain available for this session but could not be saved for restart: ${error.message}`,true);}
+      if(repositoryId===appState.activeId)appState.expandedFolders=expanded;
+    }
+    function setFolderImportReport(message,error=false){
+      const report=$('#folderImportReport');
+      report.classList.toggle('hidden',!message);report.classList.toggle('error',Boolean(error));report.innerHTML=message||'';
+    }
+    async function verifyRepositoryImport(repositoryId,filePaths,folderPaths=[]){
+      const state=await api(`/api/v1/repositories/${encodeURIComponent(repositoryId)}/state`);
+      const files=new Set((state.tree||[]).filter(item=>item.type==='file').map(item=>item.path));
+      const folders=new Set((state.tree||[]).filter(item=>item.type==='folder').map(item=>item.path));
+      return {state,missingFiles:filePaths.filter(path=>!files.has(path)),missingFolders:folderPaths.filter(path=>!folders.has(path))};
+    }
+    async function uploadFilesToRepository(repositoryId, items, source='preserve', message='Uploaded from ForgeTrace', emptyFolders=[]) {
+      if(!items?.length&&!emptyFolders?.length)return {completed:0,verified:0,createdFolders:0,errors:[],missingFiles:[],missingFolders:[],expectedPaths:[]};
+      const base=`/api/v1/repositories/${encodeURIComponent(repositoryId)}`;
+      const filePaths=expectedRepositoryPaths(items,source);const folderPaths=expectedRepositoryFolders(emptyFolders,source);
+      const errorsByPath=new Map();let completed=0;let createdFolders=0;let processed=0;const total=Math.max(1,items.length+emptyFolders.length);
+      setFolderImportReport(`<strong>Uploading ${items.length} discovered file${items.length===1?'':'s'}…</strong><br>ForgeTrace will verify every nested path after transfer.`);
+      for(const folder of emptyFolders){
+        const path=repositoryImportFolderPath(folder,source);if(!path){processed++;continue;}
+        try{await api(`${base}/folder`,{method:'POST',body:{path,author:author()}});createdFolders++;errorsByPath.delete(path);}
+        catch(error){if(!/already exists/i.test(error.message))errorsByPath.set(path,error.message);}
+        processed++;$('#progressBar').style.width=`${Math.round(processed/total*100)}%`;
+      }
+      async function uploadOne(item,isRetry=false){
+        const file=item?.file||item;const path=repositoryImportPath(item,source);
+        if(!path){errorsByPath.set(file?.name||'File','No usable repository path');return false;}
+        try{
+          await api(`${base}/upload?path=${encodePath(path)}&author=${encodeURIComponent(author())}&message=${encodeURIComponent(isRetry?`${message} (automatic verification retry)`:message)}`,{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:file});
+          errorsByPath.delete(path);return true;
+        }catch(error){errorsByPath.set(path,error.message);return false;}
+      }
+      for(const item of items){if(await uploadOne(item))completed++;processed++;$('#progressBar').style.width=`${Math.round(processed/total*100)}%`;}
+      let verification=await verifyRepositoryImport(repositoryId,filePaths,folderPaths);
+      if(verification.missingFiles.length){
+        const missing=new Set(verification.missingFiles);
+        setFolderImportReport(`<strong>Verifying nested files…</strong><br>${missing.size} path${missing.size===1?' is':'s are'} missing after the first pass; retrying automatically.`);
+        for(const item of items){const path=repositoryImportPath(item,source);if(missing.has(path))await uploadOne(item,true);}
+        verification=await verifyRepositoryImport(repositoryId,filePaths,folderPaths);
+      }
+      const errors=[...errorsByPath].map(([path,message])=>`${path}: ${message}`);
+      rememberExpandedImport(repositoryId,[...filePaths,...folderPaths]);
+      const verified=filePaths.length-verification.missingFiles.length;
+      const failed=verification.missingFiles.length+verification.missingFolders.length;
+      setFolderImportReport(failed
+        ? `<strong>Import incomplete: ${verified} of ${filePaths.length} files verified.</strong><br>Missing: ${escapeHtml([...verification.missingFiles,...verification.missingFolders].slice(0,5).join(', '))}${failed>5?` and ${failed-5} more`:''}`
+        : `<strong>Import verified: all ${verified} files are present.</strong><br>Every discovered nested path was confirmed in the repository tree.`,Boolean(failed));
+      setTimeout(()=>{$('#progressBar').style.width='0';},600);
+      return {completed,verified,createdFolders,errors,missingFiles:verification.missingFiles,missingFolders:verification.missingFolders,expectedPaths:[...filePaths,...folderPaths]};
+    }
+    async function uploadSelection(selection) {
+      const items=selection?.items||[];if((!items.length&&!selection?.emptyFolders?.length)||!appState.activeId)return;
+      const result=await uploadFilesToRepository(appState.activeId,items,'preserve','Uploaded from ForgeTrace',selection.emptyFolders||[]);
+      await refreshState(`Verified ${result.verified} of ${items.length} selected file${items.length===1?'':'s'}.`);
+      if(result.missingFiles.length||result.missingFolders.length)toast(`Folder import is incomplete. Missing paths are listed below the toolbar.`,true);
+      else if(result.errors.length)toast(`All selected files were verified, but some upload attempts required recovery: ${result.errors.slice(0,3).join(' · ')}`,true);
+    }
+    async function uploadFiles(files) { return uploadSelection(selectionFromFileList(files,false)); }
+    async function saveSelectedFile() { if (!appState.selectedFile?.editable) return; try { await api(`${repoBase()}/file`,{method:'PUT',body:{path:appState.selectedPath,content:$('#code').value,author:author(),message:`Updated ${appState.selectedPath}`}}); await refreshState(`Saved ${appState.selectedPath}.`); } catch(error){toast(error.message,true);} }
+    async function createFile() { const path=prompt('New file path (for example src/main.py):'); if (!path) return; try { await api(`${repoBase()}/file`,{method:'PUT',body:{path,content:'',author:author(),message:`Created ${path}`}}); await refreshState(`Created ${path}.`); await selectPath(path,'file'); } catch(error){toast(error.message,true);} }
+    async function createFolder() { const path=prompt('New folder path:'); if (!path) return; try { await api(`${repoBase()}/folder`,{method:'POST',body:{path,author:author()}}); await refreshState(`Created folder ${path}.`); } catch(error){toast(error.message,true);} }
+    async function renameSelected() { if (!appState.selectedPath) return; const next=prompt('New repository-relative path:',appState.selectedPath); if (!next||next===appState.selectedPath) return; try { await api(`${repoBase()}/rename`,{method:'POST',body:{path:appState.selectedPath,newPath:next,author:author()}}); appState.selectedPath=''; appState.selectedEntry=null; await refreshState(`Renamed path to ${next}.`); } catch(error){toast(error.message,true);} }
+    async function deleteSelected() { if (!appState.selectedPath||!confirm(`Delete ${appState.selectedPath}? This removes it from disk. A prior snapshot can restore it.`)) return; try { await api(`${repoBase()}/path?path=${encodePath(appState.selectedPath)}&author=${encodeURIComponent(author())}`,{method:'DELETE'}); appState.selectedPath=''; appState.selectedEntry=null; await refreshState('Path deleted.'); } catch(error){toast(error.message,true);} }
+    async function createSnapshot() { const message=prompt('Snapshot message:'); if (!message) return; try { await api(`${repoBase()}/commit`,{method:'POST',body:{message,author:author()}}); await refreshState('Repository snapshot created.'); setTab('snapshots'); } catch(error){toast(error.message,true);} }
+    async function restoreSnapshot(id) { if (!confirm(`Restore snapshot ${id}? Current working files will be replaced by the snapshot contents.`)) return; try { await api(`${repoBase()}/checkout`,{method:'POST',body:{commitId:id,author:author()}}); appState.selectedPath=''; appState.selectedEntry=null; await refreshState(`Restored snapshot ${id}.`); } catch(error){toast(error.message,true);} }
+    function downloadSelected() { if (appState.selectedFile) window.location.href=appState.selectedFile.downloadUrl; }
+    async function exportRepository() {
+      try{
+        const preview=await api(`${repoBase()}/export-preview`);
+        let url=`${repoBase()}/export?history=1`;
+        if(preview.sensitiveCount){
+          const sample=(preview.sensitiveFiles||[]).slice(0,8).map(item=>item.path).join('\n');
+          if(!confirm(`This export contains ${preview.sensitiveCount} potentially sensitive file(s):\n\n${sample}${preview.sensitiveCount>8?'\n…':''}\n\nInclude them in the ZIP?`))return;
+          url+='&confirmSensitive=1';
+        }
+        window.location.href=url;
+      }catch(error){toast(error.message,true);}
+    }
+
+    async function chooseConflictPolicy(preview){
+      if(!(preview.conflicts||[]).length)return 'abort';
+      const answer=prompt(`${preview.conflicts.length} conflict(s) were found. Enter abort, skip, overwrite, or rename.`, 'abort');
+      if(answer===null)throw new Error('Import cancelled.');
+      const policy=answer.trim().toLowerCase();
+      if(!['abort','skip','overwrite','rename'].includes(policy))throw new Error('Conflict policy must be abort, skip, overwrite, or rename.');
+      if(policy==='abort')throw new Error('Import cancelled because conflicts exist.');
+      if(policy==='overwrite'&&!confirm('Overwrite existing files? ForgeTrace will create a safety snapshot first.'))throw new Error('Import cancelled.');
+      return policy;
+    }
+    async function pollJob(jobId){
+      appState.currentJob=jobId;
+      for(;;){
+        const job=await api(`/api/v1/jobs/${encodeURIComponent(jobId)}`); const p=job.progress||{};
+        const done=p.filesApplied??p.filesStaged??p.filesScanned??0; const total=p.totalFiles||Math.max(done,1);
+        setFolderImportReport(`<strong>${escapeHtml(job.message||job.phase||'Working…')}</strong><br>${escapeHtml(p.currentPath||'')} ${done?`· ${done}/${total} files`:''}<div class="job-actions"><button class="btn danger" type="button" id="cancelCurrentJobBtn">Cancel operation</button></div>`);
+        const cancel=$('#cancelCurrentJobBtn');if(cancel)cancel.onclick=()=>api(`/api/v1/jobs/${encodeURIComponent(jobId)}`,{method:'DELETE'}).catch(error=>toast(error.message,true));
+        if(['completed','failed','cancelled'].includes(job.status)){appState.currentJob=null;if(job.status==='failed')throw new Error(job.error?.message||'Import failed.');if(job.status==='cancelled')throw new Error('Import cancelled.');return job.result;}
+        await new Promise(resolve=>setTimeout(resolve,250));
+      }
+    }
+    async function pickLocalFolder(){
+      const picked=await api('/api/v1/system/pick-folder',{method:'POST',body:{}});
+      if(!picked.available)throw new Error(picked.reason||'The operating-system folder chooser is unavailable.');
+      if(picked.cancelled)return null;
+      return picked;
+    }
+    async function importCompleteFolder(){
+      if(!appState.activeId)return;
+      try{
+        const picked=await pickLocalFolder();if(!picked)return;
+        let preview=await api(`${repoBase()}/import-preview`,{method:'POST',body:{path:picked.path,includeRoot:true,conflictPolicy:'abort'}}).catch(async error=>{
+          if(!/conflict/i.test(error.message))throw error;
+          return {conflicts:[{path:'existing files'}],source:picked.path,sensitiveFiles:[]};
+        });
+        const policy=await chooseConflictPolicy(preview);
+        if((preview.sensitiveFiles||[]).length&&!confirm(`${preview.sensitiveFiles.length} potentially sensitive file(s) were detected. Continue importing them into this local repository?`))return;
+        const job=await api(`${repoBase()}/import-jobs`,{method:'POST',body:{path:picked.path,author:author(),includeRoot:true,conflictPolicy:policy}});
+        const result=await pollJob(job.id);
+        const paths=[...(result.importedFiles||[]),...(result.createdFolders||[])];rememberExpandedImport(appState.activeId,paths);
+        await refreshState(`Imported and verified ${result.importedFiles?.length||0} files from ${picked.name}.`);
+      }catch(error){setFolderImportReport(`<strong>Folder import did not complete.</strong><br>${escapeHtml(error.message)}`,true);toast(error.message,true);await loadActiveRepository().catch(()=>{});}
+    }
+    async function selectLocalFolderForNewRepository(){
+      try{const picked=await pickLocalFolder();if(!picked)return;appState.pendingLocalFolder=picked;setRepositorySource('localfolder');if(!$('#repoNameInput').value.trim())$('#repoNameInput').value=picked.name;$('#repoImportSummary').classList.remove('hidden');$('#repoImportSummary').innerHTML=`<strong>Local folder selected:</strong> ${escapeHtml(picked.path)}<br>ForgeTrace will preview, stage, verify, and register this repository as one atomic job.`;}catch(error){toast(error.message,true);}
+    }
+    function inferImportedRepositoryName(files,source){
+      if(source==='folder'){const first=appState.pendingRepositoryFiles[0];const relative=appState.pendingFolderRoot||first?.relativePath||files[0]?.webkitRelativePath||'';const root=relative.split('/')[0];if(root)return root;}
+      if(files.length===1)return files[0].name.replace(/\.[^.]+$/,'')||files[0].name;
+      return 'Imported files';
+    }
+    function renderRepositorySource(){
+      $$('[data-repo-source]').forEach(button=>button.classList.toggle('selected',button.dataset.repoSource===appState.newRepositorySource));
+      const pathMode=appState.newRepositorySource==='path'; const forkMode=appState.newRepositorySource==='fork'; const localFolderMode=appState.newRepositorySource==='localfolder';
+      $('#repoModeField').classList.toggle('hidden',!pathMode); $('#repoPathField').classList.toggle('hidden',!pathMode); $('#repoInitializeRow').classList.toggle('hidden',!pathMode); $('#repoShareLinkField').classList.toggle('hidden',!forkMode);
+      $('#repoPathInput').required=pathMode; $('#repoShareLinkInput').required=forkMode; $('#repoSubmitBtn').textContent=pathMode?'Save repository':forkMode?'Create local fork':localFolderMode?'Create from local folder':'Create and import';
+      const files=appState.pendingRepositoryFiles; const emptyFolders=appState.pendingEmptyFolders;
+      if(pathMode||forkMode||localFolderMode||(!files.length&&!emptyFolders.length)){$('#repoImportSummary').classList.add('hidden');$('#repoImportSummary').textContent='';return;}
+      const total=files.reduce((sum,item)=>sum+((item?.file||item)?.size||0),0); const paths=files.map(item=>repositoryImportPath(item,appState.newRepositorySource)).filter(Boolean); const folderPaths=emptyFolders.map(path=>repositoryImportFolderPath(path,appState.newRepositorySource)).filter(Boolean);
+      const preview=[...paths,...folderPaths.map(path=>path+'/')]; const sample=preview.slice(0,3).map(escapeHtml).join(', ');
+      $('#repoImportSummary').classList.remove('hidden');
+      $('#repoImportSummary').innerHTML=`<strong>${files.length} file${files.length===1?'':'s'} selected · ${formatBytes(total)}${folderPaths.length?` · ${folderPaths.length} empty folder${folderPaths.length===1?'':'s'} preserved`:''}</strong><br>${sample}${preview.length>3?` and ${preview.length-3} more`:''}<br>ForgeTrace recursively imports every discovered descendant path into a normal local repository. You can move and relink it later.`;
+    }
+    function setRepositorySource(source,files=[],emptyFolders=[],rootName=''){
+      appState.newRepositorySource=source; appState.pendingRepositoryFiles=[...files]; appState.pendingEmptyFolders=[...emptyFolders]; appState.pendingFolderRoot=rootName||''; if(source!=='localfolder')appState.pendingLocalFolder=null;
+      if(source!=='path'&&files.length&&!$('#repoNameInput').value.trim())$('#repoNameInput').value=inferImportedRepositoryName(files.map(item=>item?.file||item),source);
+      renderRepositorySource();
+    }
+    function openRepoModal(){
+      $('#repoForm').reset(); $('#repoAuthorInput').value=author(); $('#repoInitializeInput').checked=true; $('#newRepoFilesInput').value=''; $('#newRepoFolderInput').value=''; $('#repoShareLinkInput').value='';
+      appState.pendingLocalFolder=null; setRepositorySource('path'); $('#repoModalBackdrop').classList.add('open'); setTimeout(()=>$('#repoPathInput').focus(),50);
+    }
+    function closeRepoModal(){
+      $('#repoModalBackdrop').classList.remove('open'); $('#repoForm').reset(); $('#repoAuthorInput').value=author(); $('#repoInitializeInput').checked=true; $('#newRepoFilesInput').value=''; $('#newRepoFolderInput').value=''; $('#repoShareLinkInput').value=''; appState.pendingLocalFolder=null; setRepositorySource('path');
+    }
+    async function submitRepository(event){
+      event.preventDefault(); const source=appState.newRepositorySource; const submit=$('#repoSubmitBtn'); let record=null; submit.disabled=true;
+      try{
+        if(source==='path'){
+          const mode=$('#repoMode').value;
+          record=await api('/api/v1/repositories',{method:'POST',body:{path:$('#repoPathInput').value,name:$('#repoNameInput').value,description:$('#repoDescriptionInput').value,author:$('#repoAuthorInput').value,initialize:$('#repoInitializeInput').checked,createDirectory:mode==='create',metadataMode:'embedded'}});
+          closeRepoModal(); await api('/api/v1/active-repository',{method:'POST',body:{repositoryId:record.id}}); await loadRepositories(record.id); toast(`${record.name} is now registered.`);
+          return;
+        }
+        if(source==='fork'){
+          record=await api('/api/v1/repositories/fork',{method:'POST',body:{shareUrl:$('#repoShareLinkInput').value,name:$('#repoNameInput').value,description:$('#repoDescriptionInput').value,author:$('#repoAuthorInput').value}});
+          closeRepoModal(); await api('/api/v1/active-repository',{method:'POST',body:{repositoryId:record.id}}); await loadRepositories(record.id); toast(`${record.name} was forked locally with ${record.importedFiles||0} shared files.`);
+          return;
+        }
+        if(source==='localfolder'){
+          const picked=appState.pendingLocalFolder;if(!picked?.path)throw new Error('Choose a local folder first.');
+          let preview=await api('/api/v1/repositories/import-local/preview',{method:'POST',body:{path:picked.path}});
+          const policy=await chooseConflictPolicy(preview);
+          if((preview.sensitiveFiles||[]).length&&!confirm(`${preview.sensitiveFiles.length} potentially sensitive file(s) were detected. Continue?`))return;
+          const job=await api('/api/v1/repositories/import-local',{method:'POST',body:{path:picked.path,name:$('#repoNameInput').value||picked.name,description:$('#repoDescriptionInput').value,author:$('#repoAuthorInput').value,conflictPolicy:policy}});
+          closeRepoModal();
+          const result=await pollJob(job.id);record=result;
+          const imported=record.import||{};
+          rememberExpandedImport(record.id,[...(imported.importedFiles||imported.files||[]),...(imported.createdFolders||imported.folders||[])]);
+          await loadRepositories(record.id);
+          toast(`${record.name} was created atomically from ${picked.name}.`);return;
+        }
+        const files=appState.pendingRepositoryFiles;
+        if(!files.length&&!appState.pendingEmptyFolders.length)throw new Error(source==='folder'?'Choose a folder to import.':'Choose at least one file to import.');
+        record=await api('/api/v1/repositories/managed',{method:'POST',body:{name:$('#repoNameInput').value||inferImportedRepositoryName(files,source),description:$('#repoDescriptionInput').value,author:$('#repoAuthorInput').value}});
+        await api('/api/v1/active-repository',{method:'POST',body:{repositoryId:record.id}});
+        const result=await uploadFilesToRepository(record.id,files,source,'Imported when the repository was created',appState.pendingEmptyFolders);
+        closeRepoModal();await loadRepositories(record.id);
+        if(result.missingFiles.length||result.missingFolders.length)toast(`${record.name} was created, but ${result.missingFiles.length+result.missingFolders.length} nested path${result.missingFiles.length+result.missingFolders.length===1?' is':'s are'} still missing.`,true);
+        else toast(`${record.name} was created and all ${result.verified} imported files were verified.`);
+      }catch(error){if(record?.id&&['files','folder'].includes(source)){await api(`${repoBase(record.id)}/discard`,{method:'DELETE'}).catch(()=>{});}toast(error.message,true);}
+      finally{submit.disabled=false;}
+    }
+    async function toggleFavorite() { try { const updated=await api(`${repoBase()}/favorite`,{method:'POST',body:{favorite:!appState.record.favorite}}); appState.record=updated; await loadRepositories(appState.activeId); } catch(error){toast(error.message,true);} }
+    async function relinkRepository() { const path=prompt('New absolute path for this repository:',appState.record.path); if (!path||path===appState.record.path) return; try { await api(`${repoBase()}/relink`,{method:'POST',body:{path}}); await loadRepositories(appState.activeId); toast('Repository relinked.'); } catch(error){toast(error.message,true);} }
+    async function unregisterRepository() { if (!confirm(`Unregister ${appState.record.name}? ForgeTrace will remove only the registry entry. Repository files and .forgetrace history will remain on disk.`)) return; try { const result=await api(repoBase(),{method:'DELETE'}); appState.activeId=''; await loadRepositories(); toast(`${result.name} was unregistered. No files were deleted.`); } catch(error){toast(error.message,true);} }
+    async function initializeRegisteredRepository() { try { await api(`${repoBase()}/initialize`,{method:'POST',body:{name:appState.record.name,description:appState.record.description,author:author()}}); await loadRepositories(appState.activeId); toast('Repository initialized.'); } catch(error){toast(error.message,true);} }
+
+    function openModal(id) { $('#'+id).classList.add('open'); }
+    function closeModal(id) { $('#'+id).classList.remove('open'); }
+
+    function openSettings() {
+      if(!appState.record)return;
+      $('#settingsName').value=appState.record.name||'';
+      $('#settingsDescription').value=appState.record.description||'';
+      $('#settingsAuthor').value=appState.record.defaultAuthor||author();
+      $('#settingsUploadLimit').value=Math.round((appState.record.uploadLimitBytes||1073741824)/(1024*1024));
+      const caps=appState.record.capabilities||{};
+      $('#capabilityGrid').innerHTML=[
+        ['Workspace',caps.exists&&caps.directory?'Available':'Unavailable'],
+        ['Read access',caps.readable?'Granted':'Unavailable'],
+        ['Write access',caps.writable?'Granted':'Read-only'],
+        ['Free space',caps.freeBytes==null?'Unknown':formatBytes(caps.freeBytes)],
+      ].map(([label,value])=>`<div class="capability"><strong>${label}</strong>${escapeHtml(value)}</div>`).join('');
+      openModal('settingsModalBackdrop');
+    }
+
+    async function submitSettings(event) {
+      event.preventDefault();
+      try {
+        const updated=await api(`${repoBase()}/settings`,{method:'POST',body:{
+          name:$('#settingsName').value,description:$('#settingsDescription').value,
+          defaultAuthor:$('#settingsAuthor').value,
+          uploadLimitBytes:Math.round(Number($('#settingsUploadLimit').value||1024)*1024*1024),
+        }});
+        closeModal('settingsModalBackdrop');
+        $('#authorInput').value=updated.defaultAuthor||author();
+        await loadRepositories(appState.activeId);
+        toast('Repository settings saved.');
+      } catch(error){toast(error.message,true);}
+    }
+
+    function renderCollectionOptions() {
+      const selected=new Set((appState.record?.collections||[]).map(item=>item.id));
+      $('#collectionOptions').innerHTML=appState.library.collections.length?appState.library.collections.map(item=>`<div class="collection-option"><label style="display:flex;align-items:center;gap:8px;flex:1"><input type="checkbox" value="${item.id}" ${selected.has(item.id)?'checked':''}><span>${escapeHtml(item.name)} <span class="repo-path">${item.repositoryCount} repos</span></span></label><button class="filter-chip" type="button" data-edit-collection-id="${item.id}">Edit</button><button class="filter-chip" type="button" data-delete-collection-id="${item.id}">×</button></div>`).join(''):'<div class="repo-path">No collections yet. Create one below.</div>';
+    }
+
+    function openOrganize() {
+      if(!appState.record)return;
+      $('#tagsInput').value=(appState.record.tags||[]).join(', ');
+      $('#newCollectionName').value=''; $('#newCollectionDescription').value='';
+      renderCollectionOptions();
+      openModal('organizeModalBackdrop');
+    }
+
+    async function createCollectionFromModal() {
+      const name=$('#newCollectionName').value.trim();
+      if(!name)return toast('Enter a collection name.',true);
+      try {
+        await api('/api/v1/collections',{method:'POST',body:{name,description:$('#newCollectionDescription').value}});
+        await loadLibrary();
+        renderCollectionOptions();
+        $('#newCollectionName').value=''; $('#newCollectionDescription').value='';
+        toast(`Created collection ${name}.`);
+      } catch(error){toast(error.message,true);}
+    }
+
+    async function editCollection(id) {
+      const item=appState.library.collections.find(collection=>collection.id===id); if(!item)return;
+      const name=prompt('Collection name:',item.name); if(!name)return;
+      const description=prompt('Collection description:',item.description||''); if(description===null)return;
+      try { await api(`/api/v1/collections/${encodeURIComponent(id)}`,{method:'PUT',body:{name,description,color:item.color||''}}); await loadLibrary(); renderCollectionOptions(); toast('Collection updated.'); }
+      catch(error){toast(error.message,true);}
+    }
+
+    async function deleteCollection(id) {
+      const item=appState.library.collections.find(collection=>collection.id===id); if(!item)return;
+      if(!confirm(`Delete collection ${item.name}? Repositories and files will not be deleted.`))return;
+      try { await api(`/api/v1/collections/${encodeURIComponent(id)}`,{method:'DELETE'}); await Promise.all([loadLibrary(),loadRepositories(appState.activeId)]); renderCollectionOptions(); toast(`Deleted collection ${item.name}.`); }
+      catch(error){toast(error.message,true);}
+    }
+
+    async function deleteSavedFilter(id) {
+      const item=appState.library.savedFilters.find(filter=>filter.id===id); if(!item)return;
+      if(!confirm(`Delete saved filter ${item.name}?`))return;
+      try { await api(`/api/v1/saved-filters/${encodeURIComponent(id)}`,{method:'DELETE'}); await loadLibrary(); toast(`Deleted filter ${item.name}.`); }
+      catch(error){toast(error.message,true);}
+    }
+
+    async function submitOrganization(event) {
+      event.preventDefault();
+      const tags=$('#tagsInput').value.split(',').map(item=>item.trim()).filter(Boolean);
+      const collectionIds=[...$('#collectionOptions').querySelectorAll('input:checked')].map(input=>input.value);
+      try {
+        await api(`${repoBase()}/organization`,{method:'POST',body:{tags,collectionIds}});
+        closeModal('organizeModalBackdrop');
+        await Promise.all([loadLibrary(),loadRepositories(appState.activeId)]);
+        toast('Repository organization saved.');
+      } catch(error){toast(error.message,true);}
+    }
+
+    async function saveCurrentFilter() {
+      applyLibraryFilters();
+      const name=prompt('Saved filter name:');
+      if(!name)return;
+      try {
+        await api('/api/v1/saved-filters',{method:'POST',body:{name,query:{...appState.filters}}});
+        await loadLibrary();
+        toast(`Saved filter ${name}.`);
+      } catch(error){toast(error.message,true);}
+    }
+
+    function applySavedFilter(id) {
+      const item=appState.library.savedFilters.find(filter=>filter.id===id);
+      if(!item)return;
+      const query=item.query||{};
+      $('#repoSearch').value=query.query||''; $('#tagFilter').value=query.tag||'';
+      $('#collectionFilter').value=query.collectionId||''; $('#statusFilter').value=query.status||'';
+      $('#favoriteFilter').value=query.favorite??'';
+      applyLibraryFilters();
+      toast(`Applied ${item.name}.`);
+    }
+
+    function openRegistryTools() { openModal('registryToolsBackdrop'); }
+
+    function downloadJson(payload,name) {
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+      const url=URL.createObjectURL(blob); const link=document.createElement('a');
+      link.href=url; link.download=name; document.body.append(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+    }
+
+    async function backupRegistry() {
+      try { const result=await api('/api/v1/registry/backup',{method:'POST',body:{label:'ui'}}); toast(`Registry backup created: ${result.name}`); }
+      catch(error){toast(error.message,true);}
+    }
+
+    async function exportRegistry() {
+      try { const payload=await api('/api/v1/registry/export'); downloadJson(payload,`forgetrace-registry-${new Date().toISOString().slice(0,10)}.json`); toast('Registry export downloaded.'); }
+      catch(error){toast(error.message,true);}
+    }
+
+    async function importRegistryFile(file) {
+      if(!file)return;
+      try {
+        const payload=JSON.parse(await file.text());
+        if(!confirm('Merge this registry export? Existing repository files will not be deleted or copied.'))return;
+        const result=await api('/api/v1/registry/import',{method:'POST',body:{registry:payload,updatePaths:false}});
+        await Promise.all([loadLibrary(),loadRepositories(appState.activeId)]);
+        toast(`Registry merge complete: ${result.added} added, ${result.updated} updated, ${result.skipped} skipped.`);
+      } catch(error){toast(error.message,true);}
+    }
+
+    function formatDoctor(result) {
+      const lines=[`Status: ${result.healthy?'HEALTHY':'ATTENTION REQUIRED'}`,`SQLite: ${result.integrity}`,`Repositories: ${result.repositoryCount}`,`Issues: ${result.summary.total}`];
+      for(const issue of result.issues||[]) lines.push(`[${issue.severity.toUpperCase()}] ${issue.code} — ${issue.path||issue.repositoryId||issue.message||'registry'}`);
+      for(const action of result.actions||[]) lines.push(`[REPAIRED] ${action.action} — ${action.path||action.repositoryId||'registry'}`);
+      if(result.backup)lines.push(`Backup: ${result.backup.path}`);
+      return lines.join('\n');
+    }
+
+    async function runDoctor(repair=false) {
+      if(repair&&!confirm('Run safe registry repairs? ForgeTrace creates a backup first and never deletes repository files.'))return;
+      try {
+        const root=$('#doctorScanRoot').value.trim();
+        const result=await api('/api/v1/doctor',{method:'POST',body:{repair,scanRoots:root?[root]:[]}});
+        $('#doctorOutput').textContent=formatDoctor(result);
+        if(repair)await Promise.all([loadLibrary(),loadRepositories(appState.activeId)]);
+        toast(repair?'Doctor repair completed.':'Doctor check completed.');
+      } catch(error){toast(error.message,true);}
+    }
+
+    document.addEventListener('click', event=>{
+      const close=event.target.closest('[data-close-modal]'); if(close){closeModal(close.dataset.closeModal);return;}
+      const deleteFilter=event.target.closest('[data-delete-filter-id]'); if(deleteFilter){deleteSavedFilter(deleteFilter.dataset.deleteFilterId);return;}
+      const editCollectionButton=event.target.closest('[data-edit-collection-id]'); if(editCollectionButton){editCollection(editCollectionButton.dataset.editCollectionId);return;}
+      const deleteCollectionButton=event.target.closest('[data-delete-collection-id]'); if(deleteCollectionButton){deleteCollection(deleteCollectionButton.dataset.deleteCollectionId);return;}
+      const savedFilter=event.target.closest('[data-saved-filter-id]'); if(savedFilter){applySavedFilter(savedFilter.dataset.savedFilterId);return;}
+      const revoke=event.target.closest('[data-revoke-invite]'); if(revoke){revokeInvite(revoke.dataset.revokeInvite);return;}
+      const prReview=event.target.closest('[data-pr-review]'); if(prReview){reviewPullRequest(prReview.dataset.prReview);return;}
+      if(event.target.closest('[data-pr-merge]')){mergePullRequest();return;}
+      if(event.target.closest('[data-pr-close]')){closePullRequest();return;}
+      const prRow=event.target.closest('[data-pr-id]'); if(prRow){selectPullRequest(prRow.dataset.prId);return;}
+      const repo=event.target.closest('[data-repository-id]'); if (repo) { activateRepository(repo.dataset.repositoryId); return; }
+      const row=event.target.closest('[data-file-path]'); if (row) { selectPath(row.dataset.filePath,row.dataset.fileType); return; }
+      const tab=event.target.closest('[data-tab]'); if (tab) { setTab(tab.dataset.tab); return; }
+      const restore=event.target.closest('[data-restore-id]'); if (restore) { restoreSnapshot(restore.dataset.restoreId); return; }
+      if (event.target.closest('[data-binary-download]')) { downloadSelected(); return; }
+      const offline=event.target.closest('[data-offline-action]'); if (offline) { if(offline.dataset.offlineAction==='relink')relinkRepository(); if(offline.dataset.offlineAction==='initialize')initializeRegisteredRepository(); if(offline.dataset.offlineAction==='refresh')refreshRegistryStatus(); if(offline.dataset.offlineAction==='unregister')unregisterRepository(); }
+    });
+
+    $('#activeRepoSelect').addEventListener('change',e=>activateRepository(e.target.value));
+    ['addRepoBtn','welcomeAddBtn'].forEach(id=>$('#'+id).addEventListener('click',openRepoModal)); $('#welcomeForkBtn').addEventListener('click',()=>{openRepoModal();setRepositorySource('fork');setTimeout(()=>$('#repoShareLinkInput').focus(),30);});
+    $('#closeRepoModalBtn').addEventListener('click',closeRepoModal); $('#cancelRepoModalBtn').addEventListener('click',closeRepoModal); $('#repoModalBackdrop').addEventListener('click',e=>{if(e.target===e.currentTarget)closeRepoModal();});
+    $('#repoForm').addEventListener('submit',submitRepository);
+    $('#repoUploadFilesChoice').addEventListener('click',()=>$('#newRepoFilesInput').click()); $('#repoImportLocalChoice').addEventListener('click',selectLocalFolderForNewRepository); $('#repoUploadFolderChoice').addEventListener('click',()=>chooseDirectoryRecursively($('#newRepoFolderInput'),selection=>setRepositorySource('folder',selection.items,selection.emptyFolders,selection.rootName))); $('#repoForkChoice').addEventListener('click',()=>{setRepositorySource('fork');setTimeout(()=>$('#repoShareLinkInput').focus(),30);}); $('#repoPathChoice').addEventListener('click',()=>{setRepositorySource('path');setTimeout(()=>$('#repoPathInput').focus(),30);});
+    $('#newRepoFilesInput').addEventListener('change',event=>{if(event.target.files.length){const selection=selectionFromFileList(event.target.files,false);setRepositorySource('files',selection.items,selection.emptyFolders);}});
+    $('#newRepoFolderInput').addEventListener('change',event=>{if(event.target.files.length){try{const selection=selectionFromFileList(event.target.files,true);setRepositorySource('folder',selection.items,selection.emptyFolders,selection.rootName);}catch(error){toast(error.message,true);}}});
+    $('#authorInput').addEventListener('change',()=>{try{localStorage.setItem('forgetrace-author',author());}catch(error){toast(`Contributor preference could not be saved: ${error.message}`,true);}});
+    $('#refreshReposBtn').addEventListener('click',()=>loadRepositories(appState.activeId));
+    $('#fileSearch').addEventListener('input',()=>{$('#tree').scrollTop=0;renderFiles();}); $('#tree').addEventListener('scroll',()=>{if(appState.treeRenderPending)return;appState.treeRenderPending=true;requestAnimationFrame(()=>{appState.treeRenderPending=false;renderFiles();});});
+    $('#fileInput').addEventListener('change',async event=>{const input=event.currentTarget;const files=Array.from(input.files||[]);input.disabled=true;try{await uploadSelection(selectionFromFileList(files,false));}catch(error){toast(error.message,true);}finally{input.value='';input.disabled=false;}});
+    $('#folderInput').addEventListener('change',async event=>{const input=event.currentTarget;const files=Array.from(input.files||[]);input.disabled=true;try{const selection=selectionFromFileList(files,true);setFolderImportReport(`<strong>Discovered ${selection.items.length} file${selection.items.length===1?'':'s'}.</strong><br>Uploading every nested path now…`);await uploadSelection(selection);}catch(error){setFolderImportReport(`<strong>Folder selection failed.</strong><br>${escapeHtml(error.message)}`,true);toast(error.message,true);}finally{input.value='';input.disabled=false;}});
+    $('#uploadFilesBtn').addEventListener('click',()=>$('#fileInput').click()); $('#importLocalFolderBtn').addEventListener('click',importCompleteFolder); $('#uploadFolderBtn').addEventListener('click',()=>chooseDirectoryRecursively($('#folderInput'),uploadSelection));
+    $('#newFileBtn').addEventListener('click',createFile); $('#newFolderBtn').addEventListener('click',createFolder); $('#saveBtn').addEventListener('click',saveSelectedFile);
+    $('#expandAllBtn').addEventListener('click',()=>{appState.expandedFolders=new Set((appState.data?.tree||[]).filter(item=>item.type==='folder').map(item=>item.path));saveExpandedFolders();renderFiles();});
+    $('#collapseAllBtn').addEventListener('click',()=>{appState.expandedFolders.clear();saveExpandedFolders();renderFiles();});
+    $('#renameBtn').addEventListener('click',renameSelected); $('#deleteBtn').addEventListener('click',deleteSelected); $('#downloadBtn').addEventListener('click',downloadSelected);
+    $('#snapshotBtn').addEventListener('click',createSnapshot); $('#exportBtn').addEventListener('click',exportRepository);
+    $('#favoriteBtn').addEventListener('click',toggleFavorite); $('#relinkBtn').addEventListener('click',relinkRepository); $('#unregisterBtn').addEventListener('click',unregisterRepository);
+    $('#collaborationBtn').addEventListener('click',openCollaboration); $('#inviteForm').addEventListener('submit',createInvite); $('#copyInviteBtn').addEventListener('click',copyInvite); $('#startSharingBtn').addEventListener('click',()=>startSharing().catch(error=>toast(error.message,true))); $('#stopSharingBtn').addEventListener('click',stopSharing); $('#refreshSharingBtn').addEventListener('click',()=>loadSharingStatus().catch(error=>toast(error.message,true))); $('#refreshPrBtn').addEventListener('click',()=>loadPullRequests(true));
+    $('#settingsBtn').addEventListener('click',openSettings); $('#settingsForm').addEventListener('submit',submitSettings);
+    $('#organizeBtn').addEventListener('click',openOrganize); $('#organizeForm').addEventListener('submit',submitOrganization); $('#createCollectionBtn').addEventListener('click',createCollectionFromModal);
+    $('#registryToolsBtn').addEventListener('click',openRegistryTools); $('#backupRegistryBtn').addEventListener('click',backupRegistry); $('#exportRegistryBtn').addEventListener('click',exportRegistry);
+    $('#importRegistryBtn').addEventListener('click',()=>$('#registryImportInput').click()); $('#registryImportInput').addEventListener('change',event=>{importRegistryFile(event.target.files[0]);event.target.value='';});
+    $('#doctorCheckBtn').addEventListener('click',()=>runDoctor(false)); $('#doctorRepairBtn').addEventListener('click',()=>runDoctor(true));
+    ['repoSearch','tagFilter','collectionFilter','statusFilter','favoriteFilter'].forEach(id=>$('#'+id).addEventListener(id==='repoSearch'?'input':'change',applyLibraryFilters)); $('#saveFilterBtn').addEventListener('click',saveCurrentFilter);
+    ['settingsModalBackdrop','organizeModalBackdrop','registryToolsBackdrop','collaborationModalBackdrop'].forEach(id=>$('#'+id).addEventListener('click',event=>{if(event.target===event.currentTarget)closeModal(id);}));
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeRepoModal();['settingsModalBackdrop','organizeModalBackdrop','registryToolsBackdrop','collaborationModalBackdrop'].forEach(closeModal);} if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'&&appState.selectedFile?.editable){e.preventDefault();saveSelectedFile();} });
+
+    async function init() {
+      try{$('#authorInput').value=localStorage.getItem('forgetrace-author')||'Rooke Poole';}catch{$('#authorInput').value='Rooke Poole';}
+      await Promise.all([loadVersion(),loadLibrary(),loadRepositories()]).catch(error=>toast(error.message,true));
+    }
+    init();
+  </script>
 </body>
 </html>

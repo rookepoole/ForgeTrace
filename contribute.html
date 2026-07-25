@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b10">
+  <title>Contribute to ForgeTrace</title>
+  <style>
+    :root{color-scheme:dark;--bg:#07090d;--panel:#111720;--panel2:#0b1017;--line:rgba(255,255,255,.11);--text:#f5f7fb;--muted:#9ba8ba;--accent:#73f5d1;--blue:#8bb5ff;--danger:#ff7786;--warning:#f5c96d;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:Inter,ui-sans-serif,system-ui,sans-serif}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 10% 0,rgba(115,245,209,.13),transparent 32%),radial-gradient(circle at 92% 4%,rgba(139,181,255,.10),transparent 28%),var(--bg);color:var(--text);font-family:var(--sans)}
+    button,input,textarea{font:inherit}.shell{width:min(1040px,calc(100% - 28px));margin:0 auto;padding:34px 0 70px}.brand{display:flex;gap:12px;align-items:center;margin-bottom:30px}.mark{width:40px;height:40px;display:grid;place-items:center;border:1px solid rgba(115,245,209,.5);border-radius:12px;color:var(--accent);font:800 15px var(--mono)}.brand strong{display:block}.brand span{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+    .hero,.panel{border:1px solid var(--line);background:rgba(17,23,32,.9);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.3)}.hero{padding:26px;background:linear-gradient(135deg,rgba(115,245,209,.07),transparent 48%),rgba(17,23,32,.9)}h1{margin:0;font-size:clamp(28px,6vw,48px);letter-spacing:-.04em}.hero p{color:var(--muted);line-height:1.65;max-width:760px}.repo{margin-top:18px;padding:14px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid var(--line)}.repo strong{display:block;font-size:18px}.repo span{display:block;color:var(--muted);margin-top:5px}
+    .security{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}.security div{padding:12px;border:1px solid rgba(115,245,209,.17);background:rgba(115,245,209,.045);border-radius:11px;color:var(--muted);font-size:12px}.security b{display:block;color:var(--accent);margin-bottom:4px}
+    .panel{margin-top:16px;padding:20px}.panel h2{margin:0 0 6px}.sub{color:var(--muted);font-size:13px;line-height:1.55}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}.field{display:grid;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:12px;color:var(--muted);font-weight:700}.input,.textarea{width:100%;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:11px 12px;outline:0}.input:focus,.textarea:focus{border-color:rgba(115,245,209,.55);box-shadow:0 0 0 3px rgba(115,245,209,.08)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.btn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);border-radius:9px;padding:10px 13px;cursor:pointer;font-weight:700;font-size:12px}.btn:hover:not(:disabled){border-color:rgba(255,255,255,.28)}.btn.primary{background:var(--accent);border-color:var(--accent);color:#04110d}.btn.warning{border-color:rgba(245,201,109,.38);color:#ffe9ae;background:rgba(245,201,109,.07)}.btn:disabled{opacity:.45;cursor:not-allowed}.status{display:inline-flex;padding:5px 8px;border:1px solid var(--line);border-radius:999px;text-transform:uppercase;letter-spacing:.08em;font-size:10px;font-weight:800;color:var(--muted)}.status.open,.status.approved{color:var(--accent);border-color:rgba(115,245,209,.3)}.status.changes_requested,.status.conflict{color:var(--warning);border-color:rgba(245,201,109,.35)}.status.merged{color:var(--blue)}
+    .pr-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.pr-head h2{margin:0}.drop{margin-top:16px;padding:24px;border:1px dashed rgba(139,181,255,.38);border-radius:13px;text-align:center;background:rgba(139,181,255,.035)}.drop.drag{border-color:var(--accent);background:rgba(115,245,209,.06)}.file-list{display:grid;gap:7px;margin-top:14px}.file{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.16)}.path{font:12px var(--mono);overflow-wrap:anywhere}.meta{color:var(--muted);font:11px var(--mono)}.risk{color:var(--warning);font-size:10px;font-weight:800}.empty{color:var(--muted);padding:18px;text-align:center;border:1px dashed var(--line);border-radius:10px}.notice{padding:12px;border-radius:10px;border:1px solid rgba(245,201,109,.28);background:rgba(245,201,109,.055);color:#ffe9ae;font-size:12px;line-height:1.55;margin-top:14px}.error{border-color:rgba(255,119,134,.35);background:rgba(255,119,134,.06);color:#ffd8dd}.progress{height:3px;position:fixed;left:0;top:0;background:var(--accent);width:0;transition:width .2s;z-index:20}.hidden{display:none!important}.toast{position:fixed;right:18px;bottom:18px;max-width:400px;background:#151d27;border:1px solid var(--line);border-radius:11px;padding:12px 14px;box-shadow:0 16px 50px rgba(0,0,0,.4);z-index:30}.toast.bad{border-color:rgba(255,119,134,.45);color:#ffd8dd}
+    @media(max-width:720px){.security,.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.shell{padding-top:20px}.hero,.panel{padding:18px}.file{grid-template-columns:1fr}.pr-head{display:block}.pr-head .status{margin-top:10px}}
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <main class="shell">
+    <div class="brand"><div class="mark">FT</div><div><strong>ForgeTrace Contribution Gateway</strong><span>Quarantined pull requests for local-first repositories</span></div></div>
+
+    <section class="hero">
+      <div style="color:var(--accent);font:700 11px var(--mono);letter-spacing:.16em;text-transform:uppercase">Secure external collaboration</div>
+      <h1>Contribute to ForgeTrace</h1>
+      <p>Your changes are staged outside the owner’s repository. You cannot browse their machine, run commands, or write directly to the live workspace. The repository owner must inspect and explicitly merge every pull request.</p>
+      <div class="security">
+        <div><b>No filesystem browsing</b>Only paths you explicitly submit are accepted.</div>
+        <div><b>No code execution</b>ForgeTrace stores bytes and produces diffs; it runs nothing.</div>
+        <div><b>Local approval required</b>Only the owner’s localhost workspace can merge.</div>
+      </div>
+      <div class="repo" id="repoCard"><strong>Validating invitation…</strong><span>The invite token is read from the URL fragment and is never sent in the page request.</span></div>
+      <div class="actions hidden" id="sourceActions"><button class="btn" id="downloadSource" type="button">Download repository source ZIP</button><span class="sub" style="align-self:center">All normal repository files selected by the owner; no ForgeTrace/VCS metadata or machine paths.</span></div>
+      <div class="notice hidden" id="fatalNotice"></div>
+    </section>
+
+    <section class="panel hidden" id="createPanel">
+      <h2>Open a pull request</h2>
+      <div class="sub">Describe your change first. ForgeTrace captures a repository baseline, then gives you an isolated draft where you can upload changed or new files.</div>
+      <form id="createForm">
+        <div class="grid">
+          <div class="field"><label for="authorName">Your name</label><input class="input" id="authorName" required maxlength="120" autocomplete="name"></div>
+          <div class="field"><label for="title">Pull request title</label><input class="input" id="title" required maxlength="180" placeholder="Explain the result"></div>
+          <div class="field full"><label for="description">Description</label><textarea class="textarea" id="description" rows="4" maxlength="8000" placeholder="What changed, why, and how the owner should verify it"></textarea></div>
+        </div>
+        <div class="actions"><button class="btn primary" type="submit">Create isolated draft</button></div>
+      </form>
+    </section>
+
+    <section class="panel hidden" id="prPanel">
+      <div class="pr-head"><div><div class="sub" id="prNumber"></div><h2 id="prTitle"></h2><div class="sub" id="prMeta"></div></div><span class="status" id="prStatus"></span></div>
+      <div class="notice hidden" id="reviewNotice"></div>
+      <div id="editArea">
+        <div class="drop" id="dropZone"><strong>Drop changed or new files here</strong><div class="sub" style="margin-top:6px">Folder structures are preserved. Archives are not extracted. <code>.git</code> and <code>.forgetrace</code> paths are blocked.</div><div class="actions" style="justify-content:center"><button class="btn" id="chooseFiles" type="button">Choose files</button><button class="btn" id="chooseFolder" type="button">Choose folder</button></div><input id="fileInput" type="file" multiple hidden><input id="folderInput" type="file" webkitdirectory multiple hidden></div>
+        <div class="grid" id="deletionArea" style="margin-top:14px"><div class="field full"><label for="deletePath">Request a file deletion</label><div style="display:flex;gap:8px"><input class="input" id="deletePath" placeholder="repository/relative/file.txt"><button class="btn warning" id="addDeletion" type="button">Add deletion</button></div></div></div>
+      </div>
+      <div class="file-list" id="changeList"></div>
+      <div class="actions"><button class="btn primary" id="submitPr" type="button">Submit for local review</button><button class="btn" id="refreshPr" type="button">Refresh status</button><button class="btn hidden" id="newPr" type="button">Open another pull request</button></div>
+      <div class="notice">Keep this page open or save the pull-request number. When the owner requests changes, this draft becomes editable again after refresh. The invite token remains only in this browser session.</div>
+    </section>
+  </main>
+  <div id="toast" class="toast hidden"></div>
+  <script>
+    'use strict';
+    const $=s=>document.querySelector(s);
+    let token=(location.hash||'').slice(1).trim();
+    if(token){sessionStorage.setItem('forgetrace-invite-token',token);history.replaceState(null,'',location.pathname+location.search)}
+    else token=sessionStorage.getItem('forgetrace-invite-token')||'';
+    const state={context:null,pr:null,busy:0};
+    const formatBytes=n=>{const u=['B','KB','MB','GB'];let i=0,v=Number(n)||0;while(v>=1024&&i<u.length-1){v/=1024;i++}return `${v.toFixed(i?1:0)} ${u[i]}`};
+    const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function setBusy(on){state.busy=Math.max(0,state.busy+(on?1:-1));$('#progress').style.width=state.busy?'72%':'0'}
+    function toast(message,bad=false){const el=$('#toast');el.textContent=message;el.className=`toast${bad?' bad':''}`;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.add('hidden'),4500)}
+    async function api(path,options={}){const init={...options,headers:{'X-ForgeTrace-Invite':token,...(options.headers||{})}};if(init.body&&typeof init.body!=='string'&&!(init.body instanceof Blob)&&!(init.body instanceof ArrayBuffer)){init.headers['Content-Type']='application/json';init.body=JSON.stringify(init.body)}setBusy(true);try{const response=await fetch(path,init);const type=response.headers.get('content-type')||'';const payload=type.includes('json')?await response.json():await response.text();if(!response.ok)throw new Error(payload?.error||`Request failed (${response.status})`);return payload}finally{setBusy(false)}}
+    function fatal(message){$('#fatalNotice').textContent=message;$('#fatalNotice').className='notice error';$('#createPanel').classList.add('hidden');$('#prPanel').classList.add('hidden')}
+    async function storageKey(){if(!token)return'';const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token));return'forgetrace-pr-'+[...new Uint8Array(bytes)].slice(0,10).map(v=>v.toString(16).padStart(2,'0')).join('')}
+    async function savePrId(id){sessionStorage.setItem(await storageKey(),id)}
+    async function savedPrId(){return sessionStorage.getItem(await storageKey())||''}
+    function renderContext(){const c=state.context;$('#repoCard').innerHTML=`<strong>${escapeHtml(c.repository.name)}</strong><span>${escapeHtml(c.repository.description||'No repository description provided.')}</span><span style="margin-top:9px;font:11px var(--mono)">Invite expires ${escapeHtml(new Date(c.invite.expiresAt).toLocaleString())} · ${formatBytes(c.invite.maxFileBytes)} per file · ${formatBytes(c.invite.maxTotalBytes)} total</span>`;$('#sourceActions').classList.toggle('hidden',!c.rules.sourceDownload);$('#deletionArea').classList.toggle('hidden',!c.invite.allowDeletes)}
+    async function downloadSource(){try{setBusy(true);const response=await fetch('/api/v1/collaboration/source',{headers:{'X-ForgeTrace-Invite':token}});if(!response.ok){const payload=await response.json().catch(()=>({}));throw new Error(payload.error||`Download failed (${response.status})`)}const blob=await response.blob();const disposition=response.headers.get('content-disposition')||'';const match=disposition.match(/filename="([^"]+)"/);const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=match?.[1]||'repository-source.zip';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),1000);toast('Repository source downloaded.')}catch(e){toast(e.message,true)}finally{setBusy(false)}}
+    function renderPr(){const pr=state.pr;if(!pr)return;$('#createPanel').classList.add('hidden');$('#prPanel').classList.remove('hidden');$('#prNumber').textContent=`Pull request #${pr.number}`;$('#prTitle').textContent=pr.title;$('#prMeta').textContent=`${pr.authorName} · revision ${pr.revision} · ${pr.changeCount} change${pr.changeCount===1?'':'s'}`;const status=pr.effectiveStatus||pr.status;$('#prStatus').textContent=status.replaceAll('_',' ');$('#prStatus').className=`status ${status}`;
+      const editable=['draft','changes_requested'].includes(pr.status);$('#editArea').classList.toggle('hidden',!editable);$('#submitPr').classList.toggle('hidden',!editable);$('#submitPr').disabled=!pr.changeCount;$('#newPr').classList.toggle('hidden',!['merged','closed'].includes(pr.status));
+      const latestReview=[...(pr.reviews||[])].reverse().find(r=>r.verdict==='changes_requested');if(pr.status==='changes_requested'&&latestReview){$('#reviewNotice').textContent=`Changes requested by ${latestReview.reviewer}: ${latestReview.comment||'Please revise the pull request.'}`;$('#reviewNotice').classList.remove('hidden')}else $('#reviewNotice').classList.add('hidden');
+      const files=(pr.files||[]).map(f=>`<div class="file"><span class="path">${escapeHtml(f.path)}</span><span class="meta">${formatBytes(f.size)}</span><span class="${f.risky?'risk':'meta'}">${f.risky?'REQUIRES EXTRA OWNER APPROVAL':'UPLOAD'}</span></div>`);const dels=(pr.deletions||[]).map(d=>`<div class="file"><span class="path">${escapeHtml(d.path)}</span><span class="meta">delete</span><span class="risk">DELETION</span></div>`);$('#changeList').innerHTML=[...files,...dels].join('')||'<div class="empty">No changes staged yet.</div>'}
+    async function refreshPr(){if(!state.pr)return;try{state.pr=await api(`/api/v1/collaboration/pull-requests/${encodeURIComponent(state.pr.id)}`);renderPr();toast('Pull request refreshed.')}catch(e){toast(e.message,true)}}
+    async function createPr(event){event.preventDefault();try{const pr=await api('/api/v1/collaboration/pull-requests',{method:'POST',body:{authorName:$('#authorName').value,title:$('#title').value,description:$('#description').value}});state.pr=pr;await savePrId(pr.id);renderPr();toast('Isolated pull request draft created.')}catch(e){toast(e.message,true)}}
+    async function uploadFiles(files){if(!state.pr||!files.length)return;for(let i=0;i<files.length;i++){const file=files[i],path=file.webkitRelativePath||file.name;try{state.pr=await api(`/api/v1/collaboration/pull-requests/${encodeURIComponent(state.pr.id)}/files?path=${encodeURIComponent(path)}`,{method:'POST',body:file});toast(`Staged ${path} (${i+1}/${files.length})`)}catch(e){toast(`${path}: ${e.message}`,true);break}}renderPr()}
+    async function addDeletion(){const path=$('#deletePath').value.trim();if(!path||!state.pr)return;try{state.pr=await api(`/api/v1/collaboration/pull-requests/${encodeURIComponent(state.pr.id)}/deletions`,{method:'POST',body:{path}});$('#deletePath').value='';renderPr();toast(`Deletion staged for ${path}.`)}catch(e){toast(e.message,true)}}
+    async function submitPr(){if(!state.pr||!confirm('Submit this pull request for local owner review? You cannot edit it again unless changes are requested.'))return;try{state.pr=await api(`/api/v1/collaboration/pull-requests/${encodeURIComponent(state.pr.id)}/submit`,{method:'POST'});renderPr();toast('Pull request submitted.')}catch(e){toast(e.message,true)}}
+    async function startAnotherPullRequest(){try{state.context=await api('/api/v1/collaboration/invite');if(!state.context.canCreatePullRequest){toast('This invitation has reached its pull-request limit.',true);return}sessionStorage.removeItem(await storageKey());state.pr=null;$('#prPanel').classList.add('hidden');$('#createPanel').classList.remove('hidden');$('#createForm').reset();window.scrollTo({top:document.querySelector('#createPanel').offsetTop-20,behavior:'smooth'})}catch(e){toast(e.message,true)}}
+    async function init(){if(!token){fatal('This collaboration link is missing its invite token. Ask the repository owner for a new ForgeTrace invite.');return}try{state.context=await api('/api/v1/collaboration/invite');renderContext();const id=await savedPrId();if(id){try{state.pr=await api(`/api/v1/collaboration/pull-requests/${encodeURIComponent(id)}`);renderPr();return}catch{sessionStorage.removeItem(await storageKey())}}const history=await api('/api/v1/collaboration/pull-requests');const latest=(history.pullRequests||[])[0];if(latest){state.pr=await api(`/api/v1/collaboration/pull-requests/${encodeURIComponent(latest.id)}`);await savePrId(latest.id);renderPr();return}if(state.context.canCreatePullRequest)$('#createPanel').classList.remove('hidden');else fatal('This invite has reached its pull-request limit and has no recoverable request. Ask the owner for a new invite.')}catch(e){fatal(e.message)}}
+    $('#createForm').addEventListener('submit',createPr);$('#downloadSource').addEventListener('click',downloadSource);$('#chooseFiles').addEventListener('click',()=>$('#fileInput').click());$('#chooseFolder').addEventListener('click',()=>$('#folderInput').click());$('#fileInput').addEventListener('change',e=>{uploadFiles([...e.target.files]);e.target.value=''});$('#folderInput').addEventListener('change',e=>{uploadFiles([...e.target.files]);e.target.value=''});$('#addDeletion').addEventListener('click',addDeletion);$('#submitPr').addEventListener('click',submitPr);$('#refreshPr').addEventListener('click',refreshPr);$('#newPr').addEventListener('click',startAnotherPullRequest);
+    const drop=$('#dropZone');['dragenter','dragover'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.add('drag')}));['dragleave','drop'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.remove('drag')}));drop.addEventListener('drop',e=>uploadFiles([...e.dataTransfer.files]));
+    init();
+  </script>
+</body>
+</html>

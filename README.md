@@ -1,77 +1,86 @@
-# ForgeTrace — Working Local Repository
+# ForgeTrace — Local-First Repository Workspace
 
-**Created by Rooke Poole. Open-source under the MIT License.**
+**Created by Rooke Poole. Open source under the MIT License.**
 
-ForgeTrace is a **real local-first repository application**, not a static demo. It stores uploaded and edited files on disk, records contribution history, creates restorable content-addressed snapshots, and exports the complete repository as a ZIP.
+ForgeTrace v0.4.0 is a stabilized local-first repository workspace for managing multiple real folders, attributable project activity, restorable SHA-256 snapshots, portable exports, and owner-reviewed outside contributions without requiring a cloud account.
 
-
-## Development roadmap
-
-The authoritative expansion plan is [`BUILD_PLAN.md`](BUILD_PLAN.md). Its first priority is safe multi-repository support: one ForgeTrace instance managing many repository paths across local drives, removable storage, and trusted network locations.
-
-Project governance and safety documents:
-
-- [`CONTRIBUTING.md`](CONTRIBUTING.md)
-- [`SECURITY.md`](SECURITY.md)
-- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
-- [`NOTICE.md`](NOTICE.md)
-- [`CHANGELOG.md`](CHANGELOG.md)
-
-## Run
+## Start
 
 ### Windows
 
-Double-click `run_local.bat`, then open:
-
-`http://127.0.0.1:8765`
+Double-click `START_FORGETRACE.bat`.
 
 ### macOS / Linux
 
 ```bash
-./run_local.sh
+chmod +x START_FORGETRACE.sh
+./START_FORGETRACE.sh
 ```
 
-No third-party packages are required; only Python 3.
+The owner workspace opens at `http://127.0.0.1:8765`. Sharing is off until enabled from the selected repository’s **Collaborate** panel.
 
-## Working features
+## v0.4.0 stabilization highlights
 
-- Initialize a repository with a name, description, and owner
-- Upload one or many real files
-- Upload complete folders while preserving relative paths
-- Drag and drop files
-- Browse files and folders
-- Create files and folders
-- Edit and save UTF-8 text/source files
-- Download binary or text files
-- Rename and delete paths
-- Persist repository contents on disk in `workspace/`
-- Record every operation in contribution history
-- Create deduplicated, restorable repository snapshots
-- Restore any snapshot from the UI
-- Export current files plus `FORGETRACE_HISTORY.json` as a ZIP
-- Block path traversal and protect internal metadata
-- Accept files up to 250 MB per request
+- Cross-process repository locking and one owner process per application-data directory
+- Transactional file, folder, import, merge, and restore operations with rollback journals
+- Snapshot preflight and SHA-256 verification before workspace mutation
+- Empty-directory, file-mode, and timestamp preservation in snapshots
+- Staged imports with conflict preview, free-space preflight, progress, cancellation, and byte-level verification
+- Atomic new-repository imports that cannot leave an orphan README-only repository
+- True depth-first, parent-child, virtualized file tree
+- Working folder rename and delete controls
+- Incremental file-hash cache rather than full rehashing on every refresh
+- Doctor recovery from valid `state.json.bak` and pending transaction journals
+- UUID-first managed-repository rediscovery and moved-path relinking
+- Sensitive-file preview and explicit inclusion controls for import/share/export
+- Locked immutable exports
+- Contributor quarantine cleanup and storage metrics
+- HTTP timeouts, HEAD support, bounded rate-limit maps, and split route handlers
 
-## Storage model
+The complete closure of the v0.3.6 audit is documented in [`AUDIT_CLOSURE.md`](AUDIT_CLOSURE.md).
 
-```text
-workspace/
-├── your actual repository files
-└── .forgetrace/
-    ├── state.json       contribution and snapshot metadata
-    └── objects/         content-addressed snapshot objects
-```
+## Repository onboarding
 
-The application never needs GitHub credentials. It is an independent repository workspace. Snapshot objects are SHA-256 addressed and reused across commits when file contents do not change.
+Choose **+ Repository** and use one of four paths:
 
-## Optional custom workspace
+1. **Upload files** — create a managed repository from selected files.
+2. **Import local folder** — use the operating-system picker and transactional server-side directory import.
+3. **Fork shared link** — create a managed local fork from a ForgeTrace collaboration link before any repository exists.
+4. **Use a local path** — create or register a repository at an exact absolute path.
+
+Imports preview conflicts and sensitive paths before mutation. Long imports expose persistent progress and can be cancelled safely.
+
+## Collaboration boundary
+
+ForgeTrace uses a separate restricted contributor listener. Remote invitees can download an allowed source bundle and submit quarantined changes, but they cannot browse the owner filesystem, access the registry, edit the live workspace, restore snapshots, or merge pull requests. The local owner reviews exact evidence and approves the merge.
+
+Use contributor sharing only over a trusted LAN or private VPN. Do not directly port-forward ForgeTrace to the public internet.
+
+## Storage
+
+Application data is stored outside the extracted package:
+
+- Registry and settings: platform application-data directory
+- Managed repositories: `managed-repositories/`
+- Import/fork transfers and persistent job history: application-data storage
+- Repository history: `<repository>/.forgetrace/`
+
+Replacing the application package does not replace these data locations. Startup discovery repopulates valid managed repositories by embedded UUID.
+
+## Validate the source
 
 ```bash
-python server.py --workspace /path/to/project --port 8765
+python -m unittest discover -s tests -v
+python tests/browser_smoke_test.py
+PYTHONPATH=. python tests/browser_blackbox_test.py
 ```
 
-This lets ForgeTrace manage an existing folder. ForgeTrace metadata is stored in that folder’s `.forgetrace/` directory.
+See [`HANDOFF/04_TESTING_AND_VALIDATION.md`](HANDOFF/04_TESTING_AND_VALIDATION.md) for the complete matrix.
 
-## Important
+## Important limitations
 
-Do not open `index.html` directly. The UI depends on the local Python API. Start `server.py`, `run_local.bat`, or `run_local.sh` first.
+ForgeTrace is not yet a Git wire-protocol host. It does not provide `git clone`, `git push`, persistent user accounts, MFA, built-in TLS certificate management, or public-internet hardening. Physical Windows native-picker acceptance remains a release-machine test described in `tests/WINDOWS_NATIVE_PICKER_ACCEPTANCE.md`.
+
+## Development
+
+Start with [`HANDOFF/00_READ_ME_FIRST.md`](HANDOFF/00_READ_ME_FIRST.md), then paste [`HANDOFF/01_NEW_CHAT_BOOT_PROMPT.md`](HANDOFF/01_NEW_CHAT_BOOT_PROMPT.md) into a new development chat.

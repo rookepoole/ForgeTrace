@@ -16,11 +16,14 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Iterator
 
+from .conflict_resolution import ConflictResolutionStore
 from .errors import ForgeTraceError
 from .registry import RepositoryRegistry
+from .review_conversations import ReviewConversationStore
+from .security_events import SecurityEventError, SecurityEventLedger
 from .utils import utc_now
 
-COLLABORATION_SCHEMA_VERSION = 3
+COLLABORATION_SCHEMA_VERSION = 6
 DEFAULT_INVITE_HOURS = 72
 MAX_INVITE_HOURS = 24 * 30
 DEFAULT_MAX_FILE_BYTES = 100 * 1024 * 1024
@@ -50,8 +53,9 @@ class CollaborationService:
     commands, never extracts archives, and never exposes arbitrary filesystem paths.
     """
 
-    def __init__(self, registry: RepositoryRegistry) -> None:
+    def __init__(self, registry: RepositoryRegistry, security_events: SecurityEventLedger | None = None) -> None:
         self.registry = registry
+        self.security_events = security_events
         self.data_dir = registry.data_dir / "collaboration"
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.data_dir / "collaboration.sqlite3"
@@ -59,7 +63,75 @@ class CollaborationService:
         self.quarantine_dir.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
         self._migrate()
+        self.review_conversations = ReviewConversationStore(
+            registry=self.registry,
+            db_path=self.db_path,
+            data_dir=self.data_dir,
+            lock=self.lock,
+            invite_resolver=self._invite_row_for_token,
+            pr_for_token=self._pr_for_token,
+            owner_pr_resolver=self._owner_pr_row,
+            staged_path=self._staged_path,
+            audit=self._audit,
+            token_fingerprint=self._token_fingerprint,
+        )
+        self.review_conversations.backfill_current_revisions()
+        self.conflict_resolutions = ConflictResolutionStore(
+            registry=self.registry,
+            db_path=self.db_path,
+            data_dir=self.data_dir,
+            lock=self.lock,
+            review_store=self.review_conversations,
+            owner_pr_resolver=self._owner_pr_row,
+            file_rows=self._file_rows,
+            deletion_rows=self._deletion_rows,
+            audit=self._audit,
+        )
         self.cleanup_retention()
+
+    def _audit(
+        self,
+        *,
+        required: bool = False,
+        category: str = "collaboration",
+        action: str,
+        outcome: str,
+        severity: str = "info",
+        repository_id: str = "",
+        actor: str = "",
+        subject_id: str = "",
+        details: dict[str, Any] | None = None,
+        surface: str = "gateway",
+    ) -> dict[str, Any] | None:
+        if self.security_events is None:
+            return None
+        try:
+            if required:
+                self.security_events.assert_writable()
+            return self.security_events.append(
+                category=category,
+                action=action,
+                outcome=outcome,
+                severity=severity,
+                surface=surface,
+                repository_id=repository_id,
+                actor=actor,
+                subject_id=subject_id,
+                details=details or {},
+            )
+        except SecurityEventError as exc:
+            if required:
+                raise ForgeTraceError(
+                    "The security event ledger is unavailable or failed integrity verification. The protected collaboration action was blocked.",
+                    HTTPStatus.SERVICE_UNAVAILABLE,
+                    "security_event_ledger_unavailable",
+                    {"reason": str(exc)},
+                ) from exc
+            return None
+
+    @staticmethod
+    def _token_fingerprint(token: str) -> str:
+        return hashlib.sha256(str(token or "").encode("utf-8")).hexdigest()[:16]
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
@@ -102,6 +174,7 @@ class CollaborationService:
                     allow_deletes INTEGER NOT NULL DEFAULT 1 CHECK(allow_deletes IN (0,1)),
                     allow_source_download INTEGER NOT NULL DEFAULT 1 CHECK(allow_source_download IN (0,1)),
                     allow_sensitive_source INTEGER NOT NULL DEFAULT 0 CHECK(allow_sensitive_source IN (0,1)),
+                    allow_project_participation INTEGER NOT NULL DEFAULT 0 CHECK(allow_project_participation IN (0,1)),
                     last_used_at TEXT NOT NULL DEFAULT ''
                 );
                 CREATE INDEX IF NOT EXISTS idx_collaboration_invites_repository
@@ -177,6 +250,14 @@ class CollaborationService:
                     "ADD COLUMN allow_sensitive_source INTEGER NOT NULL DEFAULT 0 "
                     "CHECK(allow_sensitive_source IN (0,1))"
                 )
+            if "allow_project_participation" not in invite_columns:
+                connection.execute(
+                    "ALTER TABLE collaboration_invites "
+                    "ADD COLUMN allow_project_participation INTEGER NOT NULL DEFAULT 0 "
+                    "CHECK(allow_project_participation IN (0,1))"
+                )
+            ReviewConversationStore.migrate_schema(connection)
+            ConflictResolutionStore.migrate_schema(connection)
             connection.execute(
                 """
                 INSERT INTO collaboration_meta(key, value, updated_at) VALUES ('schema_version', ?, ?)
@@ -235,16 +316,44 @@ class CollaborationService:
 
     def _invite_row_for_token(self, connection: sqlite3.Connection, token: str) -> sqlite3.Row:
         if not token or len(token) < 32:
+            self._audit(
+                action="invite_required",
+                outcome="denied",
+                severity="warning",
+                details={"inviteFingerprint": self._token_fingerprint(token) if token else ""},
+            )
             raise ForgeTraceError("A valid collaboration invite is required.", HTTPStatus.UNAUTHORIZED, "invite_required")
         row = connection.execute(
             "SELECT * FROM collaboration_invites WHERE token_hash = ?",
             (self._hash_token(token),),
         ).fetchone()
         if not row:
+            self._audit(
+                action="invalid_invite",
+                outcome="denied",
+                severity="warning",
+                details={"inviteFingerprint": self._token_fingerprint(token)},
+            )
             raise ForgeTraceError("Collaboration invite is invalid.", HTTPStatus.UNAUTHORIZED, "invalid_invite")
         if row["revoked"]:
+            self._audit(
+                action="invite_revoked_access",
+                outcome="denied",
+                severity="warning",
+                repository_id=row["repository_id"],
+                subject_id=row["id"],
+                details={"inviteId": row["id"], "inviteFingerprint": self._token_fingerprint(token)},
+            )
             raise ForgeTraceError("Collaboration invite has been revoked.", HTTPStatus.FORBIDDEN, "invite_revoked")
         if _parse_utc(row["expires_at"]) <= datetime.now(timezone.utc):
+            self._audit(
+                action="invite_expired_access",
+                outcome="denied",
+                severity="warning",
+                repository_id=row["repository_id"],
+                subject_id=row["id"],
+                details={"inviteId": row["id"], "inviteFingerprint": self._token_fingerprint(token)},
+            )
             raise ForgeTraceError("Collaboration invite has expired.", HTTPStatus.GONE, "invite_expired")
         return row
 
@@ -276,6 +385,7 @@ class CollaborationService:
         allow_deletes: bool = True,
         allow_source_download: bool = True,
         allow_sensitive_source: bool = False,
+        allow_project_participation: bool = False,
     ) -> dict[str, Any]:
         repository = self.registry.repository_service(repository_id)
         try:
@@ -294,6 +404,24 @@ class CollaborationService:
             raise ForgeTraceError("Maximum file size must be at least 1 KB.", code="invite_file_limit_too_small")
         if max_total_bytes < max_file_bytes or max_total_bytes > 4 * 1024 * 1024 * 1024:
             raise ForgeTraceError("Total pull-request size must be at least the file limit and no more than 4 GB.", code="invite_total_limit_out_of_range")
+        self._audit(
+            required=True,
+            action="invite_create_authorized",
+            outcome="authorized",
+            severity="warning" if allow_sensitive_source else "info",
+            repository_id=repository_id,
+            surface="owner",
+            details={
+                "expiresInHours": expires_in_hours,
+                "maxUses": max_uses,
+                "maxFileBytes": max_file_bytes,
+                "maxTotalBytes": max_total_bytes,
+                "allowDeletes": bool(allow_deletes),
+                "allowSourceDownload": bool(allow_source_download),
+                "allowSensitiveSource": bool(allow_sensitive_source),
+                "allowProjectParticipation": bool(allow_project_participation),
+            },
+        )
         now = datetime.now(timezone.utc)
         expires = now + timedelta(hours=expires_in_hours)
         token = secrets.token_urlsafe(32)
@@ -304,8 +432,8 @@ class CollaborationService:
                 INSERT INTO collaboration_invites(
                     id, repository_id, token_hash, label, created_at, expires_at,
                     max_uses, max_file_bytes, max_total_bytes, allow_deletes,
-                    allow_source_download, allow_sensitive_source
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    allow_source_download, allow_sensitive_source, allow_project_participation
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     invite_id, repository_id, self._hash_token(token),
@@ -314,14 +442,31 @@ class CollaborationService:
                     expires.isoformat(timespec="seconds").replace("+00:00", "Z"),
                     max_uses, max_file_bytes, max_total_bytes, int(bool(allow_deletes)),
                     int(bool(allow_source_download)), int(bool(allow_sensitive_source)),
+                    int(bool(allow_project_participation)),
                 ),
             )
-        return {
+        result = {
             "invite": self.get_invite(invite_id),
             "token": token,
             "sharePath": f"/contribute.html#{token}",
             "security": "The token is shown once and stored only as a SHA-256 hash.",
         }
+        self._audit(
+            action="invite_created",
+            outcome="success",
+            severity="warning" if allow_sensitive_source else "info",
+            repository_id=repository_id,
+            surface="owner",
+            subject_id=invite_id,
+            details={
+                "inviteId": invite_id,
+                "inviteFingerprint": self._token_fingerprint(token),
+                "expiresAt": result["invite"]["expiresAt"],
+                "allowSensitiveSource": bool(allow_sensitive_source),
+                "allowProjectParticipation": bool(allow_project_participation),
+            },
+        )
+        return result
 
     def _public_invite(self, row: sqlite3.Row) -> dict[str, Any]:
         expired = _parse_utc(row["expires_at"]) <= datetime.now(timezone.utc)
@@ -341,6 +486,7 @@ class CollaborationService:
             "allowDeletes": bool(row["allow_deletes"]),
             "allowSourceDownload": bool(row["allow_source_download"]),
             "allowSensitiveSource": bool(row["allow_sensitive_source"]),
+            "allowProjectParticipation": bool(row["allow_project_participation"]),
             "lastUsedAt": row["last_used_at"],
         }
 
@@ -371,7 +517,17 @@ class CollaborationService:
             if not row:
                 raise ForgeTraceError("Invite not found.", HTTPStatus.NOT_FOUND, "invite_not_found")
             connection.execute("UPDATE collaboration_invites SET revoked = 1 WHERE id = ?", (invite_id,))
-        return self.get_invite(invite_id)
+        result = self.get_invite(invite_id)
+        self._audit(
+            action="invite_revoked",
+            outcome="success",
+            severity="warning",
+            repository_id=repository_id,
+            surface="owner",
+            subject_id=invite_id,
+            details={"inviteId": invite_id},
+        )
+        return result
 
     def invite_context(self, token: str) -> dict[str, Any]:
         with self.connect() as connection:
@@ -385,8 +541,41 @@ class CollaborationService:
                     "archiveExtraction": False,
                     "commandsAllowed": False,
                     "sourceDownload": bool(invite["allow_source_download"]),
+                    "projectParticipation": bool(invite["allow_project_participation"]),
                     "protectedPaths": sorted(PROTECTED_SEGMENTS),
                 },
+            }
+
+
+    def project_participant(self, token: str) -> dict[str, str]:
+        """Resolve an explicitly permissioned project-layer contributor.
+
+        Ordinary source-sharing or pull-request invitations do not imply project
+        participation. The raw token is never returned or persisted.
+        """
+        with self.connect() as connection:
+            invite = self._invite_row_for_token(connection, token)
+            if not bool(invite["allow_project_participation"]):
+                self._audit(
+                    action="project_participation_denied",
+                    outcome="denied",
+                    severity="warning",
+                    repository_id=invite["repository_id"],
+                    subject_id=invite["id"],
+                    details={
+                        "inviteId": invite["id"],
+                        "inviteFingerprint": self._token_fingerprint(token),
+                    },
+                )
+                raise ForgeTraceError(
+                    "This invitation does not permit issue or discussion participation.",
+                    HTTPStatus.FORBIDDEN,
+                    "project_participation_not_allowed",
+                )
+            return {
+                "repositoryId": str(invite["repository_id"]),
+                "inviteId": str(invite["id"]),
+                "inviteFingerprint": self._token_fingerprint(token),
             }
 
     def source_archive_file(self, token: str) -> tuple[Path, str]:
@@ -400,6 +589,19 @@ class CollaborationService:
                     "source_download_not_allowed",
                 )
             repository_id = invite["repository_id"]
+            invite_id = invite["id"]
+            include_sensitive = bool(invite["allow_sensitive_source"])
+        if include_sensitive:
+            self._audit(
+                required=True,
+                category="export",
+                action="sensitive_source_export_authorized",
+                outcome="authorized",
+                severity="warning",
+                repository_id=repository_id,
+                subject_id=invite_id,
+                details={"inviteId": invite_id, "inviteFingerprint": self._token_fingerprint(token)},
+            )
         repository = self.registry.repository_service(repository_id)
         summary = repository.summary()
         source_bytes = int(summary.get("stats", {}).get("bytes", 0))
@@ -432,8 +634,36 @@ class CollaborationService:
                 )
             record = self.registry.get_repository(repository_id)
             safe = "".join(ch for ch in record["name"].replace(" ", "-") if ch.isalnum() or ch in "-_")
+            self._audit(
+                category="export",
+                action="collaboration_source_export_generated",
+                outcome="success",
+                severity="warning" if include_sensitive else "info",
+                repository_id=repository_id,
+                subject_id=invite_id,
+                details={
+                    "inviteId": invite_id,
+                    "inviteFingerprint": self._token_fingerprint(token),
+                    "includeSensitive": include_sensitive,
+                    "archiveBytes": archive_bytes,
+                },
+            )
             return archive_path, (safe or "repository") + "-source.zip"
-        except Exception:
+        except Exception as exc:
+            self._audit(
+                category="export",
+                action="collaboration_source_export_failed",
+                outcome="failure",
+                severity="error",
+                repository_id=repository_id,
+                subject_id=invite_id,
+                details={
+                    "inviteId": invite_id,
+                    "inviteFingerprint": self._token_fingerprint(token),
+                    "includeSensitive": include_sensitive,
+                    "errorType": type(exc).__name__,
+                },
+            )
             archive_path.unlink(missing_ok=True)
             raise
 
@@ -449,7 +679,11 @@ class CollaborationService:
         state = repository.load_state()
         current = repository.manifest(store_objects=False)
         latest = state["commits"][-1] if state["commits"] else None
-        if latest is None or any(repository.diff_manifests(latest["manifest"], current).values()):
+        dirty = latest is None or any(repository.diff_manifests(latest["manifest"], current).values())
+        if dirty and not repository.access_policy(state)["writable"]:
+            material = json.dumps(current, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            return "readonly-" + hashlib.sha256(material).hexdigest()[:12], current
+        if dirty:
             author = state.get("repository", {}).get("defaultAuthor") or "Repository Owner"
             repository.create_commit("Collaboration baseline", author)
             state = repository.load_state()
@@ -490,7 +724,21 @@ class CollaborationService:
                 "UPDATE collaboration_invites SET uses = uses + 1, last_used_at = ? WHERE id = ?",
                 (now, invite["id"]),
             )
-        return self.get_pull_request_for_token(token, pull_request_id)
+        result = self.get_pull_request_for_token(token, pull_request_id)
+        self._audit(
+            action="pull_request_created",
+            outcome="success",
+            repository_id=result["repositoryId"],
+            actor=author_name,
+            subject_id=pull_request_id,
+            details={
+                "pullRequestId": pull_request_id,
+                "number": result["number"],
+                "inviteId": invite["id"],
+                "inviteFingerprint": self._token_fingerprint(token),
+            },
+        )
+        return result
 
     def _file_rows(self, connection: sqlite3.Connection, pull_request_id: str) -> list[dict[str, Any]]:
         return [dict(row) for row in connection.execute(
@@ -536,6 +784,10 @@ class CollaborationService:
             "totalBytes": sum(int(item["size"]) for item in files),
             "riskyFileCount": sum(1 for item in files if item["risky"]),
             "reviews": self._review_rows(connection, row["id"]),
+            "reviewConversation": self.review_conversations.summary(
+                connection, row["id"], int(row["revision"])
+            ),
+            "submittedRevisions": self.review_conversations.revisions(connection, row["id"]),
         }
         if include_changes:
             payload["files"] = [
@@ -706,11 +958,38 @@ class CollaborationService:
             if int(count) == 0:
                 raise ForgeTraceError("Add at least one file change before submitting.", code="empty_pull_request")
             now = utc_now()
-            connection.execute(
-                "UPDATE pull_requests SET status = 'open', submitted_at = ?, updated_at = ?, revision = revision + 1 WHERE id = ?",
-                (now, now, pull_request_id),
+            submitted_revision = int(row["revision"]) + 1
+            files = self._file_rows(connection, pull_request_id)
+            deletions = self._deletion_rows(connection, pull_request_id)
+            self.review_conversations.capture_submission(
+                connection,
+                row,
+                revision=submitted_revision,
+                files=files,
+                deletions=deletions,
+                strict=True,
+                submitted_at=now,
             )
-        return self.get_pull_request_for_token(token, pull_request_id)
+            connection.execute(
+                "UPDATE pull_requests SET status = 'open', submitted_at = ?, updated_at = ?, revision = ? WHERE id = ?",
+                (now, now, submitted_revision, pull_request_id),
+            )
+        result = self.get_pull_request_for_token(token, pull_request_id)
+        self._audit(
+            action="pull_request_submitted",
+            outcome="success",
+            repository_id=result["repositoryId"],
+            actor=result.get("authorName", ""),
+            subject_id=pull_request_id,
+            details={
+                "pullRequestId": pull_request_id,
+                "number": result["number"],
+                "revision": result["revision"],
+                "changeCount": result["changeCount"],
+                "inviteFingerprint": self._token_fingerprint(token),
+            },
+        )
+        return result
 
     def list_pull_requests(self, repository_id: str, status: str = "") -> list[dict[str, Any]]:
         self.registry.get_repository(repository_id)
@@ -736,19 +1015,9 @@ class CollaborationService:
             raise ForgeTraceError("Pull request not found.", HTTPStatus.NOT_FOUND, "pull_request_not_found")
         return row
 
-    def _conflicts(self, repository, files: list[dict[str, Any]], deletions: list[dict[str, Any]]) -> list[dict[str, str]]:
-        current = repository.manifest(store_objects=False)
-        conflicts: list[dict[str, str]] = []
-        for item in [*files, *deletions]:
-            path = item["path"]
-            base_hash = item.get("base_hash") or item.get("baseHash") or ""
-            current_hash = str(current.get(path, {}).get("hash") or "")
-            if base_hash:
-                if current_hash != base_hash:
-                    conflicts.append({"path": path, "reason": "changed_since_pull_request_started", "baseHash": base_hash, "currentHash": current_hash})
-            elif current_hash:
-                conflicts.append({"path": path, "reason": "new_path_now_exists", "baseHash": "", "currentHash": current_hash})
-        return conflicts
+    def _conflicts(self, repository, files: list[dict[str, Any]], deletions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        current = repository.manifest(store_objects=False, persist_index=False)
+        return ConflictResolutionStore._conflicts_for_manifest(current, files, deletions)
 
     def _diff_for_file(self, repository, pull_request_id: str, item: dict[str, Any]) -> dict[str, Any]:
         staged = self._staged_path(repository.repository_id or "", pull_request_id, item["path"])
@@ -762,9 +1031,24 @@ class CollaborationService:
         base_hash = item["base_hash"]
         if base_hash:
             object_path = repository.object_path(base_hash)
-            if not object_path.exists() or object_path.stat().st_size > MAX_DIFF_BYTES or not repository.is_text(object_path):
-                return result
-            old_text = object_path.read_text(encoding="utf-8", errors="replace")
+            if object_path.exists():
+                if object_path.stat().st_size > MAX_DIFF_BYTES or not repository.is_text(object_path):
+                    return result
+                old_text = object_path.read_text(encoding="utf-8", errors="replace")
+            else:
+                try:
+                    _rel, live_path = repository.resolve_path(item["path"])
+                    live_manifest = repository.manifest(store_objects=False)
+                    if str(live_manifest.get(item["path"], {}).get("hash") or "") != base_hash:
+                        return result
+                    if not live_path.exists() or live_path.stat().st_size > MAX_DIFF_BYTES or not repository.is_text(live_path):
+                        return result
+                    live_bytes = live_path.read_bytes()
+                    if len(live_bytes) > MAX_DIFF_BYTES or hashlib.sha256(live_bytes).hexdigest() != base_hash:
+                        return result
+                    old_text = live_bytes.decode("utf-8", errors="replace")
+                except (ForgeTraceError, OSError):
+                    return result
         new_text = staged.read_text(encoding="utf-8", errors="replace")
         diff_lines = list(difflib.unified_diff(
             old_text.splitlines(), new_text.splitlines(),
@@ -785,14 +1069,29 @@ class CollaborationService:
             deletions = self._deletion_rows(connection, pull_request_id)
             payload["files"] = [self._diff_for_file(repository, pull_request_id, item) for item in files]
             payload["conflicts"] = self._conflicts(repository, files, deletions)
-            if payload["conflicts"] and row["status"] in {"open", "approved", "changes_requested"}:
+            payload["conflictResolution"] = self.conflict_resolutions.summary_owner(
+                repository_id, pull_request_id
+            )
+            if (
+                payload["conflicts"]
+                and not bool(payload["conflictResolution"].get("complete"))
+                and row["status"] in {"open", "approved", "changes_requested", "conflict"}
+            ):
                 payload["effectiveStatus"] = "conflict"
             else:
                 payload["effectiveStatus"] = row["status"]
             return payload
 
     def review_pull_request(
-        self, repository_id: str, pull_request_id: str, *, reviewer: str, verdict: str, comment: str = ""
+        self,
+        repository_id: str,
+        pull_request_id: str,
+        *,
+        reviewer: str,
+        verdict: str,
+        comment: str = "",
+        expected_revision: int | None = None,
+        request_id: str = "",
     ) -> dict[str, Any]:
         verdict = str(verdict).strip().lower()
         if verdict not in {"approved", "changes_requested", "comment"}:
@@ -801,18 +1100,66 @@ class CollaborationService:
         comment = self._clean_text(comment, label="Review comment", maximum=8000)
         with self.lock, self.connect() as connection:
             row = self._owner_pr_row(connection, repository_id, pull_request_id)
-            if row["status"] not in {"open", "approved", "changes_requested"}:
+            if row["status"] not in {"open", "approved", "changes_requested", "conflict"}:
                 raise ForgeTraceError("This pull request cannot be reviewed in its current state.", HTTPStatus.CONFLICT, "pull_request_not_reviewable")
+            if expected_revision is not None and int(expected_revision) != int(row["revision"]):
+                raise ForgeTraceError(
+                    "Pull request changed after it was loaded. Refresh before reviewing.",
+                    HTTPStatus.CONFLICT,
+                    "pull_request_revision_changed",
+                    {"currentRevision": int(row["revision"])},
+                )
+            if verdict == "approved":
+                unresolved = self.review_conversations.unresolved_current_count(
+                    connection, pull_request_id, int(row["revision"])
+                )
+                if unresolved:
+                    raise ForgeTraceError(
+                        "Resolve every thread on the current submitted revision before approval.",
+                        HTTPStatus.CONFLICT,
+                        "unresolved_review_threads",
+                        {"unresolvedThreadCount": unresolved},
+                    )
+                repository = self.registry.repository_service(repository_id)
+                files = self._file_rows(connection, pull_request_id)
+                deletions = self._deletion_rows(connection, pull_request_id)
+                with repository.lock:
+                    self.conflict_resolutions.require_resolutions_for_approval_locked(
+                        connection, pr=row, repository=repository, files=files, deletions=deletions
+                    )
+            now = utc_now()
             connection.execute(
-                "INSERT INTO pull_request_reviews(id, pull_request_id, reviewer, verdict, comment, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-                ("rev_" + uuid.uuid4().hex[:16], pull_request_id, reviewer, verdict, comment, utc_now()),
+                """
+                INSERT INTO pull_request_reviews(
+                    id, pull_request_id, reviewer, verdict, comment, created_at, revision, request_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "rev_" + uuid.uuid4().hex[:16], pull_request_id, reviewer, verdict, comment,
+                    now, int(row["revision"]), str(request_id or "")[:120],
+                ),
             )
             if verdict != "comment":
                 connection.execute(
                     "UPDATE pull_requests SET status = ?, updated_at = ? WHERE id = ?",
-                    (verdict, utc_now(), pull_request_id),
+                    (verdict, now, pull_request_id),
                 )
-        return self.get_pull_request(repository_id, pull_request_id)
+        result = self.get_pull_request(repository_id, pull_request_id)
+        self._audit(
+            action="pull_request_reviewed",
+            outcome="success",
+            repository_id=repository_id,
+            actor=reviewer,
+            subject_id=pull_request_id,
+            surface="owner",
+            details={
+                "pullRequestId": pull_request_id,
+                "verdict": verdict,
+                "revision": result["revision"],
+                "requestId": str(request_id or "")[:120],
+            },
+        )
+        return result
 
     def merge_pull_request(
         self,
@@ -823,8 +1170,12 @@ class CollaborationService:
         confirmation: str,
         expected_revision: int,
         allow_risky_files: bool = False,
+        request_id: str = "",
     ) -> dict[str, Any]:
         merged_by = self._clean_text(merged_by, label="Merger", maximum=120, required=True)
+        result: dict[str, Any]
+        resolution_draft_ids: list[str] = []
+        resolved_conflict_count = 0
         with self.lock, self.connect() as connection:
             row = self._owner_pr_row(connection, repository_id, pull_request_id)
             if row["status"] != "approved":
@@ -837,50 +1188,143 @@ class CollaborationService:
             if confirmation.strip() != expected_phrase:
                 raise ForgeTraceError(f"Type {expected_phrase} to confirm the merge.", code="merge_confirmation_failed")
             if int(expected_revision) != int(row["revision"]):
-                raise ForgeTraceError("Pull request changed after review. Refresh before merging.", HTTPStatus.CONFLICT, "pull_request_revision_changed")
+                raise ForgeTraceError(
+                    "Pull request changed after review. Refresh before merging.",
+                    HTTPStatus.CONFLICT,
+                    "pull_request_revision_changed",
+                )
             files = self._file_rows(connection, pull_request_id)
             deletions = self._deletion_rows(connection, pull_request_id)
             if any(bool(item["risky"]) for item in files) and not allow_risky_files:
                 raise ForgeTraceError(
                     "This pull request contains executable or script-like files. Explicit risky-file approval is required.",
-                    HTTPStatus.CONFLICT, "risky_files_require_confirmation",
+                    HTTPStatus.CONFLICT,
+                    "risky_files_require_confirmation",
                 )
             repository = self.registry.repository_service(repository_id)
-            conflicts = self._conflicts(repository, files, deletions)
-            if conflicts:
-                connection.execute("UPDATE pull_requests SET status = 'conflict', updated_at = ? WHERE id = ?", (utc_now(), pull_request_id))
-                raise ForgeTraceError(
-                    "Pull request conflicts with changes made after it was opened.", HTTPStatus.CONFLICT,
-                    "pull_request_conflict", {"conflicts": conflicts},
-                )
-            staged_changes = {
-                item["path"]: self._staged_path(repository_id, pull_request_id, item["path"])
-                for item in files
-            }
-            expected_hashes = {
-                item["path"]: str(item.get("base_hash") or "")
-                for item in [*files, *deletions]
-            }
-            result = repository.merge_pull_request(
-                pull_request_id=pull_request_id,
-                pull_request_number=int(row["number"]),
-                title=row["title"],
-                contributor=row["author_name"],
-                merged_by=merged_by,
-                staged_changes=staged_changes,
-                deletions=[item["path"] for item in deletions],
-                expected_base_hashes=expected_hashes,
-            )
-            now = utc_now()
-            connection.execute(
-                """
-                UPDATE pull_requests SET status='merged', merged_at=?, merged_by=?, merge_commit_id=?, updated_at=?
-                WHERE id=?
-                """,
-                (now, merged_by, result["commit"]["id"], now, pull_request_id),
-            )
+            try:
+                with repository.lock:
+                    repository.require_writable("pull request merge")
+                    try:
+                        plan = self.conflict_resolutions.build_merge_plan_locked(
+                            connection, pr=row, repository=repository, files=files, deletions=deletions
+                        )
+                    except ForgeTraceError as exc:
+                        if exc.code == "conflict_resolution_required":
+                            details = dict(exc.details or {})
+                            conflicts = list(details.get("conflicts") or [])
+                            connection.execute(
+                                "UPDATE pull_requests SET status='conflict', updated_at=? WHERE id=?",
+                                (utc_now(), pull_request_id),
+                            )
+                            self._audit(
+                                action="pull_request_merge_conflict",
+                                outcome="denied",
+                                severity="warning",
+                                repository_id=repository_id,
+                                actor=merged_by,
+                                subject_id=pull_request_id,
+                                surface="owner",
+                                details={
+                                    "pullRequestId": pull_request_id,
+                                    "conflictCount": len(conflicts),
+                                    "resolutionRequired": True,
+                                    "requestId": str(request_id or "")[:120],
+                                },
+                            )
+                            raise ForgeTraceError(
+                                "Pull request conflicts with changes made after it was opened. Prepare and confirm quarantine-side resolutions before approval and merge.",
+                                HTTPStatus.CONFLICT,
+                                "pull_request_conflict",
+                                details,
+                            ) from exc
+                        raise
+                    resolution_draft_ids = list(plan["resolutionDraftIds"])
+                    resolved_conflict_count = int(plan["resolvedConflictCount"])
+                    self._audit(
+                        required=True,
+                        action="pull_request_merge_authorized",
+                        outcome="authorized",
+                        severity="warning" if any(bool(item["risky"]) for item in files) else "info",
+                        repository_id=repository_id,
+                        actor=merged_by,
+                        subject_id=pull_request_id,
+                        surface="owner",
+                        details={
+                            "pullRequestId": pull_request_id,
+                            "number": int(row["number"]),
+                            "revision": int(row["revision"]),
+                            "fileCount": len(files),
+                            "deletionCount": len(deletions),
+                            "allowRiskyFiles": bool(allow_risky_files),
+                            "resolvedConflictCount": resolved_conflict_count,
+                            "resolutionDraftIds": resolution_draft_ids,
+                            "repositoryDigest": plan["binding"]["repositoryDigest"],
+                            "requestId": str(request_id or "")[:120],
+                        },
+                    )
+                    result = repository.merge_pull_request(
+                        pull_request_id=pull_request_id,
+                        pull_request_number=int(row["number"]),
+                        title=row["title"],
+                        contributor=row["author_name"],
+                        merged_by=merged_by,
+                        staged_changes=plan["stagedChanges"],
+                        deletions=plan["deletions"],
+                        expected_base_hashes=plan["expectedHashes"],
+                    )
+                    now = utc_now()
+                    self.conflict_resolutions.mark_applied(
+                        connection, resolution_draft_ids, actor_name=merged_by, request_id=request_id
+                    )
+                    connection.execute(
+                        """
+                        UPDATE pull_requests SET status='merged', merged_at=?, merged_by=?, merge_commit_id=?, updated_at=?
+                        WHERE id=?
+                        """,
+                        (now, merged_by, result["commit"]["id"], now, pull_request_id),
+                    )
+            except Exception as exc:
+                if not isinstance(exc, ForgeTraceError) or exc.code not in {
+                    "pull_request_conflict", "pull_request_not_approved", "unresolved_review_threads",
+                    "conflict_resolution_required", "repository_read_only",
+                }:
+                    self._audit(
+                        action="pull_request_merge_failed",
+                        outcome="failure",
+                        severity="error",
+                        repository_id=repository_id,
+                        actor=merged_by,
+                        subject_id=pull_request_id,
+                        surface="owner",
+                        details={
+                            "pullRequestId": pull_request_id,
+                            "number": int(row["number"]),
+                            "errorType": type(exc).__name__,
+                            "requestId": str(request_id or "")[:120],
+                        },
+                    )
+                raise
         payload = self.get_pull_request(repository_id, pull_request_id)
         payload["merge"] = result
+        self._audit(
+            action="pull_request_merged",
+            outcome="success",
+            severity="warning" if allow_risky_files else "info",
+            repository_id=repository_id,
+            actor=merged_by,
+            subject_id=pull_request_id,
+            surface="owner",
+            details={
+                "pullRequestId": pull_request_id,
+                "number": payload["number"],
+                "mergeCommitId": payload["mergeCommitId"],
+                "allowRiskyFiles": bool(allow_risky_files),
+                "resolvedConflictCount": resolved_conflict_count,
+                "resolutionDraftIds": resolution_draft_ids,
+                "requestId": str(request_id or "")[:120],
+            },
+        )
         self.purge_closed_quarantine(repository_id, pull_request_id)
         return payload
 
@@ -892,6 +1336,15 @@ class CollaborationService:
             now = utc_now()
             connection.execute("UPDATE pull_requests SET status='closed', closed_at=?, updated_at=? WHERE id=?", (now, now, pull_request_id))
         payload = self.get_pull_request(repository_id, pull_request_id)
+        self._audit(
+            action="pull_request_closed",
+            outcome="success",
+            severity="warning",
+            repository_id=repository_id,
+            subject_id=pull_request_id,
+            surface="owner",
+            details={"pullRequestId": pull_request_id, "number": payload["number"]},
+        )
         self.purge_closed_quarantine(repository_id, pull_request_id)
         return payload
 
@@ -921,14 +1374,26 @@ class CollaborationService:
                     removed_quarantine += 1
         except sqlite3.Error:
             pass
-        return {"transfers": removed_transfers, "quarantine": removed_quarantine}
+        review_cleanup = self.review_conversations.cleanup_retention()
+        resolution_cleanup = self.conflict_resolutions.cleanup_retention()
+        return {
+            "transfers": removed_transfers,
+            "quarantine": removed_quarantine,
+            **review_cleanup,
+            **resolution_cleanup,
+        }
 
-    def storage_metrics(self) -> dict[str, Any]:
+    def storage_metrics(self, *, max_files: int | None = None) -> dict[str, Any]:
         quarantine_bytes = 0
         quarantine_files = 0
+        complete = True
+        limit = None if max_files is None else max(1, min(int(max_files), 1_000_000))
         for path in self.quarantine_dir.rglob("*"):
             try:
                 if path.is_file() and not path.is_symlink():
+                    if limit is not None and quarantine_files >= limit:
+                        complete = False
+                        break
                     quarantine_bytes += path.stat().st_size
                     quarantine_files += 1
             except OSError:
@@ -938,11 +1403,89 @@ class CollaborationService:
                 str(row["status"]): int(row["count"])
                 for row in connection.execute("SELECT status, COUNT(*) AS count FROM pull_requests GROUP BY status")
             }
+        review_metrics = self.review_conversations.storage_metrics(max_files=max_files)
+        resolution_metrics = self.conflict_resolutions.storage_metrics(max_files=max_files)
         return {
             "quarantineBytes": quarantine_bytes,
             "quarantineFiles": quarantine_files,
             "pullRequestsByStatus": statuses,
-            "retention": {"closedAndMergedQuarantine": "purged immediately", "staleTransfersHours": 24},
+            "reviewConversations": review_metrics,
+            "conflictResolutions": resolution_metrics,
+            "retention": {
+                "closedAndMergedQuarantine": "purged immediately",
+                "staleTransfersHours": 24,
+                "terminalReviewDays": review_metrics["terminalRetentionDays"],
+                "terminalConflictResolutionDays": resolution_metrics["terminalRetentionDays"],
+            },
+            "complete": complete and review_metrics.get("complete", True) and resolution_metrics.get("complete", True),
+        }
+
+    def health_assessment(
+        self,
+        *,
+        max_revisions: int = 100,
+        max_evidence_files: int = 1000,
+        max_drafts: int = 200,
+        max_storage_files: int = 5000,
+    ) -> dict[str, Any]:
+        """Compose collaboration database, retention, review, and conflict health."""
+
+        with self.lock, self.connect() as connection:
+            integrity_rows = [str(row[0]) for row in connection.execute("PRAGMA integrity_check")]
+            sqlite_integrity = "ok" if integrity_rows == ["ok"] else "; ".join(integrity_rows)
+            foreign_keys = [dict(row) for row in connection.execute("PRAGMA foreign_key_check")]
+            schema_row = connection.execute(
+                "SELECT value FROM collaboration_meta WHERE key='schema_version'"
+            ).fetchone()
+            try:
+                schema_version = int(schema_row[0]) if schema_row else 0
+            except (TypeError, ValueError):
+                schema_version = 0
+            pull_requests = {
+                str(row["status"]): int(row["count"])
+                for row in connection.execute(
+                    "SELECT status, COUNT(*) AS count FROM pull_requests GROUP BY status"
+                )
+            }
+            known_prs = {
+                (str(row["repository_id"]), str(row["id"]))
+                for row in connection.execute("SELECT repository_id,id FROM pull_requests")
+            }
+
+        orphan_quarantine = 0
+        scanned_quarantine = 0
+        orphan_scan_complete = True
+        bounded_dirs = max(1, min(int(max_drafts), 5000)) * 2
+        for path in self.quarantine_dir.glob("*/*"):
+            if scanned_quarantine >= bounded_dirs:
+                orphan_scan_complete = False
+                break
+            scanned_quarantine += 1
+            try:
+                key = (path.parent.name, path.name)
+                if path.is_dir() and key not in known_prs:
+                    orphan_quarantine += 1
+            except OSError:
+                continue
+
+        review = self.review_conversations.health_assessment(
+            max_revisions=max_revisions,
+            max_files=max_evidence_files,
+        )
+        resolutions = self.conflict_resolutions.health_assessment(max_drafts=max_drafts)
+        storage = self.storage_metrics(max_files=max_storage_files)
+        return {
+            "schemaVersion": schema_version,
+            "expectedSchemaVersion": COLLABORATION_SCHEMA_VERSION,
+            "sqliteIntegrity": sqlite_integrity,
+            "foreignKeyIssueCount": len(foreign_keys),
+            "foreignKeyIssues": foreign_keys[:100],
+            "pullRequestsByStatus": pull_requests,
+            "orphanQuarantineDirectoryCount": orphan_quarantine,
+            "orphanQuarantineScanComplete": orphan_scan_complete,
+            "reviewConversations": review,
+            "conflictResolutions": resolutions,
+            "storage": storage,
         }
 
     def purge_closed_quarantine(self, repository_id: str, pull_request_id: str) -> None:

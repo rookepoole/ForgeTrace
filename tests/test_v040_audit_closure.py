@@ -14,6 +14,7 @@ from pathlib import Path
 from unittest import mock
 
 from forgetrace.app import build_application
+from forgetrace.constants import APP_VERSION
 from forgetrace.collaboration import CollaborationService
 from forgetrace.errors import RepositoryError
 from forgetrace.importing import build_folder_import_plan
@@ -289,7 +290,7 @@ class AuditClosureHttpSecurityTest(unittest.TestCase):
             self.assertGreater(len(response.read()), 0)
         request = urllib.request.Request(self.base + "/api/version", method="HEAD")
         with urllib.request.urlopen(request, timeout=10) as response:
-            self.assertEqual("0.4.0", response.headers["X-ForgeTrace-Version"])
+            self.assertEqual(APP_VERSION, response.headers["X-ForgeTrace-Version"])
             self.assertEqual(b"", response.read())
 
 

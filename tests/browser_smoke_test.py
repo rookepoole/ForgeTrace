@@ -94,7 +94,7 @@ def mock_transport_script() -> str:
       window.fetch = async (input, init={}) => {
         const url = new URL(typeof input === 'string' ? input : input.url, 'http://forgetrace.local');
         const method = (init.method || 'GET').toUpperCase();
-        if (url.pathname === '/api/v1/version') return response({name:'ForgeTrace',version:'0.3.6',applicationSchemaVersion:2});
+        if (url.pathname === '/api/v1/version') return response({name:'ForgeTrace',version:'0.4.2',applicationSchemaVersion:3});
         if (url.pathname === '/api/v1/sharing' && method === 'GET') return response(sharing);
         if (url.pathname === '/api/v1/sharing/start' && method === 'POST') { const body=JSON.parse(init.body||'{}'); const port=Number(body.port||8766); sharing={...sharing,enabled:true,port,baseUrls:[`http://192.168.1.50:${port}`],publicBaseUrl:`http://192.168.1.50:${port}`,startedAt:'2026-07-24T21:00:00Z'}; return response(sharing); }
         if (url.pathname === '/api/v1/sharing/stop' && method === 'POST') { sharing={...sharing,enabled:false,port:null,baseUrls:[],publicBaseUrl:'',startedAt:''}; return response(sharing); }
@@ -109,6 +109,8 @@ def mock_transport_script() -> str:
           return response(record,201);
         }
         if (url.pathname === '/api/v1/library' && method === 'GET') return response(library);
+        if (url.pathname === '/api/v1/registry/backups' && method === 'GET') return response({backups:[{name:'registry-20260725T160000Z-ui-1234abcd.sqlite3',path:'/backups/registry-20260725T160000Z-ui-1234abcd.sqlite3',bytes:4096,modified:1785000000}]});
+        if (url.pathname === '/api/v1/registry/restores' && method === 'GET') return response({restores:[]});
         if (url.pathname === '/api/v1/registry/backup' && method === 'POST') return response({name:'registry-ui.sqlite3',path:'/backups/registry-ui.sqlite3'},201);
         if (url.pathname === '/api/v1/registry/export' && method === 'GET') return response({format:'forgetrace-registry-export',version:1,repositories:records,collections:library.collections,savedFilters:[]});
         if (url.pathname === '/api/v1/doctor' && method === 'POST') return response({healthy:true,integrity:'ok',repositoryCount:2,issues:[],actions:[],summary:{critical:0,errors:0,warnings:0,total:0},backup:null});

@@ -1,6 +1,6 @@
 # Windows Native Folder Picker Acceptance
 
-This checklist is the required physical-Windows acceptance run for ForgeTrace v0.4.0. Automated Linux CI validates the PowerShell command contract and the complete import API, but cannot display a real Windows folder dialog.
+This checklist is the required physical-Windows acceptance run for ForgeTrace v0.4.2. Automated Linux CI validates the PowerShell command contract and the complete import API, but cannot display a real Windows folder dialog.
 
 ## Matrix
 

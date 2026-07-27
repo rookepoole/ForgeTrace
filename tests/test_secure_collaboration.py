@@ -496,7 +496,7 @@ class SecureCollaborationMigrationTest(unittest.TestCase):
                     "SELECT value FROM collaboration_meta WHERE key='schema_version'"
                 ).fetchone()[0]
             self.assertIn("allow_source_download", columns)
-            self.assertEqual("3", version)
+            self.assertEqual("6", version)
 
 
 if __name__ == "__main__":

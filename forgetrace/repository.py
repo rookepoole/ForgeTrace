@@ -4,23 +4,33 @@ import hashlib
 import json
 import mimetypes
 import os
+import re
 import shutil
 import threading
 import tempfile
 import urllib.parse
 import uuid
 import zipfile
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from http import HTTPStatus
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
-from .constants import MAX_EDITABLE_TEXT_BYTES, MAX_REQUEST_BYTES, REPOSITORY_SCHEMA_VERSION, TEXT_EXTENSIONS
+from .constants import (
+    MAX_EDITABLE_TEXT_BYTES,
+    MAX_REQUEST_BYTES,
+    REPOSITORY_ACCESS_READ_ONLY,
+    REPOSITORY_ACCESS_READ_WRITE,
+    REPOSITORY_SCHEMA_VERSION,
+    TEXT_EXTENSIONS,
+    normalize_repository_access_mode,
+)
 from .errors import RepositoryError
 from .locks import InterProcessRLock
 from .policies import path_policy_warnings
-from .transactions import FilesystemTransaction, recover_transactions
+from .transactions import FilesystemTransaction, inspect_transactions, recover_transactions
 from .utils import utc_now
 
 
@@ -54,11 +64,15 @@ class ForgeTraceRepository:
         repository_id: str | None = None,
         *,
         upload_limit_bytes: int = MAX_REQUEST_BYTES,
+        access_mode_getter: Callable[[], str] | None = None,
+        recover_on_open: bool = True,
+        create_workspace: bool = True,
     ):
         self.project_root = project_root.resolve()
         self.workspace = workspace.expanduser().resolve()
         self.repository_id = repository_id
         self.upload_limit_bytes = max(1, min(int(upload_limit_bytes), MAX_REQUEST_BYTES))
+        self._access_mode_getter = access_mode_getter
         self.meta_dir = self.workspace / ".forgetrace"
         self.objects_dir = self.meta_dir / "objects"
         self.state_path = self.meta_dir / "state.json"
@@ -67,10 +81,11 @@ class ForgeTraceRepository:
             self.lock = self._workspace_locks.setdefault(
                 lock_key, InterProcessRLock(self.meta_dir / "repository.lock", timeout=60.0)
             )
-        self.workspace.mkdir(parents=True, exist_ok=True)
+        if create_workspace:
+            self.workspace.mkdir(parents=True, exist_ok=True)
         self._tree_cache: dict[str, Any] = {"signature": None, "entries": [], "manifest": {}}
         self._recovery_actions: list[dict[str, Any]] = []
-        if self.meta_dir.exists():
+        if recover_on_open and self.meta_dir.exists():
             with self.lock:
                 self._recovery_actions = recover_transactions(
                     self.workspace, self.meta_dir, current_revision=self._read_disk_revision
@@ -129,6 +144,7 @@ class ForgeTraceRepository:
                 "description": "",
                 "createdAt": "",
                 "defaultAuthor": "",
+                "accessMode": REPOSITORY_ACCESS_READ_WRITE,
             },
             "contributions": [],
             "commits": [],
@@ -148,12 +164,126 @@ class ForgeTraceRepository:
         state.setdefault("revision", 0)
         state.setdefault("contributions", [])
         state.setdefault("commits", [])
-        state.setdefault("repository", {})
+        repository = state.setdefault("repository", {})
+        try:
+            schema_version = int(state.get("schemaVersion") or 0)
+        except (TypeError, ValueError):
+            schema_version = 0
+        raw_mode = repository.get("accessMode")
+        mode_present = raw_mode is not None and str(raw_mode).strip() != ""
+        legacy_missing_mode = not mode_present and schema_version < REPOSITORY_SCHEMA_VERSION
+        embedded_mode = normalize_repository_access_mode(
+            raw_mode, fail_closed=mode_present or schema_version >= REPOSITORY_SCHEMA_VERSION
+        )
+        repository["accessMode"] = embedded_mode
+        if schema_version < REPOSITORY_SCHEMA_VERSION:
+            state["schemaVersion"] = REPOSITORY_SCHEMA_VERSION
+            state["_needsSchemaUpgrade"] = True
+        state["_embeddedAccessModeValid"] = (
+            legacy_missing_mode or str(raw_mode or "").strip().lower() in {
+                REPOSITORY_ACCESS_READ_WRITE, REPOSITORY_ACCESS_READ_ONLY
+            }
+        )
+        state["_embeddedAccessModeNeedsDefault"] = legacy_missing_mode
         state["_loadedRevision"] = int(state.get("revision") or 0)
         return state
 
-    def save_state(self, state: dict[str, Any]) -> None:
+    def embedded_access_mode(self, state: dict[str, Any] | None = None) -> str:
+        payload = state or self.load_state(require_initialized=False)
+        repository = payload.get("repository", {}) if isinstance(payload, dict) else {}
+        raw_mode = repository.get("accessMode") if isinstance(repository, dict) else None
+        try:
+            schema_version = int(payload.get("schemaVersion") or 0) if isinstance(payload, dict) else 0
+        except (TypeError, ValueError):
+            schema_version = 0
+        mode_present = raw_mode is not None and str(raw_mode).strip() != ""
+        return normalize_repository_access_mode(
+            raw_mode, fail_closed=mode_present or schema_version >= REPOSITORY_SCHEMA_VERSION
+        )
+
+    def registry_access_mode(self) -> str:
+        if self._access_mode_getter is None:
+            return self.embedded_access_mode()
+        try:
+            return normalize_repository_access_mode(self._access_mode_getter(), fail_closed=True)
+        except Exception:
+            return REPOSITORY_ACCESS_READ_ONLY
+
+    def access_policy(self, state: dict[str, Any] | None = None) -> dict[str, Any]:
+        payload = state or self.load_state(require_initialized=False)
+        embedded = self.embedded_access_mode(payload)
+        repository = payload.get("repository", {}) if isinstance(payload, dict) else {}
+        raw_mode = repository.get("accessMode") if isinstance(repository, dict) else None
+        embedded_valid = bool(payload.get("_embeddedAccessModeValid")) if isinstance(payload, dict) and "_embeddedAccessModeValid" in payload else (
+            str(raw_mode or "").strip().lower() in {REPOSITORY_ACCESS_READ_WRITE, REPOSITORY_ACCESS_READ_ONLY}
+        )
+        registry = self.registry_access_mode()
+        effective = (
+            REPOSITORY_ACCESS_READ_WRITE
+            if embedded_valid and embedded == registry == REPOSITORY_ACCESS_READ_WRITE
+            else REPOSITORY_ACCESS_READ_ONLY
+        )
+        return {
+            "registryMode": registry,
+            "embeddedMode": embedded,
+            "embeddedValid": embedded_valid,
+            "effectiveMode": effective,
+            "consistent": embedded_valid and registry == embedded,
+            "writable": effective == REPOSITORY_ACCESS_READ_WRITE,
+        }
+
+    def require_writable(self, operation: str = "repository mutation") -> None:
+        policy = self.access_policy()
+        if not policy["writable"]:
+            raise RepositoryError(
+                "Repository is read-only. Return it to read-write mode before changing repository content or embedded settings.",
+                HTTPStatus.LOCKED,
+                "repository_read_only",
+                {"operation": operation, "accessPolicy": policy},
+            )
+
+    @contextmanager
+    def mutation(self, operation: str):
+        """Serialize a mutation and verify access mode while the repository lock is held."""
         with self.lock:
+            self.require_writable(operation)
+            yield
+
+    def set_embedded_access_mode(self, mode: str) -> dict[str, Any]:
+        selected = str(mode or "").strip().lower()
+        if selected not in {REPOSITORY_ACCESS_READ_WRITE, REPOSITORY_ACCESS_READ_ONLY}:
+            raise RepositoryError("Repository access mode is invalid.", code="invalid_repository_access_mode")
+        with self.lock:
+            state = self.load_state()
+            state.setdefault("repository", {})["accessMode"] = selected
+            state["schemaVersion"] = REPOSITORY_SCHEMA_VERSION
+            state["_embeddedAccessModeValid"] = True
+            state["_embeddedAccessModeNeedsDefault"] = False
+            self.save_state(state, bypass_access_policy=True)
+            return self.access_policy(state)
+
+    def reconcile_access_mode(self, registry_mode: str) -> dict[str, Any]:
+        selected = normalize_repository_access_mode(registry_mode, fail_closed=True)
+        with self.lock:
+            state = self.load_state()
+            repository = state.setdefault("repository", {})
+            embedded = self.embedded_access_mode(state)
+            needs_upgrade = bool(state.get("_needsSchemaUpgrade"))
+            mode_missing = bool(state.get("_embeddedAccessModeNeedsDefault"))
+            should_tighten = selected == REPOSITORY_ACCESS_READ_ONLY and embedded != REPOSITORY_ACCESS_READ_ONLY
+            if mode_missing or needs_upgrade or should_tighten:
+                if mode_missing or should_tighten:
+                    repository["accessMode"] = selected
+                    state["_embeddedAccessModeValid"] = True
+                    state["_embeddedAccessModeNeedsDefault"] = False
+                state["schemaVersion"] = REPOSITORY_SCHEMA_VERSION
+                self.save_state(state, bypass_access_policy=True)
+            return self.access_policy(state)
+
+    def save_state(self, state: dict[str, Any], *, bypass_access_policy: bool = False) -> None:
+        with self.lock:
+            if not bypass_access_policy:
+                self.require_writable("repository metadata persistence")
             self.meta_dir.mkdir(parents=True, exist_ok=True)
             self.objects_dir.mkdir(parents=True, exist_ok=True)
             expected_revision = int(state.get("_loadedRevision", state.get("revision", 0)) or 0)
@@ -267,6 +397,7 @@ class ForgeTraceRepository:
                 "description": (description or "").strip(),
                 "createdAt": now,
                 "defaultAuthor": author,
+                "accessMode": REPOSITORY_ACCESS_READ_WRITE,
             }
             readme = self.workspace / "README.md"
             transaction = self._new_transaction(state, "repository_initialize")
@@ -293,7 +424,7 @@ class ForgeTraceRepository:
                 raise
 
     def update_repository_metadata(self, name: str, description: str, default_author: str) -> dict[str, Any]:
-        with self.lock:
+        with self.mutation("repository settings update"):
             state = self.load_state()
             state.setdefault("repository", {})
             state["repository"]["name"] = str(name).strip()
@@ -313,7 +444,7 @@ class ForgeTraceRepository:
             "forkedAt", "tokenFingerprint", "archiveSha256", "sourceFiles",
         }
         cleaned = {key: upstream[key] for key in allowed if key in upstream}
-        with self.lock:
+        with self.mutation("upstream metadata update"):
             state = self.load_state()
             state.setdefault("repository", {})["upstream"] = cleaned
             self.save_state(state)
@@ -334,7 +465,7 @@ class ForgeTraceRepository:
             self.repository_id = repository_id
             if not stored:
                 state.setdefault("repository", {})["id"] = repository_id
-                self.save_state(state)
+                self.save_state(state, bypass_access_policy=True)
 
     def is_text(self, path: Path) -> bool:
         if path.suffix.lower() in TEXT_EXTENSIONS or path.name in {"Dockerfile", "Makefile", "Procfile", "LICENSE"}:
@@ -383,6 +514,103 @@ class ForgeTraceRepository:
         except (OSError, json.JSONDecodeError):
             return {}
 
+    def transaction_health(self, *, limit: int = 200) -> dict[str, Any]:
+        return inspect_transactions(
+            self.workspace,
+            self.meta_dir,
+            current_revision=self._read_disk_revision,
+            limit=limit,
+        )
+
+    def hash_index_health(self, *, max_entries: int = 5000) -> dict[str, Any]:
+        """Inspect the incremental hash index without refreshing or rewriting it."""
+
+        bounded = max(1, min(int(max_entries), 100_000))
+        if not self.index_path.exists():
+            return {
+                "state": "missing",
+                "valid": True,
+                "entryCount": 0,
+                "scannedCount": 0,
+                "complete": True,
+                "staleCount": 0,
+                "missingPathCount": 0,
+                "invalidEntryCount": 0,
+                "updatedAt": "",
+            }
+        try:
+            payload = json.loads(self.index_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            return {
+                "state": "invalid",
+                "valid": False,
+                "entryCount": 0,
+                "scannedCount": 0,
+                "complete": True,
+                "staleCount": 0,
+                "missingPathCount": 0,
+                "invalidEntryCount": 1,
+                "updatedAt": "",
+                "message": str(exc),
+            }
+        files = payload.get("files") if isinstance(payload, dict) else None
+        if not isinstance(files, dict) or int(payload.get("schemaVersion") or 0) != 1:
+            return {
+                "state": "invalid",
+                "valid": False,
+                "entryCount": len(files) if isinstance(files, dict) else 0,
+                "scannedCount": 0,
+                "complete": True,
+                "staleCount": 0,
+                "missingPathCount": 0,
+                "invalidEntryCount": 1,
+                "updatedAt": str(payload.get("updatedAt") or "") if isinstance(payload, dict) else "",
+                "message": "Hash index schema or file map is invalid.",
+            }
+        stale = 0
+        missing = 0
+        invalid = 0
+        entries = sorted(files.items())
+        for rel, item in entries[:bounded]:
+            if not isinstance(item, dict):
+                invalid += 1
+                continue
+            digest = str(item.get("hash") or "")
+            signature = str(item.get("signature") or "")
+            if not re.fullmatch(r"[0-9a-f]{64}", digest) or not signature:
+                invalid += 1
+                continue
+            try:
+                normalized, path = self.resolve_path(str(rel))
+            except RepositoryError:
+                invalid += 1
+                continue
+            if normalized != str(rel).replace("\\", "/") or not path.is_file() or path.is_symlink():
+                missing += 1
+                continue
+            try:
+                info = path.stat()
+            except OSError:
+                missing += 1
+                continue
+            actual_signature = f"{info.st_size}:{info.st_mtime_ns}:{getattr(info, 'st_ino', 0)}"
+            if actual_signature != signature:
+                stale += 1
+        complete = len(entries) <= bounded
+        valid = invalid == 0
+        state = "invalid" if not valid else "stale" if stale or missing else "current"
+        return {
+            "state": state,
+            "valid": valid,
+            "entryCount": len(entries),
+            "scannedCount": min(len(entries), bounded),
+            "complete": complete,
+            "staleCount": stale,
+            "missingPathCount": missing,
+            "invalidEntryCount": invalid,
+            "updatedAt": str(payload.get("updatedAt") or ""),
+        }
+
     def _save_hash_index(self, payload: dict[str, Any]) -> None:
         self.meta_dir.mkdir(parents=True, exist_ok=True)
         temp = self.index_path.with_name(f"file-index.{uuid.uuid4().hex}.tmp")
@@ -402,7 +630,7 @@ class ForgeTraceRepository:
             "mtimeNs": int(info.st_mtime_ns),
         }
 
-    def _scan_workspace(self, *, need_hashes: bool = True) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]], list[dict[str, Any]]]:
+    def _scan_workspace(self, *, need_hashes: bool = True, persist_index: bool = True) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]], list[dict[str, Any]]]:
         """Return depth-first tree rows, cached file manifest, and directory metadata."""
         prior = self._load_hash_index() if need_hashes else {}
         prior_files = prior.get("files") if isinstance(prior.get("files"), dict) else {}
@@ -457,7 +685,7 @@ class ForgeTraceRepository:
                     next_files[entry["path"]] = {"signature": signature, "hash": digest}
 
         visit(self.workspace, Path("."))
-        if need_hashes:
+        if need_hashes and persist_index and self.access_policy().get("writable", False):
             self._save_hash_index({"schemaVersion": 1, "updatedAt": utc_now(), "files": next_files})
         self._tree_cache = {"signature": utc_now(), "entries": entries, "manifest": manifest, "directories": directories}
         return entries, manifest, directories
@@ -562,7 +790,7 @@ class ForgeTraceRepository:
                 "repository_upload_limit_exceeded",
                 {"limitBytes": self.upload_limit_bytes, "fileBytes": len(content)},
             )
-        with self.lock:
+        with self.mutation("file write"):
             state = self.load_state()
             existed = path.exists()
             if path.exists() and path.is_dir():
@@ -608,7 +836,7 @@ class ForgeTraceRepository:
                 "repository_upload_limit_exceeded",
                 {"limitBytes": self.upload_limit_bytes, "fileBytes": size},
             )
-        with self.lock:
+        with self.mutation("file upload"):
             state = self.load_state()
             existed = path.exists()
             if path.exists() and path.is_dir():
@@ -647,7 +875,7 @@ class ForgeTraceRepository:
 
     def create_folder(self, raw_path: str, author: str) -> dict[str, Any]:
         rel, path = self.resolve_path(raw_path)
-        with self.lock:
+        with self.mutation("folder creation"):
             state = self.load_state()
             if path.exists():
                 raise RepositoryError("A file or folder already exists at that path.", HTTPStatus.CONFLICT)
@@ -683,7 +911,7 @@ class ForgeTraceRepository:
         normalized.sort(key=lambda item: (item[0].count("/"), item[0].casefold()))
         created: list[str] = []
         existing: list[str] = []
-        with self.lock:
+        with self.mutation("folder manifest creation"):
             state = self.load_state()
             transaction = self._new_transaction(state, "folder_manifest")
             try:
@@ -761,7 +989,7 @@ class ForgeTraceRepository:
     def rename_path(self, raw_path: str, raw_new_path: str, author: str) -> dict[str, Any]:
         rel, path = self.resolve_path(raw_path)
         new_rel, new_path = self.resolve_path(raw_new_path)
-        with self.lock:
+        with self.mutation("path rename"):
             state = self.load_state()
             if not path.exists():
                 raise RepositoryError("Source path not found.", HTTPStatus.NOT_FOUND)
@@ -793,7 +1021,7 @@ class ForgeTraceRepository:
 
     def delete_path(self, raw_path: str, author: str) -> dict[str, Any]:
         rel, path = self.resolve_path(raw_path)
-        with self.lock:
+        with self.mutation("path deletion"):
             state = self.load_state()
             if not path.exists():
                 raise RepositoryError("Path not found.", HTTPStatus.NOT_FOUND)
@@ -830,6 +1058,8 @@ class ForgeTraceRepository:
                 raise
 
     def scan_index(self, *, store_objects: bool = False) -> dict[str, Any]:
+        if store_objects:
+            self.require_writable("snapshot object materialization")
         entries, manifest, directories = self._scan_workspace(need_hashes=True)
         if store_objects:
             for rel, data in manifest.items():
@@ -849,8 +1079,10 @@ class ForgeTraceRepository:
                     os.replace(temp, object_path)
         return {"tree": entries, "manifest": manifest, "directories": directories}
 
-    def manifest(self, *, store_objects: bool = False) -> dict[str, dict[str, Any]]:
-        return self.scan_index(store_objects=store_objects)["manifest"]
+    def manifest(self, *, store_objects: bool = False, persist_index: bool = True) -> dict[str, dict[str, Any]]:
+        if store_objects:
+            return self.scan_index(store_objects=True)["manifest"]
+        return self._scan_workspace(need_hashes=True, persist_index=persist_index)[1]
 
     def directory_manifest(self) -> list[dict[str, Any]]:
         return self.scan_index(store_objects=False)["directories"]
@@ -903,13 +1135,14 @@ class ForgeTraceRepository:
         author: str,
         *,
         extra_parents: list[str] | None = None,
+        allow_empty: bool = False,
     ) -> dict[str, Any]:
         current = scan["manifest"]
         directories = scan["directories"]
         previous_commit = state["commits"][-1] if state["commits"] else {}
         changes = self.diff_manifests(previous_commit.get("manifest", {}), current)
         directory_changes = self.diff_directories(previous_commit.get("directoryManifest", []), directories)
-        if not any(changes.values()) and not any(directory_changes.values()) and state["commits"]:
+        if not any(changes.values()) and not any(directory_changes.values()) and state["commits"] and not allow_empty:
             raise RepositoryError("No file or folder changes exist since the previous snapshot.", HTTPStatus.CONFLICT)
         timestamp = utc_now()
         parent = state["commits"][-1]["id"] if state["commits"] else None
@@ -968,7 +1201,7 @@ class ForgeTraceRepository:
         expected_base_hashes: dict[str, str],
     ) -> dict[str, Any]:
         """Apply a reviewed quarantined change set as one filesystem/metadata transaction."""
-        with self.lock:
+        with self.mutation("pull request merge"):
             safety = self.ensure_snapshot(f"Safety snapshot before pull request #{pull_request_number}", merged_by)
             state = self.load_state()
             normalized_changes: dict[str, tuple[Path, Path]] = {}
@@ -1041,6 +1274,7 @@ class ForgeTraceRepository:
                     f"Merge pull request #{pull_request_number}: {title}",
                     merged_by,
                     extra_parents=[merge_contribution["id"]],
+                    allow_empty=True,
                 )
                 self.save_state(state)
                 transaction.commit(self.state_revision(state))
@@ -1063,7 +1297,7 @@ class ForgeTraceRepository:
         message = (message or "").strip()
         if not message:
             raise RepositoryError("A commit message is required.")
-        with self.lock:
+        with self.mutation("snapshot creation"):
             state = self.load_state()
             scan = self.scan_index(store_objects=True)
             commit = self._append_commit_to_state(state, scan, message, author)
@@ -1073,11 +1307,15 @@ class ForgeTraceRepository:
     def public_commit(self, commit: dict[str, Any]) -> dict[str, Any]:
         return {key: value for key, value in commit.items() if key not in {"manifest", "directoryManifest"}}
 
-    def verify_snapshot_objects(self, commit: dict[str, Any]) -> dict[str, Any]:
+    def verify_snapshot_objects(
+        self, commit: dict[str, Any], *, max_objects: int | None = None
+    ) -> dict[str, Any]:
         errors: list[dict[str, Any]] = []
         verified = 0
         total_bytes = 0
-        for rel, data in commit.get("manifest", {}).items():
+        manifest_items = sorted((commit.get("manifest", {}) or {}).items())
+        limit = len(manifest_items) if max_objects is None else max(0, int(max_objects))
+        for rel, data in manifest_items[:limit]:
             digest = str(data.get("hash") or "")
             expected_size = int(data.get("size") or 0)
             try:
@@ -1102,10 +1340,20 @@ class ForgeTraceRepository:
                 continue
             verified += 1
             total_bytes += actual_size
-        return {"valid": not errors, "verifiedObjects": verified, "totalBytes": total_bytes, "errors": errors}
+        complete = len(manifest_items) <= limit
+        return {
+            "valid": not errors,
+            "complete": complete,
+            "verifiedObjects": verified,
+            "scannedObjects": min(len(manifest_items), limit),
+            "objectCount": len(manifest_items),
+            "remainingObjects": max(0, len(manifest_items) - limit),
+            "totalBytes": total_bytes,
+            "errors": errors,
+        }
 
     def restore_commit(self, commit_id: str, author: str) -> dict[str, Any]:
-        with self.lock:
+        with self.mutation("snapshot restore"):
             state = self.load_state()
             commit = next((c for c in state["commits"] if c["id"] == commit_id), None)
             if not commit:
@@ -1246,6 +1494,7 @@ class ForgeTraceRepository:
             "id": self.repository_id or state["repository"].get("id", ""),
             "path": str(self.workspace),
             "repository": state["repository"],
+            "accessPolicy": self.access_policy(state),
             "revision": self.state_revision(state),
             "stats": {
                 "files": len(files),
@@ -1308,7 +1557,7 @@ class ForgeTraceRepository:
         include_sensitive: bool = True,
     ) -> None:
         state = self.load_state()
-        scan = self.scan_index(store_objects=True)
+        scan = self.scan_index(store_objects=False)
         excluded_vcs_dirs = {".git", ".hg", ".svn", ".bzr"}
         included_files: set[str] = set()
         for rel, data in scan["manifest"].items():
@@ -1317,12 +1566,32 @@ class ForgeTraceRepository:
                 continue
             if not include_sensitive and "possible_secret_or_credential" in warnings:
                 continue
-            object_path = self.object_path(data["hash"])
+            source_path = self.workspace / rel
             info = zipfile.ZipInfo(rel, date_time=self._zip_datetime(int(data.get("mtimeNs") or 0)))
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = (int(data.get("mode", 0o644)) & 0xFFFF) << 16
-            with object_path.open("rb") as source, archive.open(info, "w", force_zip64=True) as target:
-                shutil.copyfileobj(source, target, 1024 * 1024)
+            hasher = hashlib.sha256()
+            copied = 0
+            try:
+                with source_path.open("rb") as source, archive.open(info, "w", force_zip64=True) as target:
+                    for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                        hasher.update(chunk)
+                        copied += len(chunk)
+                        target.write(chunk)
+            except OSError as exc:
+                raise RepositoryError(
+                    f"Repository export could not read {rel}: {exc}",
+                    HTTPStatus.CONFLICT,
+                    "export_source_changed",
+                    {"path": rel},
+                ) from exc
+            if copied != int(data.get("size") or 0) or hasher.hexdigest() != str(data.get("hash") or ""):
+                raise RepositoryError(
+                    "Repository export was blocked because a source file changed during verification.",
+                    HTTPStatus.CONFLICT,
+                    "export_source_changed",
+                    {"path": rel, "expectedSize": int(data.get("size") or 0), "actualSize": copied},
+                )
             included_files.add(rel)
         # Preserve empty directories and portable mode metadata.
         for directory in scan["directories"]:

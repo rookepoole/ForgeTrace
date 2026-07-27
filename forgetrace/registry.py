@@ -14,8 +14,17 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Iterator
 
-from .constants import APP_SCHEMA_VERSION, MAX_REQUEST_BYTES
+from .constants import (
+    APP_SCHEMA_VERSION,
+    MAX_REQUEST_BYTES,
+    REPOSITORY_ACCESS_READ_ONLY,
+    REPOSITORY_ACCESS_READ_WRITE,
+    REPOSITORY_ACCESS_MODES,
+    normalize_repository_access_mode,
+)
 from .errors import ForgeTraceError
+from .locks import InterProcessRLock, LockUnavailable, windows_locking_processes
+from .registry_restore import RegistryRestoreService
 from .forking import CollaborationForkClient
 from .repository import ForgeTraceRepository
 from .utils import normalize_repository_path, utc_now
@@ -100,6 +109,15 @@ MIGRATIONS: tuple[tuple[int, str, str], ...] = (
         );
         """,
     ),
+    (
+        3,
+        "0003_repository_access_mode",
+        """
+        ALTER TABLE repositories
+            ADD COLUMN access_mode TEXT NOT NULL DEFAULT 'read_write'
+                CHECK(access_mode IN ('read_write', 'read_only'));
+        """,
+    ),
 )
 
 
@@ -108,92 +126,134 @@ class RepositoryRegistry:
 
     def __init__(self, project_root: Path, data_dir: Path) -> None:
         self.project_root = project_root.resolve()
+        self.migrations = MIGRATIONS
         self.data_dir = data_dir.expanduser().resolve()
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.data_dir / "registry.sqlite3"
         self.backups_dir = self.data_dir / "backups"
         self.backups_dir.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
+        self.operation_lock = InterProcessRLock(self.data_dir / "registry.lock", timeout=30.0)
+        self.repository_deletions_dir = self.data_dir / "repository-deletions"
+        self.repository_deletion_journals_dir = self.repository_deletions_dir / "journals"
+        self.repository_deletion_staging_dir = self.repository_deletions_dir / "staging"
+        self.repository_deletion_tombstones_dir = self.repository_deletions_dir / "tombstones"
+        self.repository_deletion_intents_dir = self.repository_deletions_dir / "intents"
+        self.repository_deletion_locks_dir = self.repository_deletions_dir / "locks"
+        for directory in (
+            self.repository_deletion_journals_dir,
+            self.repository_deletion_staging_dir,
+            self.repository_deletion_tombstones_dir,
+            self.repository_deletion_intents_dir,
+            self.repository_deletion_locks_dir,
+        ):
+            directory.mkdir(parents=True, exist_ok=True)
+        self.restore_service = RegistryRestoreService(self)
+        self.startup_restore_recovery_report = self.restore_service.recover_startup()
         self._migrate()
         self._backfill_legacy_organization()
+        self.startup_repository_deletion_recovery_report = self.recover_managed_repository_deletions()
         self.startup_cleanup_report = self.cleanup_stale_application_artifacts()
         self.startup_recovery_report = self.recover_startup_repositories()
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
-        connection = sqlite3.connect(self.db_path, timeout=30.0)
-        connection.row_factory = sqlite3.Row
-        connection.execute("PRAGMA foreign_keys = ON")
-        connection.execute("PRAGMA journal_mode = WAL")
-        connection.execute("PRAGMA synchronous = FULL")
         try:
-            yield connection
-            connection.commit()
-        except Exception:
-            connection.rollback()
-            raise
+            self.operation_lock.acquire()
+        except LockUnavailable as exc:
+            raise ForgeTraceError(
+                "The ForgeTrace registry is busy with another protected operation.",
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                "registry_busy",
+            ) from exc
+        connection: sqlite3.Connection | None = None
+        try:
+            connection = sqlite3.connect(self.db_path, timeout=30.0)
+            connection.row_factory = sqlite3.Row
+            connection.execute("PRAGMA foreign_keys = ON")
+            connection.execute("PRAGMA journal_mode = WAL")
+            connection.execute("PRAGMA synchronous = FULL")
+            try:
+                yield connection
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
         finally:
-            connection.close()
+            if connection is not None:
+                connection.close()
+            self.operation_lock.release()
+
+    def _apply_migrations(self, connection: sqlite3.Connection) -> list[str]:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+                version INTEGER PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                applied_at TEXT NOT NULL
+            )
+            """
+        )
+        applied = {
+            int(row["version"])
+            for row in connection.execute("SELECT version FROM schema_migrations")
+        }
+        applied_names: list[str] = []
+        for version, name, sql in MIGRATIONS:
+            if version in applied:
+                continue
+            connection.executescript(sql)
+            connection.execute(
+                "INSERT INTO schema_migrations(version, name, applied_at) VALUES (?, ?, ?)",
+                (version, name, utc_now()),
+            )
+            applied_names.append(name)
+        self._set_state(connection, "schema_version", str(APP_SCHEMA_VERSION))
+        return applied_names
 
     def _migrate(self) -> None:
         with self.lock, self.connect() as connection:
-            connection.execute(
-                """
-                CREATE TABLE IF NOT EXISTS schema_migrations (
-                    version INTEGER PRIMARY KEY,
-                    name TEXT NOT NULL UNIQUE,
-                    applied_at TEXT NOT NULL
+            self._apply_migrations(connection)
+
+    def _backfill_legacy_organization_connection(self, connection: sqlite3.Connection) -> None:
+        rows = connection.execute(
+            "SELECT id, tags_json, collection_name, created_at FROM repositories"
+        ).fetchall()
+        for row in rows:
+            stable_time = str(row["created_at"] or "1970-01-01T00:00:00Z")
+            try:
+                tags = json.loads(row["tags_json"] or "[]")
+            except json.JSONDecodeError:
+                tags = []
+            for tag in tags if isinstance(tags, list) else []:
+                cleaned = self._clean_tag(tag)
+                if cleaned:
+                    connection.execute(
+                        "INSERT OR IGNORE INTO repository_tags(repository_id, tag, created_at) VALUES (?, ?, ?)",
+                        (row["id"], cleaned, stable_time),
+                    )
+            collection_name = str(row["collection_name"] or "").strip()
+            if collection_name:
+                existing = connection.execute(
+                    "SELECT id FROM collections WHERE name = ? COLLATE NOCASE", (collection_name,)
+                ).fetchone()
+                collection_id = existing["id"] if existing else str(
+                    uuid.uuid5(uuid.NAMESPACE_URL, f"forgetrace:collection:{collection_name.casefold()}")
                 )
-                """
-            )
-            applied = {
-                int(row["version"])
-                for row in connection.execute("SELECT version FROM schema_migrations")
-            }
-            for version, name, sql in MIGRATIONS:
-                if version in applied:
-                    continue
-                connection.executescript(sql)
+                if not existing:
+                    connection.execute(
+                        "INSERT INTO collections(id, name, created_at, updated_at) VALUES (?, ?, ?, ?)",
+                        (collection_id, collection_name, stable_time, stable_time),
+                    )
                 connection.execute(
-                    "INSERT INTO schema_migrations(version, name, applied_at) VALUES (?, ?, ?)",
-                    (version, name, utc_now()),
+                    "INSERT OR IGNORE INTO repository_collections(repository_id, collection_id, added_at) VALUES (?, ?, ?)",
+                    (row["id"], collection_id, stable_time),
                 )
-            self._set_state(connection, "schema_version", str(APP_SCHEMA_VERSION))
 
     def _backfill_legacy_organization(self) -> None:
         """Normalize v0.2.0 tags/collection fields without losing older registry data."""
         with self.lock, self.connect() as connection:
-            rows = connection.execute(
-                "SELECT id, tags_json, collection_name FROM repositories"
-            ).fetchall()
-            for row in rows:
-                try:
-                    tags = json.loads(row["tags_json"] or "[]")
-                except json.JSONDecodeError:
-                    tags = []
-                for tag in tags if isinstance(tags, list) else []:
-                    cleaned = self._clean_tag(tag)
-                    if cleaned:
-                        connection.execute(
-                            "INSERT OR IGNORE INTO repository_tags(repository_id, tag, created_at) VALUES (?, ?, ?)",
-                            (row["id"], cleaned, utc_now()),
-                        )
-                collection_name = str(row["collection_name"] or "").strip()
-                if collection_name:
-                    existing = connection.execute(
-                        "SELECT id FROM collections WHERE name = ? COLLATE NOCASE", (collection_name,)
-                    ).fetchone()
-                    collection_id = existing["id"] if existing else str(uuid.uuid4())
-                    if not existing:
-                        now = utc_now()
-                        connection.execute(
-                            "INSERT INTO collections(id, name, created_at, updated_at) VALUES (?, ?, ?, ?)",
-                            (collection_id, collection_name, now, now),
-                        )
-                    connection.execute(
-                        "INSERT OR IGNORE INTO repository_collections(repository_id, collection_id, added_at) VALUES (?, ?, ?)",
-                        (row["id"], collection_id, utc_now()),
-                    )
+            self._backfill_legacy_organization_connection(connection)
 
     @staticmethod
     def _set_state(connection: sqlite3.Connection, key: str, value: str) -> None:
@@ -201,6 +261,7 @@ class RepositoryRegistry:
             """
             INSERT INTO application_state(key, value, updated_at) VALUES (?, ?, ?)
             ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
+            WHERE application_state.value <> excluded.value
             """,
             (key, value, utc_now()),
         )
@@ -250,6 +311,17 @@ class RepositoryRegistry:
                 details={"minimum": minimum, "maximum": MAX_REQUEST_BYTES},
             )
         return limit
+
+    @staticmethod
+    def _validate_access_mode(value: Any) -> str:
+        mode = str(value or "").strip().lower()
+        if mode not in REPOSITORY_ACCESS_MODES:
+            raise ForgeTraceError(
+                "Repository access mode must be read_write or read_only.",
+                code="invalid_repository_access_mode",
+                details={"allowed": sorted(REPOSITORY_ACCESS_MODES)},
+            )
+        return mode
 
     @staticmethod
     def _status_for_path(path_value: str) -> tuple[str, str]:
@@ -326,6 +398,7 @@ class RepositoryRegistry:
             "metadataPath": row["metadata_path"],
             "defaultAuthor": row["default_author"],
             "uploadLimitBytes": int(row["upload_limit_bytes"]),
+            "accessMode": normalize_repository_access_mode(row["access_mode"], fail_closed=True),
             "favorite": bool(row["favorite"]),
             "pinned": bool(row["favorite"]),
             "tags": self._tags_for(connection, row["id"]),
@@ -337,7 +410,506 @@ class RepositoryRegistry:
             "status": status,
             "statusMessage": status_message,
             "capabilities": self._path_capabilities(row["path"]),
+            "managed": self.is_managed_repository_path(row["path"]),
             "active": row["id"] == active_id,
+        }
+
+
+    @staticmethod
+    def _fsync_directory(path: Path) -> None:
+        try:
+            descriptor = os.open(path, os.O_RDONLY)
+        except OSError:
+            return
+        try:
+            os.fsync(descriptor)
+        except OSError:
+            pass
+        finally:
+            os.close(descriptor)
+
+    def _atomic_write_json(self, path: Path, payload: dict[str, Any]) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+        data = json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        try:
+            with temporary.open("wb") as handle:
+                handle.write(data)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, path)
+            self._fsync_directory(path.parent)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    @staticmethod
+    def _deletion_artifact_key(repository_id: str) -> str:
+        return hashlib.sha256(str(repository_id).encode("utf-8")).hexdigest()
+
+    def _deletion_tombstone_path(self, repository_id: str) -> Path:
+        return self.repository_deletion_tombstones_dir / f"{self._deletion_artifact_key(repository_id)}.json"
+
+    def _deletion_intent_path(self, repository_id: str) -> Path:
+        return self.repository_deletion_intents_dir / f"{self._deletion_artifact_key(repository_id)}.json"
+
+    def _deletion_guard(self, repository_id: str) -> InterProcessRLock:
+        return InterProcessRLock(
+            self.repository_deletion_locks_dir / f"{self._deletion_artifact_key(repository_id)}.lock",
+            timeout=60.0,
+        )
+
+    def _write_deletion_intent(
+        self, repository_id: str, *, deletion_id: str, name: str, original_path: str
+    ) -> Path:
+        target = self._deletion_intent_path(repository_id)
+        self._atomic_write_json(
+            target,
+            {
+                "schemaVersion": 1,
+                "repositoryId": str(repository_id),
+                "deletionId": str(deletion_id),
+                "name": str(name),
+                "originalPath": str(original_path),
+                "createdAt": utc_now(),
+            },
+        )
+        return target
+
+    def _clear_deletion_intent(self, repository_id: str) -> None:
+        path = self._deletion_intent_path(repository_id)
+        path.unlink(missing_ok=True)
+        self._fsync_directory(path.parent)
+
+    def repository_deletion_pending(self, repository_id: str) -> bool:
+        return self._deletion_intent_path(repository_id).is_file()
+
+    def _require_repository_not_deleting(self, repository_id: str) -> None:
+        if self.repository_deletion_pending(repository_id):
+            raise ForgeTraceError(
+                "Repository deletion is in progress. Retry after the protected deletion transaction completes or rolls back.",
+                HTTPStatus.LOCKED,
+                "repository_delete_in_progress",
+                {"repositoryId": repository_id},
+            )
+
+    def _write_deletion_tombstone(self, repository_id: str, *, name: str, original_path: str) -> Path:
+        target = self._deletion_tombstone_path(repository_id)
+        self._atomic_write_json(
+            target,
+            {
+                "schemaVersion": 1,
+                "repositoryId": str(repository_id),
+                "name": str(name),
+                "originalPath": str(original_path),
+                "deletedAt": utc_now(),
+            },
+        )
+        return target
+
+    def _clear_deletion_tombstone(self, repository_id: str) -> None:
+        path = self._deletion_tombstone_path(repository_id)
+        path.unlink(missing_ok=True)
+        self._fsync_directory(path.parent)
+
+    def deleted_repository_ids(self) -> set[str]:
+        deleted: set[str] = set()
+        for path in sorted(self.repository_deletion_tombstones_dir.glob("*.json")):
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            repository_id = str(payload.get("repositoryId") or "").strip()
+            if repository_id and path.name == f"{self._deletion_artifact_key(repository_id)}.json":
+                deleted.add(repository_id)
+        return deleted
+
+    def is_managed_repository_path(self, path_value: str | Path) -> bool:
+        path = Path(path_value).expanduser()
+        try:
+            if path.is_symlink():
+                return False
+            resolved = path.resolve()
+            managed = self.managed_repositories_dir.resolve()
+        except OSError:
+            return False
+        return resolved.parent == managed
+
+    @staticmethod
+    def _repository_identity_at(path: Path) -> str:
+        try:
+            payload = json.loads((path / ".forgetrace" / "state.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return ""
+        return str(payload.get("repository", {}).get("id") or "").strip()
+
+    @staticmethod
+    def _replace_directory_with_retry(source: Path, destination: Path) -> None:
+        """Atomically move a repository directory, retrying transient Windows sharing errors.
+
+        Windows may briefly deny a directory rename while Explorer, an editor, antivirus,
+        or another reader is releasing a handle. ForgeTrace's own repository lock is opened
+        with FILE_SHARE_DELETE, so these retries cover only unrelated transient handles.
+        """
+
+        attempts = 16 if os.name == "nt" else 3
+        last_error: OSError | None = None
+        for attempt in range(attempts):
+            try:
+                os.replace(source, destination)
+                return
+            except OSError as exc:
+                last_error = exc
+                transient = isinstance(exc, PermissionError) or getattr(exc, "winerror", None) in {5, 32, 33}
+                if not transient or attempt + 1 >= attempts:
+                    raise
+                time.sleep(min(0.05 * (attempt + 1), 0.25))
+        if last_error is not None:
+            raise last_error
+
+    @staticmethod
+    def _managed_delete_move_error(exc: OSError, *, source: Path, destination: Path) -> ForgeTraceError:
+        windows_sharing_error = getattr(exc, "winerror", None) in {5, 32, 33} or (
+            os.name == "nt" and isinstance(exc, PermissionError)
+        )
+        if windows_sharing_error:
+            blockers = windows_locking_processes([source])
+            labels = []
+            for item in blockers[:8]:
+                name = str(item.get("name") or item.get("service") or "process").strip()
+                pid = item.get("pid")
+                labels.append(f"{name} (PID {pid})" if pid else name)
+            blocker_text = ", ".join(labels)
+            guidance = (
+                f" Windows reports these locking processes: {blocker_text}."
+                if blocker_text else
+                " Windows did not identify the locking process; Explorer, an editor, a terminal whose current directory is inside the repository, antivirus, or another ForgeTrace process may still hold it."
+            )
+            return ForgeTraceError(
+                "Windows could not obtain rename access to the managed repository."
+                + guidance
+                + " Close the listed process or move its current folder elsewhere, then retry. The repository remains registered and its files were not deleted.",
+                HTTPStatus.LOCKED,
+                "repository_delete_path_busy",
+                {
+                    "path": str(source),
+                    "stagingPath": str(destination),
+                    "winError": getattr(exc, "winerror", None),
+                    "osError": getattr(exc, "errno", None),
+                    "blockingProcesses": blockers,
+                },
+            )
+        return ForgeTraceError(
+            "ForgeTrace could not stage the managed repository for deletion. The repository remains registered and its files were not deleted.",
+            HTTPStatus.CONFLICT,
+            "repository_delete_stage_failed",
+            {
+                "path": str(source),
+                "stagingPath": str(destination),
+                "osError": getattr(exc, "errno", None),
+            },
+        )
+
+    def _write_deletion_journal(self, journal_path: Path, payload: dict[str, Any], status: str) -> None:
+        updated = dict(payload)
+        updated["status"] = status
+        updated["updatedAt"] = utc_now()
+        self._atomic_write_json(journal_path, updated)
+        payload.clear()
+        payload.update(updated)
+
+    def recover_managed_repository_deletions(self) -> dict[str, Any]:
+        """Recover interrupted permanent managed-repository deletions before discovery."""
+
+        report: dict[str, Any] = {
+            "checked": 0,
+            "rolledBack": 0,
+            "finalized": 0,
+            "retained": 0,
+            "clearedIntents": 0,
+            "actions": [],
+        }
+        managed_root = self.managed_repositories_dir.resolve()
+        staging_root = self.repository_deletion_staging_dir.resolve()
+        journal_paths = sorted(self.repository_deletion_journals_dir.glob("delete-*.json"))
+        journal_file_ids = {path.stem for path in journal_paths}
+        for journal_path in journal_paths:
+            report["checked"] += 1
+            try:
+                payload = json.loads(journal_path.read_text(encoding="utf-8"))
+                repository_id = str(payload.get("repositoryId") or "").strip()
+                deletion_id = str(payload.get("deletionId") or "").strip()
+                original = Path(str(payload.get("originalPath") or "")).expanduser().resolve()
+                staged = Path(str(payload.get("stagedPath") or "")).expanduser().resolve()
+                if (
+                    not repository_id
+                    or deletion_id != journal_path.stem
+                    or original.parent != managed_root
+                    or staged.parent != staging_root
+                ):
+                    raise ValueError("Repository deletion journal paths are outside protected roots.")
+            except (OSError, json.JSONDecodeError, ValueError) as exc:
+                report["retained"] += 1
+                report["actions"].append({"journal": journal_path.name, "action": "retained_invalid", "error": str(exc)})
+                continue
+
+            with self.lock, self.connect() as connection:
+                row = connection.execute("SELECT id FROM repositories WHERE id = ?", (repository_id,)).fetchone()
+            if row:
+                try:
+                    if staged.exists() and not original.exists():
+                        self._replace_directory_with_retry(staged, original)
+                        self._fsync_directory(original.parent)
+                    self._clear_deletion_tombstone(repository_id)
+                    self._clear_deletion_intent(repository_id)
+                    journal_path.unlink(missing_ok=True)
+                    self._fsync_directory(journal_path.parent)
+                    report["rolledBack"] += 1
+                    report["actions"].append({"journal": journal_path.name, "action": "rolled_back", "repositoryId": repository_id})
+                except OSError as exc:
+                    report["retained"] += 1
+                    report["actions"].append({"journal": journal_path.name, "action": "rollback_failed", "repositoryId": repository_id, "error": str(exc)})
+                continue
+
+            try:
+                self._write_deletion_tombstone(
+                    repository_id,
+                    name=str(payload.get("name") or "Deleted repository"),
+                    original_path=str(original),
+                )
+                if staged.exists():
+                    shutil.rmtree(staged)
+                    self._fsync_directory(staged.parent)
+                self._clear_deletion_intent(repository_id)
+                journal_path.unlink(missing_ok=True)
+                self._fsync_directory(journal_path.parent)
+                report["finalized"] += 1
+                report["actions"].append({"journal": journal_path.name, "action": "finalized", "repositoryId": repository_id})
+            except OSError as exc:
+                report["retained"] += 1
+                report["actions"].append({"journal": journal_path.name, "action": "finalize_failed", "repositoryId": repository_id, "error": str(exc)})
+
+        # A crash can occur after the external deletion intent is written but before
+        # the journal is installed or retained. Clear only orphaned, well-formed intents;
+        # malformed evidence remains visible for operator attention.
+        for intent_path in sorted(self.repository_deletion_intents_dir.glob("*.json")):
+            try:
+                payload = json.loads(intent_path.read_text(encoding="utf-8"))
+                repository_id = str(payload.get("repositoryId") or "").strip()
+                deletion_id = str(payload.get("deletionId") or "").strip()
+                if (
+                    not repository_id
+                    or not deletion_id.startswith("delete-")
+                    or intent_path.name != f"{self._deletion_artifact_key(repository_id)}.json"
+                ):
+                    raise ValueError("Repository deletion intent is malformed.")
+            except (OSError, json.JSONDecodeError, ValueError) as exc:
+                report["retained"] += 1
+                report["actions"].append({"intent": intent_path.name, "action": "retained_invalid_intent", "error": str(exc)})
+                continue
+            if deletion_id in journal_file_ids:
+                continue
+            intent_path.unlink(missing_ok=True)
+            self._fsync_directory(intent_path.parent)
+            report["clearedIntents"] += 1
+            report["actions"].append({"intent": intent_path.name, "action": "cleared_orphan_intent", "repositoryId": repository_id})
+        return report
+
+    def delete_managed_repository(self, repository_id: str) -> dict[str, Any]:
+        """Permanently remove a ForgeTrace-managed repository and its registration.
+
+        ForgeTrace first acquires the normal in-repository lock and installs a durable
+        application-data deletion intent. Once that intent is visible to every process,
+        the in-repository lock handle is released before the parent directory rename.
+        The external deletion guard, registry lock, operation lock, intent, and recovery
+        journal preserve serialization without keeping any ForgeTrace handle inside the
+        directory Windows must move.
+        """
+
+        record = self.get_repository(repository_id)
+        if not record.get("managed"):
+            raise ForgeTraceError(
+                "Only repositories stored in ForgeTrace managed application data can be permanently deleted. Unregister external repositories instead.",
+                HTTPStatus.FORBIDDEN,
+                "repository_not_managed",
+            )
+        original = Path(record["path"]).expanduser().resolve()
+        deletion_id = f"delete-{uuid.uuid4().hex}"
+        staged = self.repository_deletion_staging_dir / deletion_id
+        journal_path = self.repository_deletion_journals_dir / f"{deletion_id}.json"
+        journal = {
+            "schemaVersion": 2,
+            "deletionId": deletion_id,
+            "repositoryId": repository_id,
+            "name": record["name"],
+            "originalPath": str(original),
+            "stagedPath": str(staged.resolve()),
+            "createdAt": utc_now(),
+            "status": "preparing",
+        }
+
+        path_existed = original.exists()
+        service: ForgeTraceRepository | None = None
+        if path_existed:
+            if not original.is_dir() or original.is_symlink():
+                raise ForgeTraceError(
+                    "Managed repository path is not a normal directory.",
+                    HTTPStatus.CONFLICT,
+                    "repository_path_invalid",
+                )
+            service = ForgeTraceRepository(
+                self.project_root,
+                original,
+                repository_id,
+                upload_limit_bytes=record["uploadLimitBytes"],
+                access_mode_getter=lambda: self.get_access_mode(repository_id),
+            )
+
+        moved = False
+        registry_removed = False
+        guard = self._deletion_guard(repository_id)
+        with guard:
+            # Linearize after every existing repository operation, validate identity,
+            # and publish the external intent while the normal repository lock is held.
+            validation_lock = service.lock if service is not None else self.operation_lock
+            with validation_lock:
+                if service is not None and service.initialized():
+                    service.require_writable("managed repository deletion")
+                    service.ensure_identity(repository_id)
+                elif normalize_repository_access_mode(record.get("accessMode"), fail_closed=True) != REPOSITORY_ACCESS_READ_WRITE:
+                    raise ForgeTraceError(
+                        "Repository is read-only. Return it to read-write mode before permanently deleting it.",
+                        HTTPStatus.LOCKED,
+                        "repository_read_only",
+                        {"operation": "managed repository deletion"},
+                    )
+                with self.lock, self.operation_lock:
+                    connection = sqlite3.connect(self.db_path, timeout=30.0)
+                    connection.row_factory = sqlite3.Row
+                    connection.execute("PRAGMA foreign_keys = ON")
+                    connection.execute("PRAGMA journal_mode = WAL")
+                    connection.execute("PRAGMA synchronous = FULL")
+                    try:
+                        row = self._fetch_row(connection, repository_id)
+                        if Path(str(row["path"])).expanduser().resolve() != original:
+                            raise ForgeTraceError(
+                                "Repository path changed while deletion was being prepared.",
+                                HTTPStatus.CONFLICT,
+                                "repository_path_changed",
+                            )
+                        self._write_deletion_journal(journal_path, journal, "prepared")
+                        self._write_deletion_intent(
+                            repository_id,
+                            deletion_id=deletion_id,
+                            name=str(row["name"]),
+                            original_path=str(original),
+                        )
+                        connection.commit()
+                    except Exception:
+                        connection.rollback()
+                        journal_path.unlink(missing_ok=True)
+                        self._clear_deletion_intent(repository_id)
+                        raise
+                    finally:
+                        connection.close()
+
+            # The repository-local handle is now closed. The external intent blocks new
+            # ForgeTrace reads and writes while the protected application-data locks keep
+            # the registry transaction and recovery evidence serialized.
+            try:
+                with self.lock, self.operation_lock:
+                    connection = sqlite3.connect(self.db_path, timeout=30.0)
+                    connection.row_factory = sqlite3.Row
+                    connection.execute("PRAGMA foreign_keys = ON")
+                    connection.execute("PRAGMA journal_mode = WAL")
+                    connection.execute("PRAGMA synchronous = FULL")
+                    try:
+                        row = self._fetch_row(connection, repository_id)
+                        if Path(str(row["path"])).expanduser().resolve() != original:
+                            raise ForgeTraceError(
+                                "Repository path changed while deletion was being prepared.",
+                                HTTPStatus.CONFLICT,
+                                "repository_path_changed",
+                            )
+                        if original.exists():
+                            try:
+                                self._replace_directory_with_retry(original, staged)
+                            except OSError as exc:
+                                raise self._managed_delete_move_error(
+                                    exc, source=original, destination=staged
+                                ) from exc
+                            moved = True
+                            self._fsync_directory(original.parent)
+                            self._fsync_directory(staged.parent)
+                            self._write_deletion_journal(journal_path, journal, "staged")
+                        self._write_deletion_tombstone(repository_id, name=row["name"], original_path=str(original))
+                        connection.execute("DELETE FROM repositories WHERE id = ?", (repository_id,))
+                        active_id = self._get_state(connection, "active_repository_id")
+                        if active_id == repository_id:
+                            replacement = connection.execute(
+                                "SELECT id FROM repositories ORDER BY favorite DESC, last_opened_at DESC LIMIT 1"
+                            ).fetchone()
+                            self._set_state(connection, "active_repository_id", replacement["id"] if replacement else "")
+                        connection.commit()
+                        registry_removed = True
+                    except Exception:
+                        connection.rollback()
+                        raise
+                    finally:
+                        connection.close()
+                try:
+                    self._write_deletion_journal(journal_path, journal, "registry_removed")
+                except OSError:
+                    pass
+            except Exception:
+                if not registry_removed:
+                    self._clear_deletion_tombstone(repository_id)
+                    if moved and staged.exists() and not original.exists():
+                        try:
+                            self._replace_directory_with_retry(staged, original)
+                            self._fsync_directory(original.parent)
+                        except OSError as rollback_exc:
+                            raise ForgeTraceError(
+                                "ForgeTrace could not restore the managed repository after a failed deletion attempt. The recovery journal and deletion intent were retained for startup recovery.",
+                                HTTPStatus.INTERNAL_SERVER_ERROR,
+                                "repository_delete_rollback_failed",
+                                {
+                                    "path": str(original),
+                                    "stagingPath": str(staged),
+                                    "winError": getattr(rollback_exc, "winerror", None),
+                                    "osError": getattr(rollback_exc, "errno", None),
+                                },
+                            ) from rollback_exc
+                    journal_path.unlink(missing_ok=True)
+                    self._fsync_directory(journal_path.parent)
+                    self._clear_deletion_intent(repository_id)
+                raise
+
+            cleanup_pending = False
+            if staged.exists():
+                try:
+                    shutil.rmtree(staged)
+                    self._fsync_directory(staged.parent)
+                except OSError:
+                    cleanup_pending = True
+            if not cleanup_pending:
+                journal_path.unlink(missing_ok=True)
+                self._fsync_directory(journal_path.parent)
+            else:
+                try:
+                    self._write_deletion_journal(journal_path, journal, "cleanup_pending")
+                except OSError:
+                    pass
+            self._clear_deletion_intent(repository_id)
+
+        return {
+            "deleted": repository_id,
+            "name": record["name"],
+            "path": str(original),
+            "managed": True,
+            "filesDeleted": path_existed and not cleanup_pending,
+            "pathWasMissing": not path_existed,
+            "cleanupPending": cleanup_pending,
+            "tombstoned": True,
         }
 
 
@@ -636,8 +1208,10 @@ class RepositoryRegistry:
                 HTTPStatus.FORBIDDEN,
                 "repository_not_managed",
             )
-        result = self.unregister(repository_id)
-        shutil.rmtree(path, ignore_errors=True)
+        service = self.repository_service(repository_id)
+        with service.mutation("managed repository discard"):
+            result = self.unregister(repository_id)
+            shutil.rmtree(path, ignore_errors=True)
         return {"discarded": repository_id, "path": str(path), "registry": result}
 
     def fork_from_collaboration_link(
@@ -744,8 +1318,11 @@ class RepositoryRegistry:
 
         probe = ForgeTraceRepository(self.project_root, workspace, None, upload_limit_bytes=upload_limit_bytes)
         stored_id = ""
+        resolved_access_mode = REPOSITORY_ACCESS_READ_WRITE
         if probe.initialized():
-            stored_id = str(probe.load_state().get("repository", {}).get("id") or "").strip()
+            probe_state = probe.load_state()
+            stored_id = str(probe_state.get("repository", {}).get("id") or "").strip()
+            resolved_access_mode = probe.embedded_access_mode(probe_state)
         repository_id = stored_id or str(uuid.uuid4())
 
         with self.lock, self.connect() as connection:
@@ -777,6 +1354,7 @@ class RepositoryRegistry:
             service.ensure_identity(repository_id)
             state = service.load_state()
             repo_meta = state.get("repository", {})
+            resolved_access_mode = service.embedded_access_mode(state)
             resolved_name = (name or repo_meta.get("name") or workspace.name or "Repository").strip()
             resolved_description = (description or repo_meta.get("description") or "").strip()
             resolved_author = (author or repo_meta.get("defaultAuthor") or "Repository Owner").strip()
@@ -796,12 +1374,12 @@ class RepositoryRegistry:
                 """
                 INSERT INTO repositories(
                     id, name, description, path, canonical_path, metadata_mode,
-                    default_author, upload_limit_bytes, created_at, updated_at, last_opened_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    default_author, upload_limit_bytes, access_mode, created_at, updated_at, last_opened_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     repository_id, resolved_name, resolved_description, display_path, canonical_path,
-                    metadata_mode, resolved_author, upload_limit_bytes, now, now, now,
+                    metadata_mode, resolved_author, upload_limit_bytes, resolved_access_mode, now, now, now,
                 ),
             )
             current_active = self._get_state(connection, "active_repository_id")
@@ -809,7 +1387,11 @@ class RepositoryRegistry:
                 self._set_state(connection, "active_repository_id", repository_id)
             row = self._fetch_row(connection, repository_id)
             active_id = self._get_state(connection, "active_repository_id")
-            return self._row_to_public(connection, row, active_id=active_id)
+            result = self._row_to_public(connection, row, active_id=active_id)
+        # Explicit owner registration is the only supported way to restore a
+        # repository identity that was previously permanently deleted.
+        self._clear_deletion_tombstone(repository_id)
+        return result
 
     def initialize_registered(
         self, repository_id: str, *, name: str = "", description: str = "", author: str = ""
@@ -821,16 +1403,20 @@ class RepositoryRegistry:
                 "Repository path is unavailable.", HTTPStatus.SERVICE_UNAVAILABLE, "repository_offline"
             )
         service = ForgeTraceRepository(
-            self.project_root, path, repository_id, upload_limit_bytes=record["uploadLimitBytes"]
+            self.project_root, path, repository_id,
+            upload_limit_bytes=record["uploadLimitBytes"],
+            access_mode_getter=lambda: self.get_access_mode(repository_id),
         )
         if service.initialized():
             service.ensure_identity(repository_id)
+            service.reconcile_access_mode(record["accessMode"])
         else:
-            service.initialize(
-                (name or record["name"] or path.name or "Repository").strip(),
-                (description or record["description"] or "").strip(),
-                (author or record["defaultAuthor"] or "Repository Owner").strip(),
-            )
+            with service.mutation("repository initialization"):
+                service.initialize(
+                    (name or record["name"] or path.name or "Repository").strip(),
+                    (description or record["description"] or "").strip(),
+                    (author or record["defaultAuthor"] or "Repository Owner").strip(),
+                )
         state = service.load_state()
         meta = state.get("repository", {})
         with self.lock, self.connect() as connection:
@@ -877,10 +1463,8 @@ class RepositoryRegistry:
                 "repository_offline",
                 {"path": record["path"], "status": record["status"]},
             )
-        service = ForgeTraceRepository(
-            self.project_root, Path(record["path"]), repository_id, upload_limit_bytes=limit
-        )
-        service.ensure_identity(repository_id)
+        service = self.repository_service(repository_id)
+        service.upload_limit_bytes = limit
         service.update_repository_metadata(clean_name, clean_description, clean_author)
         with self.lock, self.connect() as connection:
             self._fetch_row(connection, repository_id)
@@ -1129,6 +1713,7 @@ class RepositoryRegistry:
 
     def repository_service(self, repository_id: str) -> ForgeTraceRepository:
         record = self.get_repository(repository_id)
+        self._require_repository_not_deleting(repository_id)
         if record["status"] == "offline":
             raise ForgeTraceError(
                 "Repository path is offline. Relink it or reconnect the drive.",
@@ -1142,6 +1727,7 @@ class RepositoryRegistry:
         service = ForgeTraceRepository(
             self.project_root, Path(record["path"]), repository_id,
             upload_limit_bytes=record["uploadLimitBytes"],
+            access_mode_getter=lambda: self.get_access_mode(repository_id),
         )
         if record["status"] == "uninitialized":
             raise ForgeTraceError(
@@ -1149,7 +1735,72 @@ class RepositoryRegistry:
                 "repository_uninitialized",
             )
         service.ensure_identity(repository_id)
+        service.reconcile_access_mode(record["accessMode"])
         return service
+
+    def get_access_mode(self, repository_id: str) -> str:
+        if self.repository_deletion_pending(repository_id):
+            return REPOSITORY_ACCESS_READ_ONLY
+        with self.connect() as connection:
+            row = self._fetch_row(connection, repository_id)
+            return normalize_repository_access_mode(row["access_mode"], fail_closed=True)
+
+    def set_access_mode(self, repository_id: str, mode: Any) -> dict[str, Any]:
+        self._require_repository_not_deleting(repository_id)
+        selected = self._validate_access_mode(mode)
+        record = self.get_repository(repository_id)
+        if record["status"] != "online":
+            raise ForgeTraceError(
+                "Repository access mode can only be changed while the repository is online.",
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                "repository_offline",
+                {"path": record["path"], "status": record["status"]},
+            )
+        service = ForgeTraceRepository(
+            self.project_root, Path(record["path"]), repository_id,
+            upload_limit_bytes=record["uploadLimitBytes"],
+            access_mode_getter=lambda: self.get_access_mode(repository_id),
+        )
+        service.ensure_identity(repository_id)
+        # Lock order is repository -> registry everywhere access is authorized. This
+        # lets a mode transition linearize against in-flight mutations and prevents
+        # a second owner process from writing after read-only becomes effective.
+        with service.lock, self.lock, self.operation_lock:
+            connection = sqlite3.connect(self.db_path, timeout=30.0)
+            connection.row_factory = sqlite3.Row
+            connection.execute("PRAGMA foreign_keys = ON")
+            connection.execute("PRAGMA journal_mode = WAL")
+            connection.execute("PRAGMA synchronous = FULL")
+            try:
+                row = self._fetch_row(connection, repository_id)
+                previous = normalize_repository_access_mode(row["access_mode"], fail_closed=True)
+                if previous == selected:
+                    # A deliberate owner re-application also reconciles a fail-closed
+                    # registry/embedded mismatch without requiring an unsafe toggle.
+                    service.set_embedded_access_mode(selected)
+                    connection.commit()
+                elif selected == REPOSITORY_ACCESS_READ_ONLY:
+                    connection.execute(
+                        "UPDATE repositories SET access_mode = ?, updated_at = ? WHERE id = ?",
+                        (selected, utc_now(), repository_id),
+                    )
+                    service.set_embedded_access_mode(selected)
+                    connection.commit()
+                else:
+                    service.set_embedded_access_mode(selected)
+                    connection.execute(
+                        "UPDATE repositories SET access_mode = ?, updated_at = ? WHERE id = ?",
+                        (selected, utc_now(), repository_id),
+                    )
+                    connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+            finally:
+                connection.close()
+        result = self.get_repository(repository_id)
+        result["accessPolicy"] = self.repository_service(repository_id).access_policy()
+        return result
 
     def active_service(self) -> ForgeTraceRepository:
         repository_id = self.active_repository_id()
@@ -1160,31 +1811,94 @@ class RepositoryRegistry:
             )
         return self.repository_service(repository_id)
 
+    @staticmethod
+    def _sha256_file(path: Path) -> str:
+        hasher = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
     def create_backup(self, label: str = "manual") -> dict[str, Any]:
         clean_label = "".join(ch for ch in str(label or "manual") if ch.isalnum() or ch in "-_")[:40] or "manual"
         stamp = utc_now().replace(":", "").replace("-", "")
         path = self.backups_dir / f"registry-{stamp}-{clean_label}-{uuid.uuid4().hex[:8]}.sqlite3"
-        with self.lock:
-            source = sqlite3.connect(self.db_path)
-            destination = sqlite3.connect(path)
+        with self.lock, self.operation_lock:
+            source = sqlite3.connect(self.db_path, timeout=30.0)
+            destination = sqlite3.connect(path, timeout=30.0)
             try:
+                source.execute("PRAGMA wal_checkpoint(PASSIVE)")
                 source.backup(destination)
+                destination.commit()
+                integrity = str(destination.execute("PRAGMA integrity_check").fetchone()[0])
+                if integrity.lower() != "ok":
+                    raise ForgeTraceError(
+                        "The registry backup failed integrity verification.",
+                        HTTPStatus.INTERNAL_SERVER_ERROR,
+                        "registry_backup_integrity_failed",
+                        {"integrity": integrity},
+                    )
             finally:
                 destination.close()
                 source.close()
         self._prune_backups(20)
-        return {"path": str(path), "name": path.name, "bytes": path.stat().st_size, "createdAt": utc_now()}
+        return {
+            "path": str(path),
+            "name": path.name,
+            "bytes": path.stat().st_size,
+            "sha256": self._sha256_file(path),
+            "createdAt": utc_now(),
+            "verified": True,
+        }
 
     def _prune_backups(self, keep: int) -> None:
-        backups = sorted(self.backups_dir.glob("registry-*.sqlite3"), key=lambda p: p.stat().st_mtime, reverse=True)
-        for path in backups[keep:]:
-            path.unlink(missing_ok=True)
+        # Backup selection/restore and retention pruning share the same registry-wide
+        # lock so a backup cannot disappear after restore validation has begun.
+        with self.lock, self.operation_lock:
+            backups = sorted(
+                self.backups_dir.glob("registry-*.sqlite3"),
+                key=lambda path: path.stat().st_mtime,
+                reverse=True,
+            )
+            protected = self.restore_service.protected_backup_names()
+            retained_unprotected = 0
+            for path in backups:
+                if path.name in protected:
+                    continue
+                retained_unprotected += 1
+                if retained_unprotected > keep:
+                    path.unlink(missing_ok=True)
 
     def list_backups(self) -> list[dict[str, Any]]:
-        result = []
-        for path in sorted(self.backups_dir.glob("registry-*.sqlite3"), key=lambda p: p.stat().st_mtime, reverse=True):
-            result.append({"name": path.name, "path": str(path), "bytes": path.stat().st_size, "modified": path.stat().st_mtime})
-        return result
+        with self.lock, self.operation_lock:
+            result = []
+            for path in sorted(
+                self.backups_dir.glob("registry-*.sqlite3"),
+                key=lambda item: item.stat().st_mtime,
+                reverse=True,
+            ):
+                stat = path.stat()
+                result.append(
+                    {
+                        "name": path.name,
+                        "path": str(path),
+                        "bytes": stat.st_size,
+                        "modified": stat.st_mtime,
+                    }
+                )
+            return result
+
+    def preview_registry_restore(self, backup_name: Any, mode: Any) -> dict[str, Any]:
+        return self.restore_service.preview(backup_name, mode)
+
+    def restore_registry_backup(self, backup_name: Any, mode: Any, preview_id: Any) -> dict[str, Any]:
+        return self.restore_service.restore(backup_name, mode, preview_id)
+
+    def list_registry_restores(self) -> list[dict[str, Any]]:
+        return self.restore_service.list_journals()
+
+    def rollback_registry_restore(self, restore_id: Any) -> dict[str, Any]:
+        return self.restore_service.rollback(restore_id)
 
     def export_registry(self) -> dict[str, Any]:
         with self.connect() as connection:
@@ -1300,14 +2014,18 @@ class RepositoryRegistry:
                         """
                         INSERT INTO repositories(
                             id, name, description, path, canonical_path, metadata_mode, metadata_path,
-                            default_author, favorite, upload_limit_bytes, created_at, updated_at, last_opened_at
-                        ) VALUES (?, ?, ?, ?, ?, 'embedded', '', ?, ?, ?, ?, ?, ?)
+                            default_author, favorite, upload_limit_bytes, access_mode, created_at, updated_at, last_opened_at
+                        ) VALUES (?, ?, ?, ?, ?, 'embedded', '', ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             repository_id, str(item.get("name") or Path(display_path).name or "Repository"),
                             str(item.get("description") or ""), display_path, canonical_path,
                             str(item.get("default_author") or "Repository Owner"), 1 if item.get("favorite") else 0,
-                            limit, str(item.get("created_at") or now), now, str(item.get("last_opened_at") or ""),
+                            limit, normalize_repository_access_mode(
+                                item.get("access_mode", item.get("accessMode", REPOSITORY_ACCESS_READ_WRITE)),
+                                fail_closed=True,
+                            ),
+                            str(item.get("created_at") or now), now, str(item.get("last_opened_at") or ""),
                         ),
                     )
                     report["added"] += 1
@@ -1399,6 +2117,7 @@ class RepositoryRegistry:
         """Repopulate/relink the registry from UUID-bearing managed repositories."""
         roots = self._startup_recovery_roots()
         discovered = self._scan_embedded_repositories(roots, max_depth=6)
+        deleted_ids = self.deleted_repository_ids()
         by_id: dict[str, list[dict[str, Any]]] = {}
         for item in discovered:
             by_id.setdefault(str(item.get("id") or ""), []).append(item)
@@ -1409,6 +2128,7 @@ class RepositoryRegistry:
             "relinked": 0,
             "skipped": 0,
             "ambiguous": 0,
+            "tombstoned": 0,
             "errors": [],
         }
         with self.connect() as connection:
@@ -1427,6 +2147,9 @@ class RepositoryRegistry:
         handled_ids: set[str] = set()
         for repository_id, candidates in by_id.items():
             if not repository_id:
+                continue
+            if repository_id in deleted_ids:
+                report["tombstoned"] += len(candidates)
                 continue
             existing = existing_by_id.get(repository_id)
             if existing:
@@ -1521,6 +2244,9 @@ class RepositoryRegistry:
                                 "name": str(meta.get("name") or workspace.name),
                                 "description": str(meta.get("description") or ""),
                                 "defaultAuthor": str(meta.get("defaultAuthor") or "Repository Owner"),
+                                "accessMode": normalize_repository_access_mode(
+                                    meta.get("accessMode", REPOSITORY_ACCESS_READ_WRITE), fail_closed=True
+                                ),
                             })
                             seen.add(canonical)
                     except (OSError, json.JSONDecodeError):
@@ -1543,7 +2269,14 @@ class RepositoryRegistry:
             return None, {"valid": False, "reason": "backup_schema_invalid"}
         return payload, {"valid": True, "path": str(backup_path), "revision": int(payload.get("revision") or 0)}
 
-    def doctor(self, *, repair: bool = False, scan_roots: list[Path] | None = None) -> dict[str, Any]:
+    def doctor(
+        self,
+        *,
+        repair: bool = False,
+        scan_roots: list[Path] | None = None,
+        recover_repository_transactions: bool = True,
+        verify_snapshot_objects: bool = True,
+    ) -> dict[str, Any]:
         scan_roots = scan_roots or []
         issues: list[dict[str, Any]] = []
         actions: list[dict[str, Any]] = []
@@ -1562,6 +2295,7 @@ class RepositoryRegistry:
                 actions.append({"action": "cleared_invalid_active_repository", "repositoryId": active_id})
 
         for row in rows:
+            row_access_mode = normalize_repository_access_mode(row["access_mode"], fail_closed=True)
             status, message = self._status_for_path(row["path"])
             if status != "online":
                 issues.append({
@@ -1581,6 +2315,15 @@ class RepositoryRegistry:
                     "repositoryId": row["id"], "path": str(state_path), "message": str(exc),
                     "backupAvailable": bool(backup_info.get("valid")), "backup": backup_info,
                 })
+                if repair and backup_state is not None and row_access_mode == REPOSITORY_ACCESS_READ_ONLY:
+                    issues.append({
+                        "severity": "warning",
+                        "code": "repository_read_only_repair_blocked",
+                        "repositoryId": row["id"],
+                        "path": str(state_path),
+                        "repair": "restore_repository_metadata_backup",
+                    })
+                    continue
                 if repair and backup_state is not None:
                     corrupt_copy = state_path.with_name(f"state.corrupt-{utc_now().replace(':','').replace('-','')}.json")
                     try:
@@ -1614,10 +2357,16 @@ class RepositoryRegistry:
                         )
                     actions.append({"action": "synchronized_repository_metadata", "repositoryId": row["id"]})
 
-            service = ForgeTraceRepository(self.project_root, Path(row["path"]), row["id"], upload_limit_bytes=int(row["upload_limit_bytes"]))
+            service = ForgeTraceRepository(
+                self.project_root, Path(row["path"]), row["id"],
+                upload_limit_bytes=int(row["upload_limit_bytes"]),
+                access_mode_getter=lambda repository_id=str(row["id"]): self.get_access_mode(repository_id),
+                recover_on_open=recover_repository_transactions,
+                create_workspace=False,
+            )
             for recovery in service._recovery_actions:
                 actions.append({"action": recovery.get("action", "repository_recovery"), "repositoryId": row["id"], **recovery})
-            for commit in (state or {}).get("commits", []):
+            for commit in (state or {}).get("commits", []) if verify_snapshot_objects else []:
                 verification = service.verify_snapshot_objects(commit)
                 if verification["valid"]:
                     continue
@@ -1627,6 +2376,15 @@ class RepositoryRegistry:
                     "errors": verification["errors"],
                 }
                 issues.append(issue)
+                if repair and row_access_mode == REPOSITORY_ACCESS_READ_ONLY:
+                    issues.append({
+                        "severity": "warning",
+                        "code": "repository_read_only_repair_blocked",
+                        "repositoryId": row["id"],
+                        "commitId": commit.get("id"),
+                        "repair": "reconstruct_snapshot_objects",
+                    })
+                    continue
                 if repair:
                     repaired = 0
                     for rel, data in commit.get("manifest", {}).items():
@@ -1653,8 +2411,18 @@ class RepositoryRegistry:
             registered_ids = {str(row["id"]) for row in connection.execute("SELECT id FROM repositories")}
             registered_paths = {str(row["canonical_path"]) for row in connection.execute("SELECT canonical_path FROM repositories")}
         discovered = self._scan_embedded_repositories(scan_roots)
+        deleted_ids = self.deleted_repository_ids()
         for item in discovered:
             _, canonical = normalize_repository_path(item["path"])
+            if item["id"] in deleted_ids:
+                issues.append({
+                    "severity": "info",
+                    "code": "permanently_deleted_repository_discovered",
+                    "repositoryId": item["id"],
+                    "path": item["path"],
+                    "message": "Automatic registration was withheld because this repository identity was permanently deleted. Add the path explicitly to restore it.",
+                })
+                continue
             if item["id"] in registered_ids or canonical in registered_paths:
                 continue
             issues.append({"severity": "info", "code": "unregistered_repository_discovered", "repositoryId": item["id"], "path": item["path"], "name": item["name"]})
@@ -1665,10 +2433,17 @@ class RepositoryRegistry:
                         """
                         INSERT INTO repositories(
                             id, name, description, path, canonical_path, metadata_mode, metadata_path,
-                            default_author, favorite, upload_limit_bytes, created_at, updated_at, last_opened_at
-                        ) VALUES (?, ?, ?, ?, ?, 'embedded', '', ?, 0, ?, ?, ?, '')
+                            default_author, favorite, upload_limit_bytes, access_mode, created_at, updated_at, last_opened_at
+                        ) VALUES (?, ?, ?, ?, ?, 'embedded', '', ?, 0, ?, ?, ?, ?, '')
                         """,
-                        (item["id"], item["name"], item["description"], item["path"], canonical, item["defaultAuthor"], MAX_REQUEST_BYTES, now, now),
+                        (
+                            item["id"], item["name"], item["description"], item["path"], canonical,
+                            item["defaultAuthor"], MAX_REQUEST_BYTES,
+                            normalize_repository_access_mode(
+                                item.get("accessMode", REPOSITORY_ACCESS_READ_WRITE), fail_closed=True
+                            ),
+                            now, now,
+                        ),
                     )
                 registered_ids.add(item["id"])
                 registered_paths.add(canonical)

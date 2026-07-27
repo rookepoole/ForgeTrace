@@ -1,114 +1,82 @@
-# ForgeTrace Recovery Guide
+# ForgeTrace Recovery — v0.5.2.1
 
-## Package update continuity
+## v0.5.2.1 checkpoint-driven recovery
 
-The registry and managed repositories live in platform application data rather than the extracted release folder. On every launch, v0.3.3 scans the stable managed root and bounded known legacy ForgeTrace workspace locations for `.forgetrace/state.json`.
+Every testable mutation boundary now records a sealed `lastCheckpoint`, timestamp, and bounded details in the transaction journal. Incomplete valid journals are classified as `rollback_on_restart`; native Git locks or active administrative state produce `deferred_external_git_state`; damaged/unreadable evidence produces `manual_inspection_required`; a terminal journal with a missing receipt produces `reconstruct_receipt_then_cleanup`; and a terminal journal with a verified receipt produces `cleanup_terminal_journal`.
 
-Missing registrations are restored by UUID. An offline managed entry may be relinked automatically only when the discovered UUID matches. Offline repositories outside known managed roots remain in the list for manual relinking. ForgeTrace does not recursively scan an entire home or Downloads directory.
+Recovery never infers success from repository appearance alone. It verifies journal identity/digest, registered repository identity and canonical paths, capture integrity, and native Git state. Exact captured files are restored under repository lock followed by the repository-scoped Git-write lock. A later read-only transition does not prevent rollback because recovery restores pre-transaction state, but new writes remain denied.
 
-Normal update procedure:
+Windows sharing failures during already-terminal directory cleanup are retained as maintenance evidence and retried on startup. They do not roll back an already committed ref. A missing terminal receipt is reconstructed from the verified journal before cleanup; a damaged or conflicting receipt blocks cleanup and requires manual inspection.
 
-1. stop the old ForgeTrace process;
-2. extract the new package to a separate folder;
-3. launch the new package normally;
-4. confirm the repository list and active project;
-5. keep the old package until the new release is verified.
 
-Do not copy `registry.sqlite3` into the release folder. The launchers already use stable platform application data.
+## v0.5.2 Git-write recovery
 
-## First response
+Transactional Git writes store a hash-sealed journal and operation-specific captures under application data `git-writes/transactions/`. Stage/commit capture the exact index; commit also captures `HEAD`, current ref, and reflog evidence; branch/tag capture only target ref/reflog evidence. Failure restores exact captured state and writes a verified receipt. Startup recovers incomplete journals, but defers while native Git locks or merge/rebase/cherry-pick/revert/bisect state exists.
 
-Keep repository files in place. Do not delete `.forgetrace`, the global registry, or registry backups while diagnosing a problem.
+Tampered journals are retained without restoration. Missing terminal receipts are reconstructed before journal cleanup, while a damaged/conflicting receipt prevents cleanup. Recovery may restore pre-transaction state after a later read-only transition. Unreachable Git objects created before a failed ref update can remain for normal Git garbage collection; receipts record created object IDs.
 
-Run a read-only check:
+## Permanent managed-repository deletion recovery
 
-```bash
-python server.py doctor --json
-python server.py doctor --scan-root /path/to/projects
-```
+v0.4.10 adds a separate application-data deletion transaction for ForgeTrace-managed repositories. The transaction writes a confined, fsynced journal, stages the complete managed directory outside every discovery root, writes a repository-ID tombstone, removes the registry row under the registry operation lock, and then erases staged bytes. It never recursively deletes linked external repositories.
 
-Run safe repair only after reviewing the report:
+Startup recovery interprets the registry row as the commit boundary:
 
-```bash
-python server.py doctor --scan-root /path/to/projects --repair
-```
+- if the registry row still exists, staged bytes are restored to the original managed path and the tombstone is cleared;
+- if the registry row is absent, the tombstone is preserved and staged bytes are finalized for deletion;
+- malformed or path-escaping journals are retained for operator inspection and are never followed outside deletion storage.
 
-Repair creates a pre-repair SQLite backup and never deletes project files.
+A tombstone suppresses startup discovery and Doctor re-registration of UUID-identical leftovers. Explicit owner registration of that repository ID clears the tombstone only after registration succeeds. Missing or manually emptied managed directories can still be removed from the registry and tombstoned.
 
-## Repository path is offline
+## Project-coordination recovery boundary
 
-ForgeTrace keeps the registry record. Reconnect the drive or mount and choose **Check again**. When an embedded repository moved, choose **Relink** and provide its new absolute path. ForgeTrace verifies the UUID in `.forgetrace/state.json`.
+The project database is independent application data. Registry backups and validated registry Replace/merge/rollback do not include, overwrite, prune, or migrate it. A repository temporarily removed from the registry may have preserved project rows that are intentionally inaccessible through the service until the same repository ID is restored or relinked.
 
-## Managed repository is missing from the list after an update
+v0.4.9 project-coordination tests hash-verified the project database across registry Replace and then reopened preserved rows after rollback. It also proved project operations on a read-only repository leave all repository bytes unchanged.
 
-Restart ForgeTrace once so startup discovery can inspect the stable managed root. When the folder contains valid embedded identity, it is registered automatically. When it was moved outside known managed roots, use **Use a local path** or Doctor with an explicit scan root.
+ForgeTrace v0.4.10 does not provide a dedicated project-database backup/restore transaction. Protect the full application-data directory using host backup tooling. Health reports database integrity and storage pressure but has no project repair authority. Manual SQLite replacement while ForgeTrace is running is unsupported.
 
-## Repository was unregistered accidentally
+## Health assessment is not recovery
 
-Unregister removes only the registry entry. Use Doctor with a scan root to discover and safely re-register embedded repositories:
+The Health dashboard may inspect transaction journals, startup recovery summaries, registry restore journals, rollback authority, snapshot objects, hash-index metadata, and access-mode consistency. It does not execute recovery, delete completed journals, restore objects, install backups, reconcile modes, or repair metadata.
 
-```bash
-python server.py doctor --scan-root /folder/containing/projects --repair
-```
+A finding may expose the existing Doctor repair action. The owner must confirm it separately, and the HTTP/UI Doctor path requires a healthy security-ledger authorization event before repair begins. Registry restore and rollback remain available only through their existing preview/journal authorities.
 
-Adding the folder manually also reuses its stored UUID and history.
+## Repository recovery
 
-## Registry backup and transport
+Repository mutations use transaction journals under `.forgetrace/transactions/`. Snapshot restore verifies every required object before workspace replacement and assembles the target in staging. Pending journals recover when the repository opens.
 
-Create an online SQLite backup:
+Conflict-resolution drafts never write the workspace. Only the existing transactional PR merge applies verified immutable revision/resolution bytes, so merge failure retains repository rollback behavior and confirmed quarantine evidence.
 
-```bash
-python server.py backup --label before-maintenance
-```
+## Registry recovery
 
-Create a portable JSON registry export:
+Validated registry backup recovery remains the v0.4.2 authority: non-mutating Merge/Replace preview, SQLite/schema checks, SHA-256 staging, canonical logical digests, cross-process `registry.lock`, exact pre-restore backup, durable journal, post-install verification, automatic rollback, guarded explicit rollback, and startup recovery.
 
-```bash
-python server.py registry-export forgetrace-registry.json
-```
+Registry recovery never replaces repository content/history, collaboration quarantine, immutable review revisions, conflict-resolution evidence, review conversations, jobs, or the separate security-event ledger.
 
-Merge it into another installation or a fresh data directory:
+## Review and conflict evidence recovery
 
-```bash
-python server.py registry-import forgetrace-registry.json --data-dir /new/app-data
-```
+Collaboration evidence is durable application data in `collaboration/collaboration.sqlite3`, `collaboration/review-revisions/`, and `collaboration/conflict-resolutions/`.
 
-JSON import transfers registrations and library metadata. It does not transfer repository files or snapshot objects.
+- SQLite transactions make thread, draft, decision, confirmation, and applied-state changes atomic.
+- Revision/evidence manifests and file SHA-256 values detect damage.
+- Missing, unreadable, symlinked, malformed, or changed evidence fails closed.
+- Applied resolution drafts remain immutable historical evidence.
+- Startup retention cleanup removes eligible terminal review/resolution evidence and orphan directories.
+- There is no standalone point-in-time collaboration-history restore UI; independently back up application data when history matters.
 
-## `state.json` is damaged
+## Access-mode and security interaction
 
-ForgeTrace retains `.forgetrace/state.json.bak` after subsequent saves. Doctor reports unreadable metadata and whether a backup exists, but v0.3.3 does not automatically replace metadata.
+Review and draft preparation remain available in read-only mode, but final merge is rejected by the repository mutation boundary. Protected confirmation and merge require a healthy security ledger before state or repository mutation.
 
-1. stop ForgeTrace;
-2. copy the full repository folder;
-3. validate both JSON files;
-4. replace `state.json` only when the backup parses and the current file does not;
-5. restart and run Doctor;
-6. verify contributions and snapshots before continuing.
+## Manual Windows gate
 
-Automatic previewed backup restoration remains roadmap work.
+Physical native-folder chooser acceptance is not implied by Linux recovery testing. Use `tests/WINDOWS_NATIVE_PICKER_ACCEPTANCE.md` on the Windows release machine.
 
-## Snapshot object is missing
+## Security-history rotation recovery
 
-Working files remain usable. A restore requiring a missing object fails. Recover `.forgetrace/objects` from a full filesystem backup. v0.3.3 Doctor does not yet perform complete object verification.
+Rotation has a separate hash-protected journal and exact active-database backup. Startup rolls an incomplete installation back, restores pruned segments and the prior retention root, and removes the newly installed segment. Journal artifact paths are confined to application-data rotation storage. An unreadable or incomplete journal blocks further rotation.
 
-## Global registry is damaged or lost
 
-1. stop ForgeTrace;
-2. move the damaged application-data directory aside;
-3. start ForgeTrace with a fresh data directory;
-4. allow startup discovery to repopulate the stable managed root;
-5. import a JSON registry export when available;
-6. otherwise scan external project roots with Doctor and repair;
-7. relink any remaining moved paths.
+## v0.4.8 Git intelligence recovery boundary
 
-Embedded UUIDs preserve repository identity.
-
-## Export boundary
-
-Repository ZIP exports contain current files and `FORGETRACE_HISTORY.json`. They intentionally exclude internal snapshot objects. Back up the complete repository folder when full restorable history is required.
-
-## v0.4.0 recovery guarantees
-
-Restore performs object preflight before any workspace mutation. Objects are checked for existence, expected size, and SHA-256. The target tree is staged and applied transactionally. Pending filesystem journals recover on repository open. Doctor can restore a valid `state.json.bak` after schema/UUID validation and can identify or reconstruct a missing object from a matching live file where safe.
-
+Git intelligence has no recovery or repair authority because it writes no Git or repository state. Timeouts, unavailable Git, unsupported metadata, corrupt objects, or bounded-output failures return explicit read errors. Existing ForgeTrace transaction, registry, snapshot, security-history, and collaboration recovery paths are unchanged.

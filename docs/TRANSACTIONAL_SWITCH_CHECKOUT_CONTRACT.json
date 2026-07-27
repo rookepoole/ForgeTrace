@@ -1,0 +1,213 @@
+{
+  "acceptanceGates": [
+    "contract and static isolation tests",
+    "service tests for every preflight rejection",
+    "deterministic crash injection at every durable boundary",
+    "fresh-process exact rollback proof",
+    "native-lock and unknown-byte manual-inspection proof",
+    "owner API/UI and contributor-denial tests",
+    "Health evidence tests",
+    "physical Windows NTFS tests including sharing violations, ignored-file collisions, case-only paths, long paths and endpoint-protection interference",
+    "owner-browser smoke on the exact packaged archive"
+  ],
+  "acceptedScope": {
+    "boundedNonConflictingUntrackedAndIgnoredFilesMayRemain": true,
+    "cleanIndexRequired": true,
+    "cleanTrackedWorktreeRequired": true,
+    "existingLocalBranchOnly": true,
+    "regularFileTreeEntriesOnly": true,
+    "rootLevelRegularGitDirectoryOnly": true,
+    "singleWorktreeOnly": true,
+    "sourceHeadMustBeAttached": true,
+    "sourceHeadMustBeBorn": true,
+    "targetMustBeDirectLocalHeadRef": true,
+    "targetMustDifferFromSource": true
+  },
+  "creator": "Rooke Poole",
+  "designVersion": "0.5.3",
+  "execution": {
+    "command": "git switch --no-guess --no-recurse-submodules <validated-existing-local-branch>",
+    "forbiddenFlags": [
+      "--detach",
+      "-c",
+      "-C",
+      "--orphan",
+      "--discard-changes",
+      "--force",
+      "--merge",
+      "--guess"
+    ],
+    "hardenedConfig": [
+      "core.hooksPath=<null>",
+      "credential.helper=",
+      "core.askPass=",
+      "core.fsmonitor=false",
+      "core.untrackedCache=false",
+      "submodule.recurse=false",
+      "fetch.recurseSubmodules=false",
+      "protocol.allow=never",
+      "protocol.file.allow=never"
+    ],
+    "postconditions": [
+      "HEAD is a symbolic ref to the exact target local branch",
+      "HEAD OID equals the preview-bound target OID",
+      "index write-tree equals the target tree",
+      "all affected tracked paths match target raw-blob SHA-256 and mode",
+      "all untracked and ignored backup paths are byte-identical and non-colliding",
+      "source and target branch refs and branch reflogs are unchanged",
+      "logs/HEAD changed only by one expected switch entry",
+      "no native lock or administrative state remains"
+    ]
+  },
+  "explicitlyExcluded": [
+    "detached checkout",
+    "checkout by commit or tag",
+    "path checkout or restore",
+    "create-and-switch",
+    "orphan branch",
+    "force or discard changes",
+    "three-way checkout merge",
+    "merge, reset, rebase, cherry-pick, revert, stash",
+    "branch or tag deletion",
+    "remote-tracking branch guessing",
+    "fetch, pull, push, clone, remote contact",
+    "submodule recursion or gitlinks",
+    "linked worktrees, gitfiles, bare repositories",
+    "sparse checkout, sparse index, split index, skip-worktree, assume-unchanged",
+    "symlinks, junctions, reparse points, devices, FIFOs, sockets",
+    "external filters, working-tree-encoding, attributes that alter checkout bytes",
+    "signed operations, hooks, editors, credential helpers, shell execution"
+  ],
+  "implementation": {
+    "applicationDataRoot": "git-switches/plans/",
+    "contributorAuthority": false,
+    "executeCommandImplemented": false,
+    "ownerApiImplemented": false,
+    "ownerUiImplemented": false,
+    "readModelImplemented": true,
+    "repositoryMutationImplemented": false,
+    "runtimeVersion": "0.5.3.0",
+    "sealedCapturePlannerImplemented": true,
+    "service": "forgetrace.git_switch.GitSwitchService"
+  },
+  "implementationGate": "The read-only preflight and sealed capture planner are implemented. No execute route, owner UI control, contributor authority, git switch/git checkout command, or worktree mutation may be added until the durable transaction and recovery engine is separately accepted.",
+  "license": "MIT",
+  "limits": {
+    "maxCaptureBytes": 536870912,
+    "maxPreviewBytes": 8388608,
+    "maxReceiptCount": 5000,
+    "maxTouchedPaths": 10000,
+    "maxUntrackedEntries": 5000,
+    "minimumFreeSpaceReserveBytes": 67108864,
+    "receiptRetentionDays": 180
+  },
+  "lockOrder": [
+    "repository OS lock",
+    "repository-scoped shared Git mutation lock",
+    "switch transaction internal lock"
+  ],
+  "operation": {
+    "credentials": false,
+    "displayName": "Switch local branch",
+    "helpers": false,
+    "hooks": false,
+    "id": "switch_branch",
+    "network": false,
+    "ownerOnly": true,
+    "previewTtlSeconds": 300,
+    "requiredConfirmation": "SWITCH BRANCH",
+    "shell": false
+  },
+  "plannedApi": [
+    "POST /api/repositories/{repositoryId}/git-switch/preview",
+    "POST /api/repositories/{repositoryId}/git-switch/execute",
+    "GET /api/repositories/{repositoryId}/git-switch/status"
+  ],
+  "plannedSecurityEvents": [
+    "authorize_git_branch_switch",
+    "complete_git_branch_switch",
+    "rollback_git_branch_switch",
+    "recover_git_branch_switch"
+  ],
+  "preflight": {
+    "binds": [
+      "repository ID and canonical root path",
+      "writable access policy and absence of deletion intent",
+      "Git executable path/version/file identity",
+      "object format and repository-root regular .git layout",
+      "single-worktree state",
+      "source HEAD ref/OID/tree and target ref/OID/tree",
+      "index bytes/digest and clean tracked status digest",
+      "source and target ref/reflog digests",
+      "relevant local Git config and attribute policy",
+      "affected tracked-path manifest",
+      "all bounded untracked and ignored regular-file bytes",
+      "filesystem case-collision and protected-path analysis",
+      "backup estimate and free-space proof"
+    ],
+    "rejects": [
+      "staged, unstaged tracked, or unmerged changes",
+      "native Git locks or active administrative state",
+      "unborn or detached HEAD",
+      "target ref drift or non-direct target ref",
+      "target collisions with any untracked or ignored path",
+      "case-only or case-fold path collisions",
+      "protected .git or .forgetrace tree entries",
+      "unsupported tree entry modes or filesystem objects",
+      "checkout-affecting filters, encodings, sparse/split index flags",
+      "capture or free-space limits exceeded"
+    ]
+  },
+  "recovery": {
+    "activeDeletionIntentBlocksNewPreviewAndExecute": true,
+    "deferWhile": [
+      "index.lock",
+      "HEAD.lock",
+      "logs/HEAD.lock",
+      "packed-refs.lock",
+      "ref/reflog lock",
+      "merge/rebase/cherry-pick/revert/bisect/sequencer state"
+    ],
+    "laterReadOnlyModeDoesNotBlockRollback": true,
+    "ownershipRule": "automatic rollback is permitted only when every captured path and Git metadata item is in a known pre-state, known target-state, or known missing state; unknown bytes require retained evidence and manual inspection",
+    "pendingSwitchJournalBlocksPermanentDeletion": true,
+    "restoreOrder": [
+      "verify sealed journal and all backup digests",
+      "classify worktree and Git metadata into known states",
+      "restore affected tracked paths and preserved untracked/ignored bytes idempotently",
+      "restore index",
+      "restore HEAD",
+      "restore logs/HEAD",
+      "verify exact pre-state and unchanged branch refs/reflogs",
+      "write rollback receipt",
+      "remove terminal journal only after receipt durability"
+    ]
+  },
+  "runtimeBaseline": "0.5.3.0",
+  "schemaVersion": 1,
+  "separation": {
+    "contributorGatewayAuthority": false,
+    "quarantineConflictResolution": "separate authority; branch switching never consumes pull requests, conflict drafts, approvals, or merge evidence and never invokes a three-way merge",
+    "readOnlyGitIntelligenceIndependent": true,
+    "service": "dedicated GitSwitchService sharing the same repository and Git mutation locks; do not add switch directly to the v0.5.2 metadata-write operation set until the implementation acceptance gate"
+  },
+  "status": "preflight_capture_planner_implemented_execution_absent",
+  "title": "Transactional Existing-Local-Branch Switch/Checkout Contract",
+  "transactionEvidence": {
+    "applicationDataRoot": "git-switches/",
+    "captures": [
+      "HEAD file",
+      "Git index",
+      "logs/HEAD",
+      "source and target ref/reflog verification state",
+      "exact pre-state bytes and mode for every affected tracked path",
+      "exact bytes and mode for every bounded untracked or ignored regular file",
+      "directory topology needed to restore affected paths",
+      "target raw-blob SHA-256/mode manifest",
+      "preview, state and evidence digests"
+    ],
+    "sealedBeforeMutation": true,
+    "tamperEvidence": "canonical SHA-256 digests for preview, journal, manifests, backups and receipt",
+    "terminalReceiptBeforeCleanup": true
+  }
+}

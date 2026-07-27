@@ -1,311 +1,167 @@
-# ForgeTrace Local API v1
+# ForgeTrace API v1 Notes — v0.5.2.1
 
-The owner API serves the bundled local UI and future CLI/desktop clients. It is unauthenticated and remains bound to `127.0.0.1`. ForgeTrace may create a separate restricted contributor listener, but that listener cannot access the owner API.
+## v0.5.2.1 additive Git-write status evidence
 
-## Application and library endpoints
+The existing owner-only Git-write status route retains schema version `1` and adds read-only fields:
 
-```text
-GET  /api/v1/version
-GET  /api/v1/repositories?query=&tag=&collectionId=&status=&favorite=
-POST /api/v1/repositories
-POST /api/v1/repositories/managed
-POST /api/v1/repositories/fork
-GET  /api/v1/active-repository
-POST /api/v1/active-repository
-GET  /api/v1/library
-POST /api/v1/collections
-PUT  /api/v1/collections/{collectionId}
-DELETE /api/v1/collections/{collectionId}
-POST /api/v1/saved-filters
-DELETE /api/v1/saved-filters/{filterId}
-```
+- `pendingTransactions[]`: journal/receipt integrity, status, last checkpoint/time/details, capture and created-object counts, native-lock/administrative blockers, path match, recovery disposition, recoverability, manual-inspection flag, and exact next step.
+- `recoverySummary`: pending, recoverable, deferred, manual-inspection, terminal-cleanup, unassigned-journal, and maintenance-warning counts.
+- `maintenanceWarnings[]`: repository-scoped, non-critical application-data cleanup failures.
+- `unassignedTransactions[]`: unreadable journals that cannot be safely associated with a repository.
+- `startupRecovery`: rollback, terminal cleanup, receipt reconstruction, deferred, retained, and manual-inspection actions.
 
-`POST /api/v1/repositories` accepts:
+These are additive diagnostics only. No recovery or repair endpoint was added, and the accepted write operations are unchanged.
 
-```json
-{
-  "path": "/absolute/path",
-  "name": "Optional display name",
-  "description": "Optional description",
-  "author": "Rooke Poole",
-  "initialize": true,
-  "createDirectory": false,
-  "metadataMode": "embedded",
-  "uploadLimitBytes": 1073741824
-}
-```
 
-External metadata mode currently returns `501 metadata_mode_not_implemented`.
+## v0.4.10 repository-management API
 
-`POST /api/v1/repositories/managed` creates a normal initialized repository under ForgeTrace application data for browser imports that cannot supply an absolute host path:
+`GET /api/v1/repositories` records include a backend-computed `managed` boolean.
 
-```json
-{
-  "name": "Imported Project",
-  "description": "Optional description",
-  "author": "Rooke Poole",
-  "uploadLimitBytes": 1073741824
-}
-```
+`DELETE /api/v1/repositories/{repositoryId}/delete-managed?actor=...` is owner-only and requires a healthy security ledger. It permanently removes only a ForgeTrace-managed repository. External repositories remain eligible only for registry-only `DELETE /api/v1/repositories/{repositoryId}` unregister.
 
-The UI then sends each selected file through the normal repository-scoped upload endpoint. Folder imports strip the selected outer folder and retain nested relative paths. The resulting repository may be moved and relinked like any path-created repository.
+The permanent-delete result distinguishes deleted bytes, already-missing paths, cleanup-pending staging, and tombstone persistence. The contributor listener denies the route.
 
-`POST /api/v1/repositories/fork` works before any active repository exists and accepts:
+## v0.4.9 Project API
 
-```json
-{
-  "shareUrl": "http://192.168.1.25:8766/contribute.html#invite-token",
-  "name": "Optional local fork name",
-  "description": "Optional local description",
-  "author": "New Teammate",
-  "uploadLimitBytes": 1073741824
-}
-```
-
-The owner process validates the invite against the restricted gateway, streams the source-only archive, performs safe ZIP extraction into a newly allocated managed directory, registers the fork, and returns it as the active repository candidate. The raw token is not stored.
-
-## Repository-scoped endpoints
+### Owner routes
 
 ```text
-GET    /api/v1/repositories/{id}
-DELETE /api/v1/repositories/{id}                 unregister only
-GET    /api/v1/repositories/{id}/state
-GET    /api/v1/repositories/{id}/file?path=...
-PUT    /api/v1/repositories/{id}/file
-GET    /api/v1/repositories/{id}/raw?path=...
-POST   /api/v1/repositories/{id}/upload?path=...
-POST   /api/v1/repositories/{id}/folder
-POST   /api/v1/repositories/{id}/rename
-DELETE /api/v1/repositories/{id}/path?path=...
-POST   /api/v1/repositories/{id}/commit
-POST   /api/v1/repositories/{id}/checkout
-GET    /api/v1/repositories/{id}/export
-POST   /api/v1/repositories/{id}/favorite
-POST   /api/v1/repositories/{id}/initialize
-POST   /api/v1/repositories/{id}/relink
-POST   /api/v1/repositories/{id}/settings
-POST   /api/v1/repositories/{id}/organization
+GET      /api/v1/repositories/{repo}/project
+GET|POST /api/v1/repositories/{repo}/project/labels
+PUT|DELETE /api/v1/repositories/{repo}/project/labels/{label}
+GET|POST /api/v1/repositories/{repo}/project/milestones
+PUT|DELETE /api/v1/repositories/{repo}/project/milestones/{milestone}
+GET|POST /api/v1/repositories/{repo}/project/issues
+GET|PUT|DELETE /api/v1/repositories/{repo}/project/issues/{issue}
+POST     /api/v1/repositories/{repo}/project/issues/{issue}/comments
+GET|POST /api/v1/repositories/{repo}/project/discussions
+GET|PUT|DELETE /api/v1/repositories/{repo}/project/discussions/{discussion}
+POST     /api/v1/repositories/{repo}/project/discussions/{discussion}/comments
+POST     /api/v1/repositories/{repo}/project/comments/{comment}/moderate
 ```
 
-Settings payload:
-
-```json
-{
-  "name": "Repository name",
-  "description": "Description",
-  "defaultAuthor": "Rooke Poole",
-  "uploadLimitBytes": 10485760
-}
-```
-
-Organization payload:
-
-```json
-{
-  "tags": ["python", "active"],
-  "collectionIds": ["collection-uuid"]
-}
-```
-
-## Registry reliability endpoints
-
-```text
-GET  /api/v1/registry/export
-GET  /api/v1/registry/backups
-POST /api/v1/registry/backup
-POST /api/v1/registry/import
-GET  /api/v1/doctor?scanRoot=/path
-POST /api/v1/doctor
-```
-
-Registry import is a non-destructive merge. It does not copy repository files, delete files, or replace repository paths for matching UUIDs unless `updatePaths` is explicitly true.
-
-Doctor POST payload:
-
-```json
-{
-  "repair": false,
-  "scanRoots": ["/path/to/projects"]
-}
-```
-
-Safe repair creates a registry backup first. Current repair actions clear an invalid active selection, synchronize embedded metadata into the registry, and register discovered embedded repositories.
-
-## Errors and limits
-
-Errors use:
-
-```json
-{
-  "error": "Human-readable explanation",
-  "code": "stable_machine_readable_code",
-  "details": {}
-}
-```
-
-Raw uploads use `application/octet-stream`. JSON endpoints require an object body. The application maximum is 1 GB; each repository may set a lower limit. Binary uploads are streamed to application-data temporary files before atomic placement. Upload routes reject oversized bodies before reading them.
-
-## Compatibility routes
-
-The old unscoped `/api/...` routes are deprecated and return `Deprecation: true` plus a successor-version link. New clients must use `/api/v1/...`.
-
-## Sharing lifecycle endpoints — v0.3.1
-
-These owner-only routes control the optional contributor listener from the normal UI:
-
-```text
-GET  /api/v1/sharing
-POST /api/v1/sharing/start
-POST /api/v1/sharing/stop
-```
-
-Start payload:
-
-```json
-{
-  "port": 8766
-}
-```
-
-The response reports `enabled`, `port`, detected `addresses`, `baseUrls`, `publicBaseUrl`, and `startedAt`. The gateway binds externally but is permanently labeled as a contributor-only surface. It denies owner APIs even for loopback clients.
-
-Stopping sharing closes the contributor listener without stopping the owner workspace. Sharing is not automatically restored after a process restart.
-
-## Secure collaboration endpoints — v0.3.1
-
-### Owner-only routes
-
-These routes require a loopback client and local Host header.
-
-```text
-GET    /api/v1/repositories/{id}/collaboration/invites
-POST   /api/v1/repositories/{id}/collaboration/invites
-DELETE /api/v1/repositories/{id}/collaboration/invites/{inviteId}
-GET    /api/v1/repositories/{id}/pull-requests
-GET    /api/v1/repositories/{id}/pull-requests/{pullRequestId}
-POST   /api/v1/repositories/{id}/pull-requests/{pullRequestId}/review
-POST   /api/v1/repositories/{id}/pull-requests/{pullRequestId}/merge
-POST   /api/v1/repositories/{id}/pull-requests/{pullRequestId}/close
-```
-
-Invite creation payload:
-
-```json
-{
-  "label": "Alex documentation",
-  "expiresInHours": 72,
-  "maxUses": 1,
-  "maxFileBytes": 104857600,
-  "maxTotalBytes": 1073741824,
-  "allowDeletes": true,
-  "allowSourceDownload": true
-}
-```
-
-The response includes the raw token once and a fragment-based `sharePath`. Store or transmit the link securely; the server stores only the token hash.
-
-Review payload:
-
-```json
-{
-  "reviewer": "Rooke Poole",
-  "verdict": "approved",
-  "comment": "Reviewed the exact diff."
-}
-```
-
-Valid verdicts are `approved`, `changes_requested`, and `comment`.
-
-Merge payload:
-
-```json
-{
-  "mergedBy": "Rooke Poole",
-  "confirmation": "MERGE #4",
-  "expectedRevision": 2,
-  "allowRiskyFiles": false
-}
-```
+Owner list routes support bounded `limit`, `offset`, `state`, `labelId`, `milestoneId`, `assignee`, and `query` filters where applicable. All mutable existing objects require `expectedVersion`; stale versions return HTTP 409. Delete operations soft-delete topics and detach/delete labels or milestones according to the service contract.
 
 ### Contributor routes
 
-Every route requires `X-ForgeTrace-Invite: <raw-token>`.
+```text
+GET      /api/v1/collaboration/project
+GET|POST /api/v1/collaboration/project/issues
+GET      /api/v1/collaboration/project/issues/{issue}
+POST     /api/v1/collaboration/project/issues/{issue}/comments
+GET|POST /api/v1/collaboration/project/discussions
+GET      /api/v1/collaboration/project/discussions/{discussion}
+POST     /api/v1/collaboration/project/discussions/{discussion}/comments
+```
+
+A valid invitation must carry `allowProjectParticipation: true`. Existing and ordinary invitations default to false. Contributors cannot manage labels/milestones, update owner fields, moderate, access repository/Git/Health/security/registry routes, approve, resolve conflicts, or merge.
+
+`GET /api/v1/version` now reports application `0.4.10`, collaboration schema `6`, and `projectCoordinationSchemaVersion: 1`.
+
+### Project response safety
+
+Bodies and comments include escaped inert `bodyHtml`; raw active content is never returned as executable markup. References are bounded informational objects only. Limits and retention are documented in `HANDOFF/09_API_AND_SCHEMA_NOTES.md`.
+
+## Unified health reports
+
+Owner listener only:
+
+- `POST /api/v1/health/reports` — generate a read-first report. Body accepts optional `repositoryId`, `scope` (`standard` or `complete`), and bounded `limits`.
+- `GET /api/v1/health/reports?limit=<n>&offset=<n>` — list retained reports.
+- `GET /api/v1/health/reports/{health_<32 hex>}` — read and reverify one report.
+- `GET /api/v1/health/reports/{health_<32 hex>}/export` — download a hash-verified JSON envelope.
+
+The application version response exposes `healthReportSchemaVersion: 1`. A report includes `reportId`, `requestId`, `generatedAt`, `scope`, optional repository scope, explicit limits, `complete`, overall `status`, ten section objects, summary counts, and `reportHash`.
+
+These endpoints never repair. The existing `POST /api/v1/doctor` remains the only owner HTTP Doctor repair authority and now requires a healthy security-ledger authorization before repair begins. The contributor listener returns `remote_owner_api_blocked` for all health and Doctor routes.
+
+## Versions
+
+- Application `0.4.10`
+- Registry schema `4`
+- Repository schema `3`
+- Collaboration schema `6`
+- Project-coordination schema `1`
+- Security-event schema `1`
+- Registry-restore journal schema `1`
+
+## Collaboration migration
+
+Schema 5 preserves schema 4 review revisions/threads/comments and adds `conflict_resolution_drafts` plus `conflict_resolution_events`. Schema 6 adds only the explicit project-participation invitation permission. Migrations are transactional and never modify repository content.
+
+## Owner review routes
 
 ```text
-GET  /api/v1/collaboration/invite
-GET  /api/v1/collaboration/source
-GET  /api/v1/collaboration/pull-requests
-POST /api/v1/collaboration/pull-requests
-GET  /api/v1/collaboration/pull-requests/{pullRequestId}
-POST /api/v1/collaboration/pull-requests/{pullRequestId}/files?path=...
-POST /api/v1/collaboration/pull-requests/{pullRequestId}/deletions
-POST /api/v1/collaboration/pull-requests/{pullRequestId}/submit
+GET|POST /api/v1/repositories/{repo}/pull-requests/{pr}/review-threads
+GET       /api/v1/repositories/{repo}/pull-requests/{pr}/review-threads/{thread}
+POST      /api/v1/repositories/{repo}/pull-requests/{pr}/review-threads/{thread}/comments
+POST      /api/v1/repositories/{repo}/pull-requests/{pr}/review-threads/{thread}/resolve
+POST      /api/v1/repositories/{repo}/pull-requests/{pr}/review-threads/{thread}/reopen
 ```
 
-`GET /source` returns `application/zip` only when the invitation permits source download. The archive contains repository source files without `FORGETRACE_HISTORY.json` or internal metadata.
+## Owner conflict-resolution routes
 
-File upload bodies are raw bytes. The `path` query value must be repository-relative and may not contain `.git` or `.forgetrace`. ForgeTrace does not accept or extract change archives.
-
-Pull-request creation payload:
-
-```json
-{
-  "authorName": "External Contributor",
-  "title": "Improve parser diagnostics",
-  "description": "Adds context and updates tests."
-}
+```text
+GET|POST /api/v1/repositories/{repo}/pull-requests/{pr}/conflict-resolutions
+GET       /api/v1/repositories/{repo}/pull-requests/{pr}/conflict-resolutions/{draft}
+POST      /api/v1/repositories/{repo}/pull-requests/{pr}/conflict-resolutions/{draft}/decision
+POST      /api/v1/repositories/{repo}/pull-requests/{pr}/conflict-resolutions/{draft}/confirm
 ```
 
-Deletion payload:
+`POST` collection prepares missing current drafts and requires `expectedPullRequestRevision`. Decision/confirm require `expectedVersion`. Stale PR/draft/repository bindings return HTTP 409. Missing or damaged evidence returns a fail-closed integrity error.
 
-```json
-{
-  "path": "obsolete/file.txt"
-}
+Decision payloads support `current`, `incoming`, `manual`, and `delete`. Manual content is accepted only when all required evidence is bounded UTF-8 text.
+
+## Contributor review routes
+
+```text
+GET|POST /api/v1/collaboration/pull-requests/{pr}/review-threads
+GET       /api/v1/collaboration/pull-requests/{pr}/review-threads/{thread}
+POST      /api/v1/collaboration/pull-requests/{pr}/review-threads/{thread}/comments
 ```
 
-Clients on the contributor listener are denied every API route outside `/api/v1/collaboration/...`. This listener-level restriction applies even when the client address is loopback.
+There are no contributor conflict-resolution, resolve/reopen, request-changes, approval, or merge routes. Contributor authority remains invitation-token derived.
 
-### Create a managed fork
+## Merge/review state
 
-`POST /api/v1/repositories/fork` accepts `shareUrl`, optional `name`, `description`, `author`, and `uploadLimitBytes`. It is owner-local only. The server validates the fragment token against the remote restricted gateway, streams and validates the source archive, and returns the newly registered repository. The raw token is not persisted.
+Public PR data includes `reviewConversation`, `submittedRevisions`, conflicts, and `conflictResolution` summary data. Approval and merge fail when current threads remain unresolved or any current conflict lacks a confirmed current draft. Merge revalidates all bindings under the repository lock.
 
-## v0.3.6 local complete-folder import
+## Context safety
 
-### `POST /api/v1/system/pick-folder`
+Review and conflict content is returned only as escaped inert text. Active content is never executed or embedded. Every evidence file is regular-file checked and size/SHA-256 verified before use.
 
-Local-owner only. Opens the operating-system folder chooser on the ForgeTrace machine.
+## Limits
 
-Response:
+Review limits remain 500 threads/PR, 500 comments/thread, 5,000 comments/PR, 8,000 characters/body, 100 rows/page, and 180-day terminal retention.
 
-```json
-{
-  "available": true,
-  "cancelled": false,
-  "path": "C:\\Projects\\Example",
-  "name": "Example"
-}
+Conflict-resolution limits are 1,000 drafts/PR, 4 GiB evidence/PR, 512 KiB and 20,000 lines for manual text, a 16 MiB free-space reserve, and 180-day terminal retention.
+
+## v0.4.7 segmented security-history API
+
+Owner-only routes now expose segment inventory/status, hash-verified retention policy, previewed rotation, bounded rotation history, chain-head digest export, and owner receipt recording under `/api/v1/security-events/*`. The contributor listener rejects all of them. Query/export span retained sealed segments plus active rows. See `HANDOFF/09_API_AND_SCHEMA_NOTES.md`.
+
+
+## v0.4.8 owner Git intelligence API
+
+Owner listener only; all routes are GET/read-only:
+
+```text
+GET /api/v1/repositories/{repositoryId}/git?commitLimit=<1..200>
+GET /api/v1/repositories/{repositoryId}/git/diff?scope=working|staged&path=<optional relative path>
+GET /api/v1/repositories/{repositoryId}/git/diff?scope=commit&commit=<full 40-64 hex object id>&path=<optional relative path>
+GET /api/v1/repositories/{repositoryId}/git/commits/{full 40-64 hex object id}
 ```
 
-### `POST /api/v1/repositories/{repositoryId}/import-local-folder`
+The overview returns probe/layout state, branch or detached HEAD, upstream and ahead/behind counts, staged/unstaged/untracked paths, bounded commit history, local branches, tags, and credential-sanitized remotes. Diff responses include scope, path/commit binding, byte count, truncation, binary suppression, and inert text. Commit detail includes bounded metadata, parents, changed files, and a bounded commit diff.
 
-Local-owner only. Recursively copies a selected local folder directly into the repository.
+`GET /api/v1/version` exposes `gitIntelligenceSchemaVersion: 1` and `gitWriteSchemaVersion: 1`. The contributor listener rejects every owner Git route.
 
-```json
-{
-  "path": "C:\\Projects\\Example",
-  "includeRoot": true,
-  "author": "Rooke Poole"
-}
+## v0.5.2 owner transactional Git-write API
+
+```text
+GET  /api/v1/repositories/{repositoryId}/git/writes?receiptLimit=<1..200>
+POST /api/v1/repositories/{repositoryId}/git/writes/preview
+POST /api/v1/repositories/{repositoryId}/git/writes/execute
 ```
 
-`includeRoot=true` preserves `Example/` in an existing repository. `includeRoot=false` imports its contents at the repository root for new managed-repository onboarding.
-
-### `POST /api/v1/repositories/{repositoryId}/folders`
-
-Creates or verifies a normalized folder manifest in one repository mutation. Used by browser recursive fallback uploads before file transfer.
-
-## v0.4.0 additions
-
-The API includes persistent operation-job status/cancel routes, import preview/job routes, sensitive-export confirmation, collaboration storage metrics, `HEAD`, and the compatibility `/api/version` alias. Owner-only native picker/import routes remain loopback-gated.
-
+The accepted preview operations are `stage`, `commit`, `create_branch`, and `create_tag`. Execute requires the exact `previewId`, server-provided typed confirmation, and actor label. All writes are local owner-only, state-bound, security-ledger authorized, repository/Git locked, journaled, rollback-capable, and startup recoverable. There are no contributor writes, branch switching, merge, remotes, credentials, fetch/pull/push/clone, hooks, signing, editor, or shell paths. See `HANDOFF/09_API_AND_SCHEMA_NOTES.md`.

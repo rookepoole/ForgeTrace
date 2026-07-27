@@ -1,4 +1,47 @@
+# ForgeTrace v0.5.2.2 Audit Closure and Trust Continuation
+
+## v0.5.3.0 trust-boundary extension
+
+The new switch-planning authority is isolated from `GitWriteService`, performs no repository mutation, uses the accepted lock order, captures exact bounded evidence outside the repository, and fails closed on ambiguous Git/filesystem states. No previously closed audit finding was reopened. Focused and full regression evidence is recorded under `HANDOFF/EVIDENCE/v0530-*`.
+
+## v0.5.2.2 acceptance-runner closure
+
+The operator-reported `NativeCommandError` was a false failure produced by Windows PowerShell 5.1 stream handling, not a failing ForgeTrace assertion. The repaired runner isolates native stdout/stderr from PowerShell's error pipeline, checks the actual exit code, retains the old filename as a compatibility delegate, and leaves all runtime trust boundaries unchanged. Physical Windows acceptance is still outstanding until the corrected exact archive completes both automated and browser gates.
+
+
+## v0.5.2.1 hardening closure
+
+- Closed the post-commit Windows cleanup exception boundary: sharing violations during non-critical cleanup no longer enter rollback.
+- Added bounded retry for critical atomic evidence replacement/removal.
+- Added twelve sealed recovery checkpoints and eleven abrupt-stop/Windows-boundary tests.
+- Proved exact fresh-process restoration of index, `HEAD`, refs, and reflogs and safe terminal receipt reconstruction.
+- Added owner/Health recovery diagnostics while preserving independent read-only Git intelligence.
+- Physical Windows v0.5.2.1 acceptance remains an explicit outstanding platform gate.
+
+
+The original 29-item audit remains fully closed. v0.5.2 adds a new Git mutation authority only behind repository/Git lock ordering, read-only and deletion-intent enforcement, security-ledger authorization, state-bound previews, sealed transaction/recovery journals, exact rollback captures, verified receipts, hardened Git plumbing, contributor denial, and independent read-only Git visibility. No inherited closure is reopened.
+
+The v0.5.1.2 physical Windows deletion transaction prerequisite was operator-reported as an unskipped `OK` on Windows on 2026-07-26. This Linux validation environment does not independently claim Windows execution and still skips the platform-only tests.
+The original 29 audit findings remain closed. This maintenance release replaces the v0.5.1.1 delete-sharing-only approach with a durable external deletion transaction:
+
+- the existing repository lock is acquired to wait for and linearize against active ForgeTrace work;
+- a durable application-data deletion intent and external repository-ID guard are installed;
+- all ForgeTrace handles inside the managed repository are closed before the Windows parent-directory move;
+- new ForgeTrace access fails closed while the intent exists;
+- registry removal, staging, tombstone commitment, rollback, and startup recovery remain journaled and lock-protected.
+
+The Security viewer regression is also closed. Primary events load independently before auxiliary segmented-history status, and auxiliary operational failures degrade only that panel. Protected security-sensitive actions still fail closed unless the complete logical security chain is healthy.
+
+Evidence: `forgetrace/locks.py`, `forgetrace/registry.py`, `forgetrace/security_events.py`, `forgetrace/web.py`, `index.html`, `tests/test_v0512_windows_delete_and_security_fetch.py`, `tests/browser_repository_management_test.py`, `tests/browser_security_events_test.py`, and `tests/browser_security_resilience_test.py`.
+
 # ForgeTrace v0.4.0 Audit Closure Map
+
+> **v0.5.1 continuation note:** All 29 accepted v0.3.6 findings remain closed. Verified release records and assets live in isolated application data, use cross-process locking and SHA-256 verification, expose only explicit published-download contributor access, and add no repository, Git, registry, review, conflict, or merge mutation authority.
+
+> **v0.5.1 continuation note:** All 29 accepted v0.3.6 findings remain closed. The larger file workspace changes presentation only. Permanent managed-repository deletion adds a journaled owner authority without weakening locks, recovery, repository isolation, read-only enforcement, contributor isolation, snapshot verification, or security evidence.
+
+> **v0.4.9 continuation note:** All 29 accepted v0.3.6 findings remain closed. Repository-scoped issues, discussions, labels, milestones, and comments live in isolated application data and add no repository, Git, registry, review, conflict, or merge mutation authority.
+
 
 **Creator:** Rooke Poole  
 **License:** MIT  
@@ -9,11 +52,12 @@
 
 ## Validation summary
 
-- 76 Python unit/integration tests passed.
-- Five available Chromium workflows passed, including a real-server, real-disk black-box workflow.
-- The live collaboration browser navigation test is environment-skipped because managed Chromium blocks localhost; equivalent HTTP collaboration paths pass.
-- Python code coverage: 76% overall; native picker module: 87%.
-- Physical Windows folder-dialog interaction is retained as an explicit manual release acceptance gate.
+- The original v0.4.0 audit closure remains supported by its 76-test and five-browser evidence.
+- The accepted v0.4.9 continuation passed 185 Python unit/integration tests and 14 focused project-coordination tests.
+- Fourteen applicable Chromium workflows passed, including a real owner/contributor project workflow that preserved repository and Git bytes.
+- The live collaboration direct-navigation test remains environment-skipped because managed Chromium blocks localhost; equivalent HTTP collaboration paths pass.
+- Python code coverage: 81% overall; project coordination: 87%; Git intelligence: 83%; segmented security history: 87%; health dashboard: 80%; native picker: 87%.
+- Physical Windows folder-dialog interaction remains an explicit manual release acceptance gate.
 
 ## Finding closures
 
@@ -324,3 +368,6 @@
 - `forgetrace/importing.py`
 - `tests/test_v040_audit_closure.py::test_route_and_import_functions_are_split_into_bounded_units`
 
+## v0.5.3 design-only continuation
+
+No original audit closure is reopened. The switch/checkout package adds specifications and tests only; runtime authority, schemas, locks, journals, deletion behavior, Security history, read-only enforcement, and contributor isolation remain unchanged.

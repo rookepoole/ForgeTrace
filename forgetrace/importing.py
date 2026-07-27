@@ -311,7 +311,7 @@ def apply_folder_import(
                 progress(phase="staging", filesStaged=staged, bytesStaged=staged_bytes, totalFiles=len(plan.files), totalBytes=plan.total_bytes, currentPath=item.destination_path)
 
         check_cancel()
-        with repository.lock:
+        with repository.mutation("local folder import"):
             state = repository.load_state()
             conflicts_overwritten = [item for item in plan.files if item.conflict == "existing_file"]
             safety = None

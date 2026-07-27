@@ -1,149 +1,80 @@
-# ForgeTrace Testing
+# ForgeTrace Testing — v0.5.2.2
 
-Run from the repository root with Python 3:
+## v0.5.3.0 switch-planner validation
 
-```bash
-python tests/smoke_test.py
-python -m unittest discover -s tests -p "test_*.py" -v
-```
+- 277 tests across 30 isolated Python modules; 275 passed on Linux and 2 physical-Windows tests skipped.
+- 14 focused preflight/capture tests passed with 82% branch-aware coverage of `forgetrace/git_switch.py`.
+- 79 Python files compiled.
+- Owner and contributor inline JavaScript bundles passed Node syntax checking.
+- The unchanged transactional Git-write owner Chromium workflow passed.
 
-Optional Chromium interface validation:
+The focused suite proves no repository mutation during read-model, capture, or verification; exact capture integrity; stale source/target/local-byte rejection; ignored/untracked and file/directory collisions; conservative case-fold rejection; read-only/deletion/native-lock enforcement; configuration/index-feature rejection; resource limits; detached/unborn/invalid targets; special-file rejection; and cleanup after injected capture failure.
 
-```bash
-python tests/browser_smoke_test.py
-python tests/browser_collaboration_test.py
-```
+## v0.5.2.2 Windows runner repair
 
-The live collaboration browser test may report a managed-environment skip when Chromium policy blocks localhost navigation. The route-level collaboration flow is independently tested through real HTTP servers.
+The physical-Windows runner uses `Start-Process` with separate redirected stdout/stderr files. This avoids Windows PowerShell 5.1 turning Python unittest's normal stderr progress into a terminating `NativeCommandError`. The gate checks the native exit code and appends `AUTOMATED_RESULT: OK` only after the complete suite succeeds. Run `tests/run_v0522_windows_git_write_acceptance.ps1` from the exact archive.
 
-The application itself has no third-party runtime dependency.
 
-## v0.3.3 acceptance coverage
+## v0.5.2.1 validation scope
 
-- an empty registry can create a managed fork from a live restricted gateway;
-- the owner HTTP API can fork before an active repository exists;
-- the raw invite token is absent from repository and registry metadata;
-- nested source files survive the streamed fork transfer;
-- malformed, tokenless, cross-origin, unsafe-path, metadata-bearing, encrypted, symlink, and oversized archives are rejected by the implementation boundary;
-- a recreated registry repopulates valid managed repositories by UUID;
-- a moved managed repository auto-relinks only after UUID verification;
-- upload, source, and pull-request transfer ceilings reflect the new limits;
-- Chromium verifies collapsed folders, expand/collapse interaction, and fork-link onboarding;
-- the full registry, recovery, security, collaboration, and sharing regression suite remains green.
+`tests/test_v0521_git_write_failure_injection.py` injects abrupt stops after index/ref/reflog and terminal-evidence checkpoints, then constructs a fresh service to prove exact rollback, receipt reconstruction, native-lock deferral, tamper retention, and Windows-style cleanup behavior. The injected signal is test-only constructor state and is not reachable through HTTP or the UI.
 
-## v0.3.2 onboarding coverage retained
+The exact physical-Windows gate is `tests/run_v0522_windows_git_write_acceptance.ps1` plus `tests/WINDOWS_TRANSACTIONAL_GIT_WRITES_ACCEPTANCE.md`. Linux evidence validates deterministic transaction logic but does not claim Windows filesystem acceptance.
 
-- managed repositories are created under the configured application-data root;
-- duplicate display names receive unique local directories;
-- managed repositories have normal embedded identity and remain relinkable;
-- the owner API creates a managed repository without an absolute path;
-- individual-file and nested folder-path uploads reach the correct repository;
-- the Add Repository dialog retains distinct file, folder, fork-link, and path choices;
-- Chromium imports an individual file, imports a folder with root stripping, and reopens the unchanged path workflow.
 
-## Existing repository and registry coverage
+## v0.5.2 accepted evidence
 
-- repository-scoped API isolation and export boundaries;
-- 100-repository registry fixture;
-- restart persistence, offline detection, UUID relink, and non-destructive unregister;
-- path traversal and `.forgetrace` protection;
-- duplicate path rejection without identity mutation;
-- atomic embedded metadata backup parsing;
-- repository settings and per-repository upload limits;
-- normalized tags, collections, saved filters, backups, import/export, Doctor, CLI, and v0.2.0 migration;
-- Chromium file editing, organization, settings, Doctor, and repository switching.
+- 249 Python tests discovered across 27 fresh processes; 247 passed on Linux and 2 physical Windows-only tests skipped.
+- 27 focused transactional Git-write tests passed with 80% branch-aware coverage of `forgetrace/git_writes.py`.
+- 19 applicable Chromium workflows passed; the direct collaboration navigation script remains an environment-policy skip with equivalent HTTP isolation coverage.
+- Python compilation and both inline JavaScript bundles passed syntax validation.
+- The v0.5.1.2 physical Windows deletion transaction prerequisite was operator-reported as an unskipped `OK` on 2026-07-26.
 
-## Secure collaboration coverage
+See `HANDOFF/EVIDENCE/v052-*` for current evidence. A monolithic suite process can stall in the inherited fsync-sensitive region on this host; only completed fresh-process modules are counted.
 
-- raw invite tokens are not stored in SQLite;
-- collaboration schema migration and source-download scope;
-- remote clients cannot access owner or repository APIs;
-- general collaboration requests and source downloads are throttled;
-- source-only ZIP includes normal source but excludes generated history, VCS metadata, and symlinks;
-- source-download permission can be disabled;
-- invite expiry, use, size, and deletion scopes are enforced;
-- `.git`, `.forgetrace`, traversal, and oversized uploads are blocked;
-- unchanged uploads are removed from the change set;
-- contributor requests are recoverable through the same token;
-- exact text diffs, binary evidence, risky-file flags, and conflicts are produced;
-- open pull requests cannot merge without explicit approval;
-- change-request revisions and resubmission work;
-- risky files require separate owner confirmation;
-- merge revalidates the baseline, creates recovery state, writes locally, and records attribution;
-- a remote-simulated contributor can download source, submit through HTTP, and be merged only through a separate local owner HTTP surface.
+## v0.4.10 accepted evidence
 
-## One-launch sharing coverage
+- Baseline before maintenance changes: **185/185** Python unit/integration tests passed.
+- Final inventory: **196/196** tests pass across isolated fresh Python processes.
+- Focused repository-management suite: **11/11** passed warning-free.
+- Real Chromium repository-management workflow: **PASS**.
+- The full applicable browser matrix contains **15 workflows**; final results are recorded in `HANDOFF/EVIDENCE/browser-workflows.log`.
+- Static and coverage results are recorded in `HANDOFF/EVIDENCE/`.
 
-- sharing status begins disabled;
-- owner API can start a restricted listener on an available port;
-- the listener serves the contributor page;
-- the listener denies repository and owner APIs even from loopback;
-- token-scoped contributor routes remain usable;
-- changing ports requires an explicit stop first;
-- Stop Sharing closes the listening socket;
-- owner-process shutdown also stops the gateway;
-- Chromium can open Collaborate, auto-start sharing, create an invite, and render the final token link;
-- owner and contributor JavaScript parse successfully.
+The focused suite covers initialized, manually emptied, and missing managed repository paths; external-path and read-only denial; ledger fail-closed behavior; contributor-gateway denial; security events; cross-process locking; pre-commit rollback; post-commit finalization; explicit restoration; tombstone suppression; and the enlarged Files workspace.
 
-## Required mutation rule
+## Unit and integration suite
 
-Every new mutating endpoint must prove:
-
-1. it cannot escape its selected repository, managed-import root, or quarantine root;
-2. it cannot change another repository;
-3. remote callers cannot invoke owner actions;
-4. its data survives restart where persistence is promised;
-5. failure returns a structured error;
-6. recovery and portability are explicit;
-7. rollback material exists before live files change;
-8. no untrusted code is executed implicitly.
-
-## v0.3.4 recursive-folder gate
-
-Run:
+The authoritative host command runs every test module in a fresh process:
 
 ```bash
-python3 -m unittest discover -s tests -p "test_*.py" -v
-python3 tests/browser_deep_folder_test.py
+for file in tests/test_*.py; do
+  module="tests.$(basename "$file" .py)"
+  TMPDIR=/dev/shm PYTHONDONTWRITEBYTECODE=1 \
+    python3 -m unittest -q "$module"
+done
 ```
 
-The API fixture verifies every descendant file and intermediate folder across six nesting levels. The Chromium test drives the recursive browser fallback, expands the resulting tree level by level, and repeats the workflow while creating a new managed repository.
+The mounted validation filesystem can intermittently stall one monolithic Python process after extensive inherited fsync, SQLite, subprocess, and Chromium activity. Every module exits cleanly in a fresh process. Evidence records that distinction rather than claiming a reliable monolithic exit on this host.
 
-## v0.3.5 verified native-folder gate
+## Browser workflow
 
-- Select a real on-disk directory through Chromium’s native `webkitdirectory` input.
-- Confirm every descendant file carries its full `webkitRelativePath`.
-- Keep the input disabled and uncleared until asynchronous upload and verification finish.
-- Verify all expected paths against `/api/v1/repositories/<id>/state`.
-- Simulate one interrupted nested upload and confirm the automatic retry succeeds.
-- Confirm all imported parent folders are expanded and the deepest file is visible immediately.
-- Confirm the launcher does not open a browser when port 8765 cannot be bound.
+`tests/browser_repository_management_test.py` renders the real owner HTML in Chromium and verifies:
 
-## v0.3.6 direct-disk complete-folder gate
+- at least 500 px rendered tree height;
+- at least 500 px rendered file-pane width at 1680×1200;
+- file pane at least 44% of the Files layout;
+- the managed-repository danger zone and exact-name confirmation;
+- the actual owner HTTP deletion route;
+- managed-directory removal, active-repository fallback, and security events;
+- restart-time tombstone suppression of a copied UUID-bearing repository.
 
-Run:
+Managed Chromium blocks direct localhost navigation. The workflow uses the established policy-compatible browser transport for initial UI data and forwards the destructive request through the real owner HTTP server. This is not represented as direct localhost browser navigation.
 
-```bash
-python3 -m unittest discover -s tests -p "test_*.py" -v
-python3 tests/browser_deep_folder_test.py
-python3 tests/browser_folder_retry_test.py
-python3 tests/browser_native_import_test.py
-python3 tests/browser_smoke_test.py
-```
+## Static validation
 
-Required evidence:
+All Python sources must compile without writing bytecode into the source package, and both owner and contributor inline JavaScript bundles must pass Node syntax checking. Exact results are stored in `HANDOFF/EVIDENCE/static-validation.log`.
 
-- the owner-only operating-system picker route returns an exact selected directory;
-- the direct-disk importer preserves files and empty folders through at least six levels;
-- existing-repository imports preserve the selected outer root;
-- new managed repositories strip only the outer root;
-- unreadable directories fail rather than disappearing silently;
-- symbolic links and root `.forgetrace` metadata are skipped;
-- every copied path is visible in the server-side repository tree;
-- browser fallback still recursively uploads and retries missing descendants;
-- the direct native-import UI expands the deepest file automatically.
+## Physical Windows gate
 
-## v0.4.0 stabilization matrix
-
-The release requires 76 Python tests, five available Chromium workflows, 76% aggregate line coverage, 87% native-picker coverage, JavaScript syntax validation, Python compilation, source-manifest verification, and clean extracted startup. `tests/browser_blackbox_test.py` is the required real-server/real-disk UI flow. Physical Windows picker acceptance follows `tests/WINDOWS_NATIVE_PICKER_ACCEPTANCE.md`.
-
+Automated Linux tests cover native-picker command/process/PowerShell/Unicode/cancellation/headless contracts. They do not replace the physical Windows checklist at `tests/WINDOWS_NATIVE_PICKER_ACCEPTANCE.md`.

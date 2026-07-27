@@ -158,3 +158,107 @@ def recover_transactions(
         shutil.rmtree(root, ignore_errors=True)
         actions.append({"transaction": root.name, "action": "rolled_back_pending"})
     return actions
+
+
+def inspect_transactions(
+    workspace: Path,
+    meta_dir: Path,
+    *,
+    current_revision: Callable[[], int] | None = None,
+    limit: int = 200,
+) -> dict[str, Any]:
+    """Inspect repository transaction journals without changing them.
+
+    Recovery is deliberately separate from assessment.  The health dashboard uses
+    this function to surface pending, unreadable, and cleanup-eligible journals while
+    leaving the existing ``recover_transactions`` authority as the only code that
+    rolls back or removes transaction artifacts.
+    """
+
+    transaction_root = meta_dir / "transactions"
+    bounded_limit = max(1, min(int(limit), 2000))
+    if not transaction_root.is_dir():
+        return {
+            "journalCount": 0,
+            "scannedCount": 0,
+            "complete": True,
+            "pendingCount": 0,
+            "unreadableCount": 0,
+            "cleanupEligibleCount": 0,
+            "journals": [],
+        }
+
+    roots = sorted(transaction_root.glob("txn-*"))
+    journals: list[dict[str, Any]] = []
+    pending = 0
+    unreadable = 0
+    cleanup_eligible = 0
+    revision = current_revision() if current_revision is not None else None
+    for root in roots[:bounded_limit]:
+        journal_path = root / "journal.json"
+        item: dict[str, Any] = {
+            "transaction": root.name,
+            "journalPath": str(journal_path),
+            "status": "unreadable",
+            "operation": "",
+            "createdAt": "",
+            "stateRevisionBefore": None,
+            "stateRevisionAfter": None,
+            "assessment": "attention_required",
+        }
+        try:
+            payload = json.loads(journal_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            unreadable += 1
+            item["message"] = str(exc)
+            journals.append(item)
+            continue
+
+        status = str(payload.get("status") or "pending")
+        try:
+            before = int(payload.get("stateRevisionBefore") or 0)
+        except (TypeError, ValueError):
+            before = 0
+        try:
+            after_value = payload.get("stateRevisionAfter")
+            after = int(after_value) if after_value is not None else None
+        except (TypeError, ValueError):
+            after = None
+        records = payload.get("records") if isinstance(payload.get("records"), list) else []
+        item.update(
+            {
+                "status": status,
+                "operation": str(payload.get("operation") or ""),
+                "createdAt": str(payload.get("createdAt") or ""),
+                "stateRevisionBefore": before,
+                "stateRevisionAfter": after,
+                "recordCount": len(records),
+            }
+        )
+        committed_by_revision = revision is not None and revision > before
+        if status == "committed" or committed_by_revision:
+            cleanup_eligible += 1
+            item["assessment"] = "cleanup_eligible"
+            if revision is not None:
+                item["currentRevision"] = revision
+                item["revisionAdvanced"] = committed_by_revision
+        elif status == "pending":
+            pending += 1
+            item["assessment"] = "recovery_required"
+            if revision is not None:
+                item["currentRevision"] = revision
+                item["revisionAdvanced"] = False
+        else:
+            unreadable += 1
+            item["assessment"] = "unknown_status"
+        journals.append(item)
+
+    return {
+        "journalCount": len(roots),
+        "scannedCount": len(journals),
+        "complete": len(roots) <= bounded_limit,
+        "pendingCount": pending,
+        "unreadableCount": unreadable,
+        "cleanupEligibleCount": cleanup_eligible,
+        "journals": journals,
+    }

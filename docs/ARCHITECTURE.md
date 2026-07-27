@@ -1,142 +1,90 @@
-# ForgeTrace Architecture — v0.3.3
+# ForgeTrace Architecture — v0.5.2
 
-ForgeTrace is a local-first Python application with a browser interface. Version 0.3.3 preserves the multi-repository registry and disk-backed workspace while making secure collaboration controllable from one normal launch.
+## v0.5.2 transactional local Git-write architecture
 
-## Process structure
+ForgeTrace now separates Git reads and writes. `GitIntelligenceService` remains read-only. `GitWriteService` is an owner-only authority for selected-file staging, staged-tree commits, local branch creation, and lightweight local tags. It uses digest-bound previews, repository-then-Git lock ordering, security-ledger authorization, operation-specific sealed captures, exact rollback, startup recovery, and verified receipts under application data `git-writes/`.
 
-```text
-server.py
-└── forgetrace.app
-    ├── CollaborationGatewayManager  runtime start/stop/status for restricted listener
-    ├── forgetrace.registry          global SQLite library, migrations, backup/import/doctor
-    ├── forgetrace.repository        isolated file/history/snapshot/atomic-merge service
-    ├── forgetrace.collaboration     invites, quarantine, pull requests, reviews, conflicts
-    ├── forgetrace.web               listener surfaces, APIs, security boundary, static UI
-    ├── forgetrace.utils             platform paths and time/path helpers
-    ├── forgetrace.errors            structured user-facing errors
-    └── forgetrace.constants         application/schema versions and limits
-```
+Commit creation uses Git plumbing with a sanitized non-interactive environment. There is no checkout/switch, merge, reset, rebase, cherry-pick, revert, remote, credential, hook, signing, editor, shell, or public-hosting path. Read-only Git inspection remains available if writer status is degraded.
 
-No third-party runtime packages are required.
+## v0.4.10 repository-management architecture
 
-## Listener model
+Permanent managed-repository deletion is a distinct owner authority in `RepositoryRegistry`. It classifies managed paths as normal direct children of application-data `managed-repositories/`, serializes with repository/registry locks, moves bytes atomically into `repository-deletions/staging/`, journals every crash boundary, writes an identity tombstone, commits registry removal, and then erases staged bytes. Startup rolls back or finalizes from the committed row state before normal repository discovery.
 
-One ForgeTrace process can own two HTTP servers:
+The Files UI sizing change does not alter repository service, tree, file, editor, or virtualization authority.
 
-| Listener | Default | Bind | Purpose |
-|---|---|---|---|
-| Owner | Always running | `127.0.0.1:8765` | Repository, registry, review, merge, and sharing controls |
-| Contributor | Off until enabled | `0.0.0.0:8766` by default | `contribute.html` and token-scoped collaboration APIs only |
+## v0.4.9 Project architecture
 
-Each `ThreadingHTTPServer` carries a `forgetrace_surface` value: `owner`, `gateway`, or legacy `combined`. The handler applies route policy from this value before relying on client-address checks.
+`ProjectCoordinationService` is a dedicated application-data coordination authority. It owns one SQLite database and one OS-backed lock under `project-coordination/`; it does not write repository files, `.forgetrace`, Git metadata, registry backups, collaboration evidence, or security-history storage.
 
-The gateway manager:
+Its schema stores repository counters, labels, milestones, issues/discussions, topic-label links, and comments. All objects carry a stable repository ID and optimistic version. The service enforces quotas, bounded pages, inert rendering, safe informational references, soft deletion, and 180-day cleanup.
 
-1. validates the requested port;
-2. constructs a new server with `surface="gateway"`;
-3. starts it on a daemon thread;
-4. reports detected LAN addresses to the owner UI;
-5. shuts it down and joins the thread when requested;
-6. shuts it down automatically when the owner process exits.
+Collaboration schema 6 adds an explicit invitation capability for project participation. The contributor listener maps only create/read/comment project methods and never exposes owner label, milestone, update, moderation, repository, Git, Health, registry, security, approval, conflict, or merge routes.
 
-Runtime sharing state is deliberately not persisted. A fresh launch is local-only until the owner enables sharing again.
+Read-only repositories remain coordinate-able because project data is outside the repository; the central repository mutation boundary is unchanged. Registry recovery replaces only registry state, so project records survive repository unregister/Replace/rollback and become accessible again with the same repository ID.
 
-## Global application data
+## Trust boundaries
 
-| Platform | Default path |
-|---|---|
-| Windows | `%LOCALAPPDATA%\ForgeTrace` |
-| macOS | `~/Library/Application Support/ForgeTrace` |
-| Linux | `${XDG_DATA_HOME:-~/.local/share}/forgetrace` |
-
-```text
-application-data/
-├── registry.sqlite3
-├── backups/
-├── managed-repositories/
-│   └── <safe-repository-name>[-N]/
-└── collaboration/
-    ├── collaboration.sqlite3
-    └── quarantine/
-        └── <repository-uuid>/<pull-request-uuid>/files/
-```
+1. **Owner listener** — loopback-only repository administration, security evidence, registry recovery, access-mode authority, review moderation, conflict-resolution decisions, approval, and merge.
+2. **Contributor listener** — separately identified, disabled by default, invitation-token scoped, and denied all owner routes.
+3. **Application data** — registry, locks, recovery journals, managed repositories, jobs, collaboration database, quarantine, immutable submitted revisions, conflict evidence, security ledger, and durable health reports outside the extracted package.
+4. **Repository service** — stable repository ID/path isolation, cross-process lock, two-copy access authority, object verification, filesystem transactions, and startup journal recovery.
 
 
-Browser file pickers do not expose an absolute host path. The owner-only managed-repository endpoint therefore creates a fresh ordinary workspace under `managed-repositories/`, initializes normal embedded metadata, and returns its repository UUID. The UI then uses the existing repository-scoped upload API. Folder imports strip one selected root segment and preserve every nested relative segment. Managed workspaces are not a proprietary container; they can be moved and relinked.
+## Unified health architecture
 
-The registry stores repository paths and library metadata, not project contents. The collaboration database stores hashed invite capabilities, pull-request metadata, staged-path evidence, and reviews. Raw invitation tokens are not persisted.
+`HealthDashboardService` is an owner-side read-first aggregator, not a repair authority. It calls bounded inspection paths on the existing registry, repository, transaction, recovery, ledger, collaboration, review, and conflict services and writes a canonical hash-verified report under application data `health-reports/`.
 
-## Per-repository data
+The report has ten sections: System, Registry, Repositories, Git, Recovery, Security, Access, Collaboration, Project, and Storage. Each section carries a completion flag. When any explicit repository/object/journal/hash-index/review/conflict/orphan/storage limit truncates work, the report remains visibly partial.
 
-```text
-my-project/
-├── normal project files
-└── .forgetrace/
-    ├── state.json
-    ├── state.json.bak
-    ├── merge-backups/   temporary rollback data during merges
-    └── objects/         SHA-256 snapshot contents
-```
+Health report generation does not recover pending transactions, restore a registry, repair embedded metadata, refresh a hash cache, remove quarantine data, change access mode, or mutate repository content. The owner UI may separately invoke the existing Doctor repair route after confirmation. That protected HTTP repair requires a healthy security-ledger authorization event before Doctor begins.
 
-`state.json` records contribution events and snapshot manifests. Embedded metadata is protected from normal repository operations and omitted from source-only collaboration archives.
+Report list, detail, and export revalidate regular-file status, report format, and canonical SHA-256. The contributor listener rejects every health/report/export/repair route before dispatch.
 
-## Owner and contributor trust boundaries
+## Collaboration evidence layers
 
-- Owner-listener requests must be loopback and use a local Host value.
-- Gateway-listener requests may access only `/`, `/contribute.html`, and `/api/v1/collaboration/...`.
-- Gateway restrictions apply even when accessed from `127.0.0.1`.
-- Owner actions require matching request origin and local Host checks.
-- Contributor changes are written to application-data quarantine, never directly to the repository.
-- Merge requires explicit owner approval, matching revision, typed confirmation, conflict-free baseline hashes, and additional risky-file confirmation where applicable.
+- `collaboration/quarantine/` holds mutable working PR uploads.
+- `collaboration/review-revisions/` holds immutable submitted-revision files, manifests, and available base snapshots.
+- `collaboration/conflict-resolutions/` holds immutable Base/Current/Submitted captures, evidence manifests, and optional resolved bytes.
+- `collaboration.sqlite3` stores PR, invitation, revision, review-thread, and conflict-draft/event metadata.
 
-## Source-download boundary
+None of these directories is live repository authority.
 
-A source invitation may produce a source-only ZIP. It excludes ForgeTrace metadata, generated history, Git/Mercurial/Subversion/Bazaar metadata, and symlinks. Normal project files remain in scope, so owners must disable source download when the repository contains secrets that should not be shared.
+## Conflict-resolution flow
 
-## Merge transaction
+1. Conflict detection compares current repository manifest against recorded PR base hashes.
+2. Owner preparation holds the collaboration and repository locks, computes a full current repository digest, verifies revision evidence, preflights quota/free space, and copies Base/Current/Submitted files into a private draft directory.
+3. The draft manifest binds repository, PR, revision, path, conflict set, repository digest, access mode, unresolved-thread gate, hashes, and request metadata.
+4. Owner decision writes only `resolved.bin` in the draft directory and updates SQLite using optimistic version checks.
+5. Confirmation revalidates all bindings and evidence and requires a healthy security ledger.
+6. Approval requires no unresolved current threads and confirmed current drafts for every conflict.
+7. Final merge reacquires the repository lock, recomputes all bindings, verifies immutable revision and resolution files, checks writable authority and ledger authorization, and invokes the existing transactional repository merge.
+8. Applied drafts become immutable historical evidence; failure before/inside merge leaves the live repository unchanged or transactionally rolled back.
 
-1. Ensure a snapshot represents current workspace state.
-2. Acquire the repository mutation lock.
-3. Recompute the current manifest and compare every affected path with the pull-request baseline.
-4. Copy affected existing files into temporary merge-backup storage.
-5. Copy staged bytes into sibling temporary files and atomically replace destinations.
-6. Apply approved deletions.
-7. Record external-contributor attribution.
-8. Create a local merge snapshot attributed to the owner.
-9. Remove temporary rollback data after success.
-10. Restore prior files and metadata if any step fails.
+## Lock hierarchy
 
-## Isolation and limits
+- owner-instance lock for one owner process per application-data directory
+- registry operation lock for registry backup/restore and coordinated registry actions
+- collaboration lock for PR/review/draft metadata
+- repository lock for any live repository read binding or mutation
+- security-ledger lock for append/integrity authority
 
-Every repository operation carries a repository UUID. Relative paths are resolved inside one canonical workspace. Collaboration adds repository-scoped token expiry, revocation, use count, per-file limits, total-size limits, maximum change count, general remote request throttling, and a stricter source-archive throttle.
+Conflict operations acquire collaboration state before the repository lock, matching existing merge ordering. No contributor route can acquire owner mutation authority.
 
-Symlinks are omitted from repository tree/export traversal to prevent archive reads outside the selected workspace.
+## Access and recovery interaction
 
-## Backup, import, and doctor
+Effective repository mode is writable only when registry and embedded copies both validly agree on `read_write`. Review and conflict preparation may read a read-only repository, but merge is rejected at the central mutation boundary. Registry recovery never restores collaboration evidence or the security ledger.
 
-Registry backups use SQLite's online backup API. Import creates a pre-import backup and merges by UUID/canonical path without moving or deleting project files. Doctor validates SQLite, path state, embedded identity, metadata readability, drift, and discovered repositories under explicit scan roots.
+## Deployment posture
 
-Collaboration-database backup, persistent security-audit export, and quarantine garbage collection remain future work.
+ForgeTrace v0.5.2 includes local project coordination, read-only Git intelligence, and a narrowly bounded transactional local Git writer, but it is not a general Git client, Git remote, execution sandbox, identity provider, public-internet collaboration service, or independently externally verified audit publication system. Use contributor sharing only over a trusted LAN or private VPN, and keep the owner listener loopback-only.
 
-## Compatibility boundary
+## v0.4.7 segmented security-history architecture
 
-The bundled UI uses `/api/v1/...`. Older unscoped routes remain temporarily and return deprecation headers. The legacy `server.py share` command remains for compatibility, but the supported user flow is the normal owner launch plus UI-controlled gateway.
+Security history is one logical event chain across an optional retention checkpoint, canonical sealed segments, and the active SQLite suffix. Rotation is staged under the cross-process security lock with exact backup, hash-protected journal, full post-install verification, rollback, and startup recovery. Anchor exports are offline and owner-controlled.
 
-## v0.3.3 fork and continuity path
 
-The owner application acts as a narrow HTTP client when a user pastes a collaboration link. It sends the fragment token only in `X-ForgeTrace-Invite`, validates the invite context, streams the source ZIP into application-data transfer storage, verifies every ZIP entry, extracts into a newly allocated managed repository, initializes embedded identity, records non-secret upstream provenance, and creates a baseline snapshot.
+## v0.4.8 Git intelligence architecture
 
-At startup the registry scans only stable managed roots and bounded known legacy ForgeTrace workspace locations. Embedded UUIDs repopulate missing registrations and may safely relink an offline managed entry when the same UUID is discovered at a new path.
+`GitIntelligenceService` is an isolated owner read authority. Routes call the service; they never construct subprocess arguments directly. The service resolves only the registered repository root, accepts only a root-level supported `.git` directory, verifies that Git's top-level path matches the registered root, and rejects bare/external/symlinked/config-extended/object-alternate layouts.
 
-## v0.3.6 complete-folder import boundary
-
-The primary complete-folder workflow does not upload a browser-provided directory tree. A localhost owner action opens the operating-system folder chooser on the ForgeTrace machine. The resulting path is passed only to the owner listener, then `ForgeTraceRepository.import_local_folder` enumerates and copies the source directly.
-
-The contributor gateway cannot call the picker or local-folder import routes. The importer follows no symbolic links, excludes root `.forgetrace` metadata, rejects source/destination containment loops, checks per-file limits, uses temporary files plus atomic replacement, and verifies the resulting repository tree.
-
-## v0.4.0 transaction architecture
-
-Repository mutation now crosses four explicit boundaries: an OS-backed repository lock, a filesystem rollback journal, an atomic repository-state write with revision, and post-commit index invalidation. Imports add a staging/verification layer before entering that boundary. The application-data directory has a separate owner-instance lock.
-
-The browser consumes a depth-first tree with `depth` and `parentPath`, and virtualizes rendered rows. Persistent jobs are application-data records rather than browser-only progress state.
-
+Every invocation uses an absolute Git executable, no shell, a restricted environment, disabled hooks/helpers/prompts/pagers/fsmonitor/submodule recursion/lazy fetch, strict timeout and output limits, and local read commands only. Results are parsed into bounded structured data. Diff and metadata content is rendered inert in the owner UI. No Git result is written into repository state, the Git index, security history, or collaboration evidence.

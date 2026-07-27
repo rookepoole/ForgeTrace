@@ -1,11 +1,83 @@
+# ForgeTrace Build Plan
+
+## v0.5.3.0 completed implementation checkpoint — Switch Preflight and Sealed Capture Planner
+
+- [x] Add a dedicated `GitSwitchService` without extending the accepted `GitWriteService` operation set.
+- [x] Expose an internal read model for the attached source branch and bounded existing direct local targets.
+- [x] Require a writable registered root worktree, direct born local `HEAD`, one worktree, clean index, and clean tracked bytes.
+- [x] Reject native Git locks, active Git administrative state, deletion intents, pending Git-write recovery, sparse/split index, checkout-affecting filters or attributes, symlinks/gitlinks/reparse points, and protected paths.
+- [x] Scan the worktree directly so ignored files are included; reject exact, ancestor, file/directory, and conservative Unicode case-fold collisions across source, target, and preserved local paths.
+- [x] Enforce 10,000 affected paths, 5,000 preserved files, 512 MiB capture, 8 MiB plan, and 64 MiB free-space-reserve limits.
+- [x] Capture exact `HEAD`, index, `logs/HEAD`, affected source tracked bytes, and every bounded untracked/ignored regular file into application-data staging.
+- [x] Revalidate all Git and worktree state after capture, install the plan atomically, and seal canonical plan and capture digests.
+- [x] Verify plan expiry, repository identity, capture integrity, target/source state, and preserved local bytes without mutating the repository.
+- [x] Keep `git switch`, `git checkout`, owner execute API/UI, contributor authority, and repository mutation absent.
+- [x] Pass 277 tests across 30 isolated modules: 275 passed on Linux and 2 physical-Windows tests skipped.
+- [x] Pass 15 focused planner tests with 82% branch-aware coverage of `forgetrace/git_switch.py`.
+- [x] Preserve all accepted locks, journals, deletion intents, read-only enforcement, security history, MIT license, and Rooke Poole creator credit.
+- [ ] Next gate: implement and prove the durable switch transaction/recovery journal and deterministic crash checkpoints internally; do not expose execution API/UI yet.
+
+## v0.5.2.2 completed implementation checkpoint — Windows Acceptance Runner Repair
+
+- [x] Reproduce the Windows PowerShell 5.1 `NativeCommandError` mechanism from the operator output without treating the passing unittest line as a ForgeTrace failure.
+- [x] Remove direct `2>&1 | Tee-Object` execution from the physical-Windows gate while retaining `$ErrorActionPreference = "Stop"` for actual PowerShell failures.
+- [x] Capture native stdout/stderr outside PowerShell's error pipeline and decide success only from the process exit code.
+- [x] Preserve environment evidence and write `AUTOMATED_RESULT: OK` only after all automated suites complete.
+- [x] Keep the prior runner filename as a compatibility delegate to the repaired gate.
+- [x] Add regression tests and update handoff evidence without changing the accepted Git-write surface or inherited trust boundaries.
+- [ ] Run `tests/run_v0522_windows_git_write_acceptance.ps1` and the owner-browser checklist on the exact v0.5.2.2 archive on physical Windows.
+
+
+## v0.5.2.1 completed implementation checkpoint — Windows and Failure-Injection Hardening
+
+- [x] Keep the accepted v0.5.2 operation set unchanged: selected-file stage, staged-tree commit, local branch creation, and lightweight local tag creation only.
+- [x] Add sealed, constructor-injected crash checkpoints around capture finalization, index installation, object creation, ref/reflog installation, rollback finalization, terminal journal finalization, and receipt creation.
+- [x] Prove fresh-process startup recovery restores exact index, `HEAD`, refs, and reflogs after injected interruption.
+- [x] Reconstruct a missing receipt from a verified terminal journal without rolling back an already committed operation.
+- [x] Defer recovery while native Git locks or administrative state are present and expose an actionable owner diagnostic.
+- [x] Treat Windows sharing failures during non-critical preview, receipt-retention, and terminal-journal cleanup as maintenance evidence rather than a false write failure.
+- [x] Add bounded retry for critical atomic replace/unlink operations and preserve primary exceptions from temporary-file cleanup.
+- [x] Expose checkpoint, journal/receipt integrity, recovery disposition, exact next step, deferred cleanup, and manual-inspection evidence in owner status, Health, and the Git UI.
+- [x] Scope maintenance warnings to the originating repository and de-duplicate unreadable global journals in Health findings.
+- [x] Add an exact physical-Windows acceptance runner and checklist without claiming platform acceptance from Linux evidence.
+- [x] The original v0.5.2.1 runner was attempted on physical Windows and exposed the PowerShell 5.1 false `NativeCommandError`; the gate is superseded by the v0.5.2.2 runner above.
+- [x] Preserve all deletion intents, locks, journals, snapshot verification, staged imports, read-only enforcement, immutable review/conflict evidence, segmented security history, MIT license, and Rooke Poole creator credit.
+
+
+## v0.5.2 completed checkpoint — Transactional Local Git Writes
+
+- [x] Record the v0.5.1.2 physical Windows deletion transaction as operator-reported unskipped `OK` on 2026-07-26.
+- [x] Keep the Windows deletion intent, external guard, transaction/recovery journal, tombstone, managed-path restriction, and Security-viewer resilience unchanged.
+- [x] Add a separate owner-only `GitWriteService`; do not add mutation methods to the read-only Git intelligence authority.
+- [x] Support only selected-file staging, staged-tree commits, local branch creation, and lightweight local tag creation.
+- [x] Bind every write to an expiring, canonical-digest preview and an exact typed confirmation.
+- [x] Acquire the normal repository lock before the repository-scoped application-data Git-write lock.
+- [x] Fail closed for read-only repositories, active deletion intents, native Git locks, merge/rebase/cherry-pick/revert/bisect state, unsupported Git layouts, stale previews, and damaged evidence.
+- [x] Capture exact index/ref/reflog/HEAD evidence as required by the operation and roll back from a durable hash-sealed transaction journal.
+- [x] Recover incomplete transactions at startup without bypassing native Git operations; reconstruct missing terminal receipts before journal cleanup.
+- [x] Use Git plumbing for commits with explicit author/committer identity and no shell, hooks, editor, signing, credential helpers, global/system configuration, network protocols, submodule recursion, or external filters.
+- [x] Add owner API/UI controls, verified receipts, security-ledger evidence, and Health reporting while keeping read-only Git inspection independently available.
+- [x] Pass 238 Python tests in fresh module processes: 236 passed on Linux and 2 physical Windows-only tests skipped.
+- [x] Pass all 19 applicable Chromium workflows; retain the collaboration navigation script's documented managed-Chromium localhost-policy skip.
+- [x] Pass 16 focused transactional Git-write tests with 78% branch-aware coverage of `forgetrace/git_writes.py`.
+- [x] Preserve the MIT license and Rooke Poole creator credit.
+
+## v0.5.1.2 accepted Windows gate
+
+The exact physical test below was reported by the operator as an unskipped `OK` on Windows on 2026-07-26:
+
+`tests.test_v0512_windows_delete_and_security_fetch.WindowsDeletionIntentRegressionTest.test_physical_windows_external_intent_delete_transaction`
+
+This records the prerequisite acceptance supplied by the Windows operator. The Linux validation environment still skips both physical Windows-only tests and does not claim to have reproduced Win32 behavior itself.
+
 # ForgeTrace Expansive Build Plan
 
 **Project:** ForgeTrace
 **Creator and project lead:** Rooke Poole
 **License:** MIT
 **Document status:** Authoritative development roadmap
-**Baseline:** Audit stabilization and transactional recovery v0.4.0
-**Last implementation update:** 2026-07-25
+**Baseline:** Transactional Local Git Writes v0.5.2
+**Last implementation update:** 2026-07-26
 **Target:** A polished, local-first alternative to cloud repository platforms
 
 ---
@@ -157,9 +229,24 @@ This patch is intentionally narrow and regression-sensitive. It improves the new
 
 ## 3. Current baseline
 
-ForgeTrace v0.3.4 now provides:
+ForgeTrace v0.4.3 now provides:
 
 - a Python local server with no third-party runtime dependencies;
+- a dedicated application-data security-event ledger with immutable rows, monotonic sequence, canonical SHA-256 chaining, redaction, verification, owner filtering/export, and contributor denial;
+- fail-closed audit gates for gateway start, invitation creation, sensitive exports, pull-request merge, registry restore/rollback, and repository access-mode transitions;
+- validated registry backup preview with explicit additive Merge and exact Replace semantics;
+- a registry-wide OS-backed operation lock covering normal connections, backup creation/retention, preview, restore, rollback, and startup recovery;
+- staged older-schema migration, SQLite integrity/foreign-key/table verification, deterministic logical digests, and preview IDs bound to backup SHA-256 plus live/prepared state;
+- exact pre-restore backups, durable recovery journals, automatic rollback after failed installation, conservative startup recovery, and explicit rollback that refuses to erase later registry work;
+- owner-visible restore/rollback history and consequence preview; recovery never replaces repository content/history or the separate security ledger, and reconciles only online embedded access-mode metadata;
+- service-enforced repository `read_write` / `read_only` authority stored in registry schema 4 and repository schema 3;
+- fail-closed effective mode that permits writes only when both persisted copies explicitly agree on read-write;
+- mode validation under the repository OS lock across file/folder changes, imports/jobs, snapshots/restores, embedded settings, object materialization, managed discard, and pull-request merge;
+- safe read-only browsing, verification, export, contribution submission, and quarantine review without repository cache/object side effects;
+- owner-visible read-only banner, lock labels, read-only editor, disabled mutation controls, and ledger-authorized owner mode switch;
+- persistent operation jobs with progress, cancellation, and interrupted-job recovery;
+- OS-backed cross-process repository locks, an owner-instance lock, and filesystem transaction journals;
+- verified snapshot restore/export and Doctor recovery before live workspace mutation;
 - a platform-specific global application-data directory;
 - a persistent SQLite repository registry and migration framework;
 - stable UUID identity for every repository;
@@ -217,16 +304,16 @@ ForgeTrace v0.3.4 now provides:
 
 - repository contribution/snapshot metadata remains JSON rather than per-repository SQLite;
 - external metadata mode is reserved but not implemented;
-- there is no background job manager or filesystem watcher;
+- there is no filesystem watcher;
 - there is no branch model beyond snapshots;
 - no Git integration, diff engine, staging area, or remote support;
 - no repository-wide or cross-repository search index;
-- no issue tracker, release manager, project boards, or inline review comments;
+- no issue tracker, release manager, or project boards;
 - pull requests are ForgeTrace snapshot-native change sets rather than Git branches or hosted Git protocol;
 - there are no persistent user accounts, roles, or authenticated full-workspace LAN sessions;
 - no plugin architecture;
 - no packaged desktop application or automatic updates;
-- operation journals, snapshot-object verification, and automated metadata-backup restoration are not yet implemented.
+- security-event retention/rotation, visual conflict resolution, and a unified health dashboard are not yet implemented.
 
 The next phases should evolve this tested baseline instead of discarding it.
 
@@ -1244,7 +1331,8 @@ This is intentionally narrower than full trusted-LAN mode. Remote invitees recei
 - [x] Attribute the submitted change to the external contributor and the merge action to the local owner.
 - [x] Add security headers, active-content attachment enforcement, origin checks, and remote request throttling.
 - [x] Add service, route-boundary, API end-to-end, conflict, limit, source-download, and merge tests.
-- [ ] Add persistent audit-log retention and an owner-visible security event viewer.
+- [x] Add persistent append-only security-event storage and an owner-visible filter/integrity/export viewer.
+- [ ] Add retention/rotation and externally anchored ledger signing/verification.
 - [ ] Add line-level review comments and contributor responses.
 - [ ] Add a visual merge-conflict resolver.
 - [ ] Add optional antivirus/content-scanner hooks without making them mandatory.
@@ -1955,7 +2043,7 @@ Compatibility commitments for 1.0:
 - [x] Replace ad hoc request prints with centralized logging.
 - [x] Add environment/CLI configuration and platform data directories.
 - [x] Add atomic repository state writes and backup copies.
-- [ ] Add operation journals for upload, rename, delete, restore, and export.
+- [x] Add operation journals for file/folder mutation, restore, import, and merge; hold export under the repository lock.
 - [x] Add shared per-workspace in-process repository locks to prevent conflicting request writers.
 - [x] Add multi-repository, API, security, recovery, and 100-repository fixtures with `unittest`.
 - [x] Add traversal, protected metadata, duplicate identity/path, backup, and export-boundary tests.
@@ -2633,14 +2721,600 @@ See `AUDIT_CLOSURE.md` for the evidence attached to every finding.
 
 ---
 
-## 45. Next best move — v0.4.1 review, audit, and recovery UX
+## 45. Completed implementation checkpoint — v0.4.1 Security Event Ledger
 
-1. Add an append-only security-event audit log and owner-visible filter/export UI without raw token storage.
-2. Add inline file/line review threads, contributor replies, and resolution state.
-3. Add a visual conflict resolver that writes only to quarantine until explicit owner confirmation.
-4. Add validated registry backup restore with preview and rollback through the UI.
-5. Add explicit read-only repository mode enforced in service and interface layers.
-6. Add repository health/integrity dashboards driven by Doctor and object verification results.
-7. Run the included physical Windows native-picker acceptance checklist and record evidence in the next release.
-8. Only after those gates, introduce a read-only Git status/diff adapter; do not begin remote credential or hosting work yet.
+### Storage and integrity
 
+- [x] Store security evidence in a dedicated application-data SQLite database separate from registry and repository metadata.
+- [x] Serialize appends with an OS-backed cross-process lock and SQLite `WAL`/`synchronous=FULL`.
+- [x] Enforce immutable event/schema rows with SQLite update/delete rejection triggers.
+- [x] Assign monotonic sequences and canonical SHA-256 previous-event chains.
+- [x] Verify SQLite integrity, schema version, triggers, sequence continuity, JSON, previous hashes, and event hashes at startup and on demand.
+- [x] Treat missing immutability controls as integrity failure after restart rather than silently recreating them.
+
+### Privacy and trust boundaries
+
+- [x] Recursively redact sensitive detail keys and bound detail depth/item/string size.
+- [x] Never pass raw invitation tokens to the ledger; persist only a short SHA-256 fingerprint.
+- [x] Exclude arbitrary export-search text from audit details.
+- [x] Deny ledger query/integrity/export routes on the contributor listener, including loopback access.
+- [x] Fail closed before gateway start, invitation creation, sensitive export/source inclusion, and pull-request merge when required evidence cannot be recorded.
+
+### Owner workflow and instrumentation
+
+- [x] Add paginated owner query, integrity, and bounded JSON export APIs.
+- [x] Add request IDs to ForgeTrace responses and event context.
+- [x] Add a Security viewer with integrity status, filters, repository context, event details, and export.
+- [x] Instrument gateway lifecycle, denials, throttling, invitations, exports, pull-request review/merge/closure, Doctor, startup recovery, transaction recovery, and integrity failures.
+
+### Validation
+
+- [x] Pass 87 Python unit/integration tests with 76% application coverage.
+- [x] Reach 84% line coverage for `forgetrace/security_events.py`.
+- [x] Pass the five accepted v0.4.0 Chromium workflows plus the new real security-ledger owner workflow.
+- [x] Confirm the live collaboration browser environment skip and passing equivalent HTTP integration coverage.
+- [x] Preserve the unexecuted physical Windows native-picker acceptance gate.
+
+---
+
+## 46. Completed implementation checkpoint — v0.4.2 Validated Registry Recovery
+
+### Recovery authority and locking
+
+- [x] Add a dedicated registry recovery service rather than overloading registry JSON import.
+- [x] Serialize registry connections, backups, retention pruning, preview, restore, rollback, and startup recovery with one OS-backed `registry.lock`.
+- [x] Keep registry recovery state in platform application data outside the extracted package.
+- [x] Keep repository workspaces, repository-local `.forgetrace` history, quarantine, and `security-events.sqlite3` outside the registry replacement boundary.
+
+### Preview and staged preparation
+
+- [x] Restrict restore sources to direct-child ForgeTrace backup names and reject traversal, symlinks, missing/unreadable files, corrupt SQLite, foreign-key errors, and unsupported newer schemas.
+- [x] Open the source read-only, copy it to private staging, verify copied SHA-256, migrate supported older schemas only in staging, and verify all required tables afterward.
+- [x] Produce deterministic logical registry digests that exclude migration bookkeeping timestamps but include all user-authoritative registry state.
+- [x] Bind preview IDs to backup name/SHA-256, selected mode, live digest, prepared digest, and application schema so stale previews fail closed.
+- [x] Show repository additions/removals/changes, path conflicts, path availability, schema migration, warnings, and exact Merge/Replace semantics in the owner UI.
+
+### Installation, journals, and rollback
+
+- [x] Create and verify an exact pre-restore SQLite backup before mutation.
+- [x] Write fsynced atomic journals with prepared/installing/installed/completed/failure/rollback transitions.
+- [x] Implement exact Replace installation with post-install logical digest verification.
+- [x] Implement additive Merge that preserves live settings, paths, filters, collections, and active selection while adding missing registrations and unioning organization memberships.
+- [x] Automatically restore the pre-restore registry after an installation failure.
+- [x] Recover interrupted journals at startup by abandoning pre-install work, finalizing a fully installed target, or rolling back ambiguous mutation.
+- [x] Permit explicit rollback only while the current digest still equals the recorded post-restore digest.
+- [x] Pin pre-restore backups against normal retention pruning while rollback authority is available.
+- [x] Serialize pruning with restore so an eligible backup cannot disappear during validation/staging.
+
+### Security and owner workflow
+
+- [x] Require a healthy durable security-event authorization before registry restore or rollback.
+- [x] Deny all backup recovery APIs to the contributor listener, including loopback access.
+- [x] Split recovery POST routing into a bounded handler and preserve the v0.4.0 route-complexity gate.
+- [x] Add owner backup selection, preview, confirmation, completion, history, and rollback controls.
+
+### Validation
+
+- [x] Pass 100 Python unit/integration tests with 77% application coverage.
+- [x] Reach 84% line coverage for `forgetrace/registry_restore.py`.
+- [x] Prove real OS-process serialization for repository writes, security-event appends, and registry operations.
+- [x] Pass seven applicable Chromium workflows, including a real 2→1 replace and verified rollback to two repositories.
+- [x] Preserve the managed-Chromium collaboration navigation skip with passing equivalent HTTP coverage.
+- [x] Preserve the unexecuted physical Windows native-picker acceptance gate.
+
+---
+
+## 47. Next best move — v0.4.3 service-enforced read-only repositories
+
+1. Add an explicit registry-level read-only setting with a migration and clear separation from detected filesystem writability.
+2. Centralize authoritative `require_writable_repository()` enforcement in the repository service before every mutation, not only in UI controls.
+3. Enforce read-only mode across file/folder writes, rename/delete, snapshots/restores, imports/jobs, settings that write repository metadata, pull-request merge, and any future adapter.
+4. Keep safe browsing, file reads, diffs, exports, source downloads, Doctor checks, and security/registry evidence available where no repository mutation occurs.
+5. Add owner UI state, warnings, enable/disable confirmation, capability explanation, and disabled controls without relying on disabled controls as the security boundary.
+6. Audit read-only mode changes and blocked mutation attempts without logging file contents or secrets.
+7. Add service/API/job/collaboration/restart/browser tests proving no mutation path bypasses the setting and that a failed metadata update does not leave the mode ambiguous.
+8. Then proceed to inline review conversations, quarantine-only visual conflict resolution, unified health dashboard, security-event retention/anchoring, Windows physical acceptance, and finally a read-only Git status/diff adapter.
+
+Do not begin Git credential management, remote hosting, or direct public-internet owner access before identity, TLS, permission, audit-retention, and adversarial networking gates are designed and tested.
+
+## 48. Completed implementation checkpoint — v0.4.3 Service-Enforced Read-Only Repositories
+
+### Accepted implementation
+
+- [x] Migrate the application registry to schema 4 with a validated `read_write` / `read_only` access-mode field.
+- [x] Migrate initialized repository metadata to schema 3 with an embedded access-mode copy.
+- [x] Compute effective authority from both copies and fail closed unless both explicitly agree on read-write.
+- [x] Check effective mode under the repository OS lock immediately before every mutation.
+- [x] Preserve fail-closed interruption semantics by ordering read-only registry-first and read-write embedded-first.
+- [x] Centrally guard direct metadata persistence and snapshot-object materialization, not only public routes.
+- [x] Reject file/folder writes, rename/delete, upload/import/job apply, snapshot creation/restore, embedded settings, managed discard, and pull-request merge.
+- [x] Keep safe reads, verification, export preview/export, contribution submission, quarantine review/closure, and owner mode recovery available.
+- [x] Implement read-only export without repository metadata/object/cache writes while verifying streamed source bytes under lock.
+- [x] Preserve live access authority during registry Merge and restore backed-up authority during Replace/rollback/startup recovery.
+- [x] Reconcile online embedded access-mode metadata after registry installation; leave unavailable repositories fail-closed.
+- [x] Add owner-only fail-closed security-ledger authorization for mode changes and deny the contributor listener.
+- [x] Add a persistent owner UI banner, lock labels, read-only editor, disabled mutation controls, and explicit mode switch.
+
+### Completion evidence
+
+- [x] 110/110 Python unit/integration tests passed.
+- [x] 10/10 focused v0.4.3 read-only tests passed.
+- [x] 79% application line coverage; repository 82%; registry recovery/security ledger 84%; native picker 87%.
+- [x] Eight applicable real Chromium workflows passed.
+- [x] Real owner workflow verified mode transition, safe reads, HTTP 423 mutation rejection, return to read-write, and actual editor save.
+- [x] Real second-process test proved a stale service observes the mode change.
+- [x] Contributor collaboration navigation remains an environment-policy skip only; equivalent HTTP integration tests pass.
+- [x] MIT license and Rooke Poole creator credit preserved.
+
+## 49. Next best move — v0.4.4 inline review conversations
+
+1. Add persistent pull-request review threads and comments under application-data collaboration storage, never repository content.
+2. Bind each thread/comment to repository ID, pull-request ID, revision, file path, optional line/range context, author role, and immutable creation metadata.
+3. Keep contributor operations token-scoped and deny all owner-only repository, ledger, registry-recovery, and access-mode authority.
+4. Allow owner resolution/reopening and changes-requested workflows without mutating the live repository.
+5. Preserve quarantine-only review: submitted code is never executed and comments cannot introduce filesystem paths outside validated PR context.
+6. Add bounded pagination, retention behavior, request IDs, security events for sensitive moderation actions, and restart persistence.
+7. Add unit/integration tests for authorization, revision drift, path validation, concurrency, persistence, and gateway isolation.
+8. Add a real owner/contributor browser workflow that exchanges comments, resolves a thread, requests changes, submits a revision, and proves merge remains subject to conflicts and repository access mode.
+9. Then proceed to quarantine-only visual conflict resolution, a unified health dashboard, security-event retention/anchoring, Windows physical acceptance, and finally a narrow read-only Git status/diff adapter.
+
+---
+
+## 50. Completed implementation checkpoint — v0.4.4 Inline Review Conversations
+
+### Revision-bound storage
+
+- [x] Migrate collaboration storage to schema 4 with submitted revisions, review threads, comments, and thread-state events.
+- [x] Preserve immutable submitted-revision manifests and changed bytes under application data, outside the live repository.
+- [x] Verify review context by manifest path, size, and SHA-256 before presenting bounded line text.
+- [x] Backfill legacy open pull requests without inventing unavailable bytes or modifying repository content.
+- [x] Keep old threads permanently bound to their original revision and mark them outdated after resubmission.
+
+### Authorization and workflow
+
+- [x] Allow owner and invitation-scoped contributors to create threads and append replies.
+- [x] Reserve request-changes, resolve, and reopen authority for the owner listener.
+- [x] Require expected PR revision for thread creation and expected thread version for replies/moderation.
+- [x] Block approval and merge while current-revision threads remain unresolved.
+- [x] Invalidate stale approval when a contributor opens a new current-revision thread.
+- [x] Keep historical unresolved threads visible without blocking a newer revision.
+- [x] Preserve review availability for read-only repositories while leaving merge centrally blocked.
+
+### Security, safety, and retention
+
+- [x] Reject traversal, absolute paths, `.forgetrace`, `.git`, paths outside the submitted manifest, invalid ranges, and spans over 200 lines.
+- [x] Render all submitted context as escaped inert text and explicitly report that active content was not rendered.
+- [x] Never execute submitted code and never use live repository bytes as a silent review-context fallback.
+- [x] Add persistent pre-insertion limits: 500 threads per PR, 500 comments per thread, and 5,000 comments per PR.
+- [x] Add bounded pagination, request IDs, storage metrics, 180-day terminal retention, and orphan revision cleanup.
+- [x] Record thread/reply evidence and require fail-closed ledger authorization before changes-requested and resolve/reopen state changes.
+- [x] Keep raw invitation tokens out of collaboration evidence.
+
+### Owner and contributor interfaces
+
+- [x] Add path/line thread creation, replies, role labels, immutable context, resolution state, current/outdated revision badges, and refresh behavior to both review surfaces.
+- [x] Add owner resolution/reopen and request-changes controls.
+- [x] Disable approval/merge presentation while current unresolved threads exist without relying on UI state as the backend boundary.
+
+### Completion evidence
+
+- [x] 122/122 Python unit/integration tests passed.
+- [x] 12/12 focused v0.4.4 review-conversation tests passed.
+- [x] 79% application coverage; review conversations 85%; collaboration 81%; repository 82%; registry 77%; recovery/security ledger 84%; native picker 87%.
+- [x] Nine applicable Chromium workflows passed.
+- [x] Real owner/contributor workflow exchanged comments, proved active-content safety, resolved a thread, requested changes, submitted a newer revision, verified outdated context, approved, merged, checked disk bytes, and checked security events.
+- [x] The separate collaboration navigation test remains only an environment-policy skip; equivalent real HTTP isolation tests pass.
+- [x] MIT license and Rooke Poole creator credit remain unchanged.
+
+## 51. Next best move — v0.4.5 quarantine-only visual conflict resolution
+
+1. Build conflict views exclusively from immutable base evidence, the current repository read view, and quarantined submitted revision bytes.
+2. Never execute submitted code or write temporary resolution bytes into the live repository.
+3. Preserve all original conflict inputs and record explicit per-file owner decisions: current, incoming, manual resolved text, or defer.
+4. Treat binary and oversized files as non-inline choices with hashes and metadata rather than unsafe rendering.
+5. Bind a resolution draft to repository ID, PR ID, submitted revision, current repository digest, path, and request ID; stale repository or PR state invalidates the draft.
+6. Re-run conflict detection, access-mode authorization, snapshot/object verification, and unresolved-thread gates under the repository lock immediately before merge.
+7. Store manual resolution drafts in quarantine-side application data with bounded size, optimistic concurrency, retention, and owner-only authority.
+8. Add fail-closed security evidence for resolution authorization and final merge, without storing file bodies in the ledger.
+9. Add service/API/browser tests for text conflicts, binary conflicts, stale drafts, read-only mode, revision drift, path containment, rollback, and gateway isolation.
+10. After that, proceed to a unified health dashboard, security-event retention/anchoring, Windows physical acceptance/release automation, and a narrow read-only Git status/diff adapter.
+
+Do not add direct public-internet owner access, Git credentials, remote hosting, or submission execution before identity, TLS, permission, evidence-retention, and adversarial networking gates are designed and validated.
+
+## 52. Completed implementation checkpoint — v0.4.5 Quarantine-Only Visual Conflict Resolution
+
+### Immutable evidence and storage
+
+- [x] Migrate collaboration storage to schema 5 with conflict-resolution drafts and lifecycle events.
+- [x] Preserve immutable submitted-revision bytes and available base snapshots outside the live repository.
+- [x] Capture verified Base/Current/Submitted evidence under application data while holding the repository lock.
+- [x] Verify manifest/file containment, regular-file status, size, and SHA-256 before display, confirmation, and merge.
+- [x] Fail closed when base/current/incoming/resolved evidence is missing, unreadable, symlinked, malformed, or changed.
+- [x] Enforce 1,000 drafts and 4 GiB evidence per PR plus a 16 MiB free-space reserve and 180-day terminal retention.
+
+### Owner authority and workflow
+
+- [x] Add owner-only prepare/list/get/save/confirm conflict-resolution APIs.
+- [x] Add explicit current, incoming, manual text, and delete decisions.
+- [x] Bound manual text to valid inline UTF-8, 512 KiB, and 20,000 lines; keep binary/oversized files as hash/metadata choices.
+- [x] Add optimistic draft versions, request IDs, stale lifecycle, applied historical evidence, and security events without bodies.
+- [x] Add a three-column escaped inert Base/Current/Submitted owner UI with save, confirm, refresh, and stale visibility.
+- [x] Deny all conflict-resolution authority to the contributor listener.
+
+### Merge integrity
+
+- [x] Bind drafts to repository ID, PR ID, revision, path, repository digest, conflict-set digest, access mode, and unresolved-thread digest/count.
+- [x] Require confirmed current drafts for every conflict before approval or merge.
+- [x] Recompute every binding and verify all evidence under the repository lock immediately before merge.
+- [x] Merge non-conflicting files from immutable submitted-revision copies rather than mutable working quarantine.
+- [x] Apply conflicting files only from verified confirmed resolution results.
+- [x] Preserve service-enforced read-only rejection, security-ledger fail-closed authorization, transaction journaling, and rollback.
+
+### Completion evidence
+
+- [x] 135/135 Python unit/integration tests passed.
+- [x] 13/13 focused v0.4.5 conflict-resolution tests passed.
+- [x] 80% application coverage; conflict resolution 86%; collaboration 85%; repository 83%; registry/recovery/security/native-picker coverage recorded.
+- [x] Ten applicable Chromium workflows passed.
+- [x] Conflict-resolution browser workflow passed three additional consecutive runs.
+- [x] Real owner workflow proved stale-draft HTTP 409 before repository mutation and successful regenerated transactional merge.
+- [x] The separate collaboration navigation test remains only an environment-policy skip; equivalent real HTTP isolation tests pass.
+- [x] MIT license and Rooke Poole creator credit remain unchanged.
+
+## 53. Next best move — v0.4.6 unified health dashboard
+
+1. Compose existing Doctor, object verification, pending transaction, registry recovery, security-ledger integrity, access-mode, collaboration storage, review, and conflict-evidence status into one owner-only read-first model.
+2. Reuse existing service checks and preserve their locks/fail-closed behavior; do not invent weaker duplicate checks.
+3. Separate assessment from repair. Any repair must call an existing authority with explicit confirmation and appropriate security evidence.
+4. Expose severity, evidence timestamp, request ID, affected identifiers, and a precise next action for every finding.
+5. Bound or job-manage expensive scans and distinguish cached/sampled/complete verification honestly.
+6. Deny all health and repair routes to the contributor gateway.
+7. Add API, corruption, offline, partial-result, bounded-scan, repair-isolation, export, and real owner-browser tests.
+8. After that, proceed to security-event retention/anchoring, Windows physical acceptance/release automation, and a narrow read-only Git status/diff adapter.
+
+Do not add direct public-internet owner access, Git credentials, remote hosting, or submission execution before identity, TLS, permission, evidence-retention, and adversarial networking gates are designed and validated.
+
+
+
+## 54. Completed implementation checkpoint — v0.4.6 Unified Health Dashboard
+
+### Read-first health model
+
+- [x] Add one owner-only health service that composes existing registry, repository, recovery, security-ledger, access-mode, collaboration, review, conflict-evidence, storage, and runtime checks.
+- [x] Keep assessment separate from repair; generating a report does not recover journals, restore a registry, clean collaboration data, refresh caches, or mutate repository content.
+- [x] Add System, Registry, Repositories, Recovery, Security, Access, Collaboration, and Storage sections with severity, evidence time, request ID, identifiers, next step, explicit limits, and completion state.
+- [x] Add repository-scoped, bounded standard, and maximum-scope reports; disclose every truncation as partial rather than healthy-complete.
+- [x] Add non-mutating transaction-journal, hash-index, snapshot-object, lock, review-revision, conflict-evidence, orphan, and storage inspection paths.
+- [x] Probe advisory locks without creating, touching, or rewriting lock files.
+
+### Durable evidence and owner workflow
+
+- [x] Store canonical SHA-256 health reports under application-data `health-reports/`, outside the extracted package and repository trees.
+- [x] Cap retained report history at 100 and revalidate regular-file status, format, and report hash on list/detail/export.
+- [x] Add owner-only report generation, history, detail, and JSON export APIs and a real Health interface with drill-down and precise next actions.
+- [x] Deny all health, report, export, and repair routes to the contributor listener.
+- [x] Keep a damaged security ledger visible as a critical finding while allowing read-only report generation to remain available.
+- [x] Require a healthy ledger authorization event before the existing HTTP/UI Doctor repair authority begins; do not add a new repair authority.
+
+### Completion evidence
+
+- [x] 145/145 Python unit/integration tests passed.
+- [x] 10/10 focused v0.4.6 health-dashboard tests passed.
+- [x] 80% application coverage; health dashboard 80%; collaboration 84%; conflict resolution 84%; repository 82%; registry 78%; registry recovery/security ledger 84%; native picker 87%.
+- [x] Eleven applicable Chromium workflows passed.
+- [x] Health-dashboard browser workflow passed three additional consecutive runs.
+- [x] Real owner workflow generated and exported durable evidence, surfaced real metadata drift, invoked only the existing confirmed Doctor repair, regenerated clean evidence, and verified security events.
+- [x] The separate direct-localhost collaboration navigation script remains an environment-policy skip; equivalent HTTP and contributor-isolation coverage passes.
+- [x] MIT license and Rooke Poole creator credit remain unchanged.
+
+## 55. Next best move — v0.4.7 security-event retention, segmented rotation, and optional external anchoring
+
+1. Preserve the current append-only event semantics while introducing explicit bounded retention segments rather than deleting rows from the active ledger.
+2. Seal each completed segment with canonical metadata, first/last sequence, previous-segment hash, final event hash, byte count, event count, and SHA-256 of the exported segment artifact.
+3. Keep one monotonic logical chain across active and sealed segments; startup and owner verification must detect missing, reordered, truncated, altered, or substituted segment files.
+4. Make rotation an owner-only, separately confirmed protected action that fails closed before changing active-ledger state when required evidence cannot be recorded.
+5. Provide configurable local retention by age, event count, and storage budget with conservative defaults, dry-run preview, protected minimum history, and rollback-safe rotation journals.
+6. Support optional owner-selected external hash anchoring as exported digest receipts only; do not require or silently contact any cloud service.
+7. Extend the unified Health dashboard with active/segment integrity, retention pressure, unanchored-segment, missing-receipt, and rotation-journal findings.
+8. Keep contributors unable to list, inspect, rotate, export, or anchor security evidence.
+9. Add corruption, crash-recovery, cross-process, quota, rollback, export/import, health integration, and real owner-browser tests.
+10. After that, execute the physical Windows native-picker release checklist and release automation, then consider a narrow read-only Git status/diff adapter.
+
+Do not add direct public-internet owner access, Git credentials, remote hosting, submission execution, or automatic third-party uploads before identity, TLS, permissions, and adversarial networking gates are separately designed and validated.
+
+## 56. Completed implementation checkpoint — v0.4.7 Segmented Security Event Retention and Owner-Controlled Anchoring
+
+### Logical history and verification
+
+- [x] Preserve global monotonic event sequence and event hashes while moving verified active prefixes into canonical sealed segment files.
+- [x] Bind every segment to the previous full-file segment hash and every active database to the final retained segment and retention-root hash.
+- [x] Verify retention checkpoint, all retained segments, active immutable metadata, SQLite integrity/triggers, and every active event before protected authorization.
+- [x] Detect missing, reordered, substituted, truncated, altered, schema-invalid, or path-invalid evidence.
+
+### Rotation, retention, and recovery
+
+- [x] Add owner-only exact rotation previews bound to active digest, chain head, policy hash, event IDs, and pruning set.
+- [x] Serialize preview/rotation/policy/anchor operations with the OS-backed security-history lock.
+- [x] Stage canonical segment, retention root, rebuilt active database, exact backup, and pruned-segment backups before installation.
+- [x] Add fsynced hash-protected journals, post-install full-chain verification, automatic rollback, and startup recovery.
+- [x] Confine recovery paths to rotation storage and block another preview for any incomplete or unreadable journal.
+- [x] Bound terminal completed/rolled-back journal history at 100 without hiding incomplete evidence.
+- [x] Add whole-segment retention by age, event count, and storage budget while preserving minimum event and age windows.
+- [x] Add canonical retention-root checkpoints for locally deleted prefixes without claiming deleted event bodies remain recoverable.
+
+### Owner workflow, anchoring, and Health
+
+- [x] Add owner UI/API for policy, segment inventory, preview, execute, history, chain-head digest export, and receipt recording.
+- [x] Make anchoring offline and owner-controlled with no automatic third-party network call.
+- [x] Verify request/receipt hashes and digest binding while keeping `externalPublicationVerified` false.
+- [x] Add Health findings for policy faults, active/segment corruption, incomplete journals, retention pressure, unanchored segments, and invalid/missing receipts.
+- [x] Deny all security-history routes to the contributor listener.
+
+### Completion evidence
+
+- [x] 160/160 Python unit/integration tests passed.
+- [x] 15/15 focused v0.4.7 tests passed.
+- [x] 81% application coverage; segmented security history 87%; repository 82%; registry 78%; registry recovery/conflict/collaboration/security-adjacent modules recorded.
+- [x] Twelve applicable Chromium workflows passed.
+- [x] Real owner workflow previewed/sealed a prefix, queried full history, exported a digest, recorded a matching receipt, and preserved the explicit no-independent-publication claim.
+- [x] The separate direct-localhost collaboration navigation script remains an environment-policy skip; equivalent HTTP isolation coverage passes.
+- [x] MIT license and Rooke Poole creator credit remain unchanged.
+
+## 57. Next best move — v0.4.8 Git Intelligence and Branch Explorer
+
+This is the first deliberate step toward more GitHub-like functionality. It must improve repository understanding without introducing credential, network, hook, or `.git` mutation risk.
+
+1. Detect local Git worktrees, linked worktrees, bare repositories, submodules, and non-Git folders without walking outside the registered repository boundary.
+2. Build one bounded subprocess authority with explicit Git executable discovery, sanitized environment, timeouts, output limits, `--no-pager`, disabled terminal prompting, and no credential-helper invocation.
+3. Add owner-only read views for:
+   - working-tree status
+   - staged and unstaged changes
+   - bounded inert text diffs and binary metadata
+   - commit graph/log and commit detail
+   - current branch or detached HEAD
+   - local branches and upstream names
+   - tags
+   - sanitized remote names and URLs
+4. Do not stage, commit, reset, checkout, switch, branch, tag, fetch, pull, push, clone, invoke hooks, or write `.git`.
+5. Deny every Git intelligence route to the contributor gateway.
+6. Integrate Git health/status findings read-only without adding a Git repair path.
+7. Add tests for absent Git, corrupt metadata, linked worktrees, large/binary diffs, unusual paths/encodings, timeout/output caps, URL secret redaction, contributor denial, and a real temporary-Git browser workflow.
+8. Keep physical Windows native-picker acceptance as a parallel release gate.
+
+## 58. Ordered GitHub-like feature track after v0.4.8
+
+### v0.4.9 — Local Issues, labels, milestones, and discussions
+
+- Repository-scoped application-data issues with title/body/status/assignees only after identity semantics are defined for local owners and invite contributors.
+- Labels, milestones, linked PRs/commits/snapshots, comments, mentions, search, filters, activity, optimistic concurrency, retention, and security evidence.
+- No live repository mutation required.
+
+### v0.5.0 — Project boards and roadmaps
+
+- Kanban/table/roadmap views over issues, PRs, milestones, releases, and repository work.
+- Durable ordering, custom fields, filters, saved views, dependency links, and export.
+
+### v0.5.1 — Releases and verified artifacts
+
+- Release notes, checksummed local artifacts, snapshot/commit references, downloadable bundles, retention, and provenance.
+- Git tags only after the transactional Git-write authority below is accepted.
+
+### v0.5.2 — Transactional local Git writes
+
+- First accepted slice: selected-file stage, staged-tree commit, local branch creation, and lightweight tag creation through a separate authority with preflight, exact index/ref/reflog evidence, hook suppression, read-only enforcement, lock ordering, rollback/recovery, and adversarial tests. Switch and merge require later explicit design and acceptance.
+- Never shell through user-controlled strings.
+
+### Remote collaboration gate
+
+Persistent identities, roles, sessions, MFA, TLS lifecycle, credential isolation, protocol limits, rate limits, and adversarial networking must be accepted before remote clone/fetch/pull/push, hosted repositories, public discovery, or direct public-internet exposure.
+
+
+## 58. Completed implementation checkpoint — v0.4.8 Git Intelligence and Branch Explorer
+
+### Read-only Git authority
+
+- [x] Add a dedicated Git intelligence service rather than invoking Git from route handlers.
+- [x] Detect only a repository-root `.git` marker and never discover a parent repository implicitly.
+- [x] Report branch/detached-HEAD, upstream, ahead/behind, staged, unstaged, and untracked state.
+- [x] Provide bounded working-tree, staged, and full-object commit diffs with binary suppression and explicit truncation.
+- [x] Provide bounded commit history/detail, local branches, tags, and credential-sanitized remotes.
+- [x] Keep Git intelligence live/read-only; do not create durable repository snapshots or mutate security history for ordinary reads.
+
+### Git subprocess and layout hardening
+
+- [x] Use an absolute Git executable with no shell and bounded timeout/stdout/stderr.
+- [x] Disable prompts, credential helpers, askpass, hooks, fsmonitor, external diff/textconv, pagers, submodule recursion, global/system configuration, and lazy partial-clone fetching.
+- [x] Reject external worktree administrative paths, symlinked/special Git metadata, config includes, object alternates, and path escapes.
+- [x] Validate repository-relative paths and require full object IDs for commit-specific inspection.
+- [x] Sanitize control characters and remote credentials while rendering all content as inert escaped text.
+
+### Owner UI, API, Health, and isolation
+
+- [x] Add owner-only overview, diff, and commit-detail GET routes.
+- [x] Add an owner Git tab with status, changed paths, diffs, branches, tags, history, and sanitized remotes.
+- [x] Add a bounded read-only Git section to Health without any repair authority.
+- [x] Deny all Git routes on the contributor listener.
+- [x] Preserve repository/read-only/registry/recovery/security/collaboration boundaries unchanged.
+
+### Completion evidence
+
+- [x] 171/171 Python unit/integration tests passed.
+- [x] 11/11 focused v0.4.8 Git-intelligence tests passed.
+- [x] 81% application coverage and 83% Git-intelligence coverage.
+- [x] Thirteen applicable Chromium workflows passed.
+- [x] The Git browser workflow passed three additional consecutive runs.
+- [x] 57 Python source files compiled and both JavaScript bundles passed syntax validation.
+
+## 59. Completed implementation checkpoint — v0.4.9 Local Issues, Labels, Milestones, and Discussions
+
+ForgeTrace now has a durable repository-scoped project-coordination layer without new repository or Git mutation authority.
+
+### Required trust model
+
+- [x] Store project coordination in a dedicated application-data SQLite database outside repositories and the package.
+- [x] Scope every label, milestone, issue, discussion, and comment by stable repository ID.
+- [x] Use optimistic versions, an OS-backed cross-process lock, bounded bodies/pages/counts, transactional schema migration, quotas, soft deletion, and 180-day cleanup.
+- [x] Escape input before a bounded inert Markdown transformation; never execute submitted HTML, SVG, JavaScript, links, images, hooks, commands, or repository code.
+- [x] Keep project activity independent of `.git`, `.forgetrace`, snapshots, repository bytes, PR evidence, and merge authority.
+- [x] Require healthy segmented security-history authorization before owner moderation or destructive actions.
+- [x] Preserve project data through restart and registry Replace/rollback; keep it outside registry backup replacement.
+- [x] Permit coordination on read-only repositories while proving repository bytes remain unchanged.
+
+### Product scope
+
+- [x] Owner issue creation, assignment, close/reopen, pin, lock, labels, milestones, due dates, references, comments, and soft deletion.
+- [x] Repository discussions, replies, accepted answers, pinning, locking, and owner moderation.
+- [x] Search/filter by state, label, milestone, assignee, text query, and repository.
+- [x] Safe informational references to PRs, revisions, commits, paths, issues, and discussions without changing those authorities.
+- [x] Invitation-scoped contributor issue/discussion creation and comments only when project participation is explicitly granted.
+- [x] Ordinary invitations remain denied and contributors receive no owner filesystem, Git, Health, security-history, registry, moderation, approval, conflict-resolution, or merge access.
+- [x] Owner and contributor browser workspaces with inert rendering and service-backed concurrency/error handling.
+
+### Completion evidence
+
+- [x] 185/185 Python unit/integration tests passed.
+- [x] 14/14 focused v0.4.9 project-coordination tests passed.
+- [x] 81% application coverage and 87% project-coordination coverage.
+- [x] Fourteen applicable Chromium workflows passed.
+- [x] The Project browser workflow passed on the final source; cumulative repeat-launch attempts were recorded as a host scheduling limitation rather than an application failure.
+- [x] 60 Python source files compiled and both JavaScript bundles passed syntax validation.
+- [x] Registry recovery independence and read-only repository byte immutability have direct tests.
+- [x] MIT license and Rooke Poole creator credit remain unchanged.
+
+## 60. Completed maintenance checkpoint — v0.4.10 Repository File Workspace and Permanent Deletion
+
+### File workspace
+
+- [x] Increase the desktop Files tree from 38%/300 px to 46%/380 px.
+- [x] Increase desktop workspace minimum height to 720 px.
+- [x] Give the virtualized file list a 500–820 px responsive desktop height.
+- [x] Preserve a bounded 320–520 px mobile file-list height.
+- [x] Preserve search, virtualization, editor behavior, and read-only presentation.
+
+### Permanent managed-repository deletion
+
+- [x] Keep unregister as a non-destructive registry-only action.
+- [x] Add a separately named owner-only delete action for ForgeTrace-managed repositories.
+- [x] Require exact-name confirmation and a healthy security-event ledger before HTTP mutation.
+- [x] Reject external, symlinked/special, stale-path, identity-mismatched, and read-only repositories.
+- [x] Support initialized, empty/uninitialized, and missing managed repository paths.
+- [x] Serialize initialized/initializing repositories with the existing OS-backed repository lock and registry lock order.
+- [x] Atomically move the whole directory outside discovery before committing registry removal.
+- [x] Add fsynced deletion journals, staging, startup rollback/finalization, and cleanup-pending recovery.
+- [x] Add durable deletion tombstones so startup discovery and Doctor cannot silently resurrect UUID-bearing leftovers.
+- [x] Clear a tombstone only through explicit owner registration of the preserved repository identity.
+- [x] Preserve separate security history and application data outside the extracted package.
+
+### Completion evidence
+
+- [x] 196 tests across the complete test inventory.
+- [x] 11/11 focused repository-management tests.
+- [x] Real Chromium enlarged-tree and permanent-delete workflow.
+- [x] Relevant registry, recovery, read-only, collaboration, project, Git, and security regressions remain green.
+- [x] MIT license and Rooke Poole creator credit preserved.
+
+## 61. Next best move — v0.5.0 Project Boards and Roadmaps
+
+ForgeTrace now has stable project work items but lacks a visual planning layer. The next increment should compose accepted issues, discussions, milestones, and pull requests into local boards without introducing automation, repository writes, or remote hosting.
+
+### Required trust model
+
+- [ ] Store boards, views, columns, cards, ordering, custom fields, dependencies, and saved filters in application data.
+- [ ] Scope all board objects by repository ID; cross-repository portfolio boards remain a later explicit design decision.
+- [ ] Use one cross-process board authority, optimistic versions, transactional migration, deterministic ordering/rank repair, quotas, pagination, restart persistence, and deletion/retention rules.
+- [ ] Treat references to issues, discussions, milestones, PRs, releases, commits, or paths as informational; board moves must not mutate those source authorities unless a separate explicit action is designed.
+- [ ] Keep all fields and exports inert; execute no webhooks, automation, commands, hooks, or repository content.
+- [ ] Preserve read-only repository behavior and registry-recovery independence.
+- [ ] Keep contributor board administration denied by default; do not silently treat project participation as board-edit permission.
+- [ ] Ledger-authorize destructive owner actions if the threat review determines they are security-sensitive.
+
+### Product scope
+
+- [ ] Kanban columns with durable card ordering and drag/drop optimistic conflicts.
+- [ ] Table and roadmap/timeline views over issues and milestones.
+- [ ] Custom fields with bounded types and values.
+- [ ] Saved filters and views.
+- [ ] Dependency and blocker links with cycle detection.
+- [ ] Board/card archive and export.
+- [ ] Owner browser workflow plus migration, concurrency, isolation, recovery, read-only, and quota tests.
+
+### Ordered GitHub-like track after v0.5.0
+
+1. Verified releases and downloadable artifact manifests.
+2. Separately authorized transactional local Git staging, commits, branches, and tags.
+3. Persistent identities, roles, sessions, MFA, and TLS.
+4. Only then remote clone/fetch/pull/push and repository hosting.
+
+
+## 61. Completed checkpoint — v0.5.0 Project Boards and Roadmaps
+
+- [x] Application-data-only board database and cross-process lock
+- [x] Kanban, table, and roadmap views
+- [x] Workflow columns and optimistic ranked card movement
+- [x] Custom fields and saved views
+- [x] Issue/discussion dependencies and activity history
+- [x] Board-specific contributor view and move permissions
+- [x] Owner and contributor browser workflows
+- [x] No repository or Git mutation authority
+
+### Next move
+
+Proceed to v0.5.1 Verified Releases and Artifacts: immutable release records, checksummed assets, release notes, provenance, retention, and owner-controlled publication/export without executing artifacts.
+
+
+## v0.5.1 verified releases and artifacts requirements — Complete
+
+- [x] Dedicated repository-scoped release database and cross-process lock in application data.
+- [x] Draft and published release records with inert notes and informational tag/commit provenance.
+- [x] Asset bytes stored outside repositories and Git metadata.
+- [x] Size and SHA-256 verification at upload, publish, download, export, and Health inspection.
+- [x] Published records and assets are immutable.
+- [x] Owner-exported verified ZIP containing manifest, notes, assets, hashes, and explicit no-external-publication claim.
+- [x] Explicit contributor access layered on project-participation invitations; download-only and published-only.
+- [x] Asset and release quotas, safe filenames, path confinement, restart persistence, read-only compatibility, and registry-recovery independence.
+- [x] Owner and contributor browser surfaces plus unit/integration and Chromium evidence.
+
+## v0.5.2 completed checkpoint — Transactional Local Git Writes
+
+The accepted first write slice is complete: selected-file staging, staged-tree commits, local branch creation, and lightweight local tag creation. It uses a separate owner-only authority with expiring digest-bound previews, exact typed confirmation, repository/Git lock ordering, security-ledger authorization, sealed journals and receipts, exact rollback, startup recovery, read-only/deletion-intent enforcement, native Git-operation exclusion, and hardened no-shell Git plumbing.
+
+Switch/checkout, merge, reset, rebase, cherry-pick, revert, annotated or signed tags, signed commits, remotes, credentials, fetch, pull, push, clone, hosting, and public exposure remain outside v0.5.2. Any future expansion must be designed as a new accepted transactional slice rather than inferred from this authority.
+
+## 62. Completed design checkpoint — v0.5.3 Transactional Switch/Checkout Contract
+
+### Scope and authority
+
+- [x] Restrict the first slice to switching from an attached born local branch to a different existing direct local branch.
+- [x] Require a dedicated future `GitSwitchService` sharing the accepted repository/Git mutation lock order.
+- [x] Preserve the v0.5.2 runtime operation set and add no execute route, UI, or command in the design package.
+- [x] Exclude detached/path checkout, create-and-switch, force/discard, three-way checkout, merge, remotes, credentials, hooks, submodules, linked worktrees, sparse/split index, and ambiguous filters.
+
+### Byte safety and recovery
+
+- [x] Require a clean index and clean tracked worktree.
+- [x] Define exact source/target manifests and exact backup of every affected tracked source path.
+- [x] Define bounded direct scanning and exact backup of all untracked and ignored regular files.
+- [x] Reject target collisions, case-fold collisions, protected paths, special files, unsupported tree modes, and insufficient backup space.
+- [x] Capture `HEAD`, index, `logs/HEAD`, ref/reflog verification state, manifests, and backups before mutation.
+- [x] Permit automatic rollback only for known pre/target/missing states; retain unknown bytes for manual inspection.
+- [x] Define native-lock deferral, later-read-only recovery, deletion-intent blocking, and pending-journal deletion blocking.
+
+### Validation and evidence
+
+- [x] Add a machine-readable schema-1 contract and human design specification.
+- [x] Add static isolation tests proving no runtime switch surface exists.
+- [x] Add disposable Git probes for ref/reflog boundaries and ignored-file overwrite behavior.
+- [x] Record the operator-reported v0.5.2.2 automated Windows `OK` separately from the unrecorded owner-browser checklist.
+- [x] Preserve MIT license and Rooke Poole creator credit.
+
+## 63. Next best move — v0.5.3 preflight and sealed capture planner
+
+1. Create a dedicated `GitSwitchService` skeleton with no execute command.
+2. Share the existing repository and Git mutation locks; add no weaker or parallel lock order.
+3. Resolve only attached source and existing direct local target refs.
+4. Prove clean index/tracked worktree and reject all unsupported Git/index/worktree features.
+5. Build exact affected tracked manifests and direct untracked/ignored filesystem manifests.
+6. Reject collisions and enforce 10,000 affected paths, 5,000 untracked entries, 512 MiB capture, and free-space reserve limits.
+7. Persist digest-bound preview and sealed capture-plan evidence under application data.
+8. Add service, corruption, drift, race, read-only, deletion-intent, contributor-denial, and Health tests.
+9. Do not add `git switch`, execute API/UI, rollback mutation, merge, or remotes until the planner boundary is accepted.

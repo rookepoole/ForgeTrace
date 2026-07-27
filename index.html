@@ -102,14 +102,22 @@
     .import-report { margin-top:10px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--muted); font-size:12px; line-height:1.5; }
     .import-report strong { color:var(--text); }
     .import-report.error { border-color:rgba(255,107,107,.55); color:#ffc0c0; }
+    .read-only-banner { margin:14px 0 0; padding:13px 15px; border:1px solid rgba(245,201,109,.42); border-radius:12px; background:linear-gradient(135deg,rgba(245,201,109,.12),rgba(245,201,109,.035)); color:#fff1c7; line-height:1.5; font-size:12px; }
+    .read-only-banner strong { display:block; color:#fff7de; margin-bottom:3px; }
+    .access-mode-card { border:1px solid var(--line); border-radius:12px; padding:14px; background:rgba(255,255,255,.025); }
+    .access-mode-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:end; }
+    .access-mode-note { color:var(--muted); font-size:11px; line-height:1.5; margin-top:8px; }
+    .danger-zone { margin-top:16px; border:1px solid rgba(255,119,134,.42); border-radius:12px; padding:14px; background:rgba(255,119,134,.045); }
+    .danger-zone h3 { color:#ffd4d9; margin:0 0 6px; }
+    .danger-zone p { color:var(--muted); font-size:11px; line-height:1.55; margin:0 0 12px; }
     .tabs { display:flex; gap:4px; margin:16px 0 10px; border-bottom:1px solid var(--line); }
     .tab { border:0; border-bottom:2px solid transparent; background:transparent; padding:11px 14px; color:var(--muted); cursor:pointer; font-weight:700; font-size:12px; }
     .tab.active { color:var(--text); border-bottom-color:var(--accent); }
     .panel { border:1px solid var(--line); background:var(--panel); border-radius:var(--radius); overflow:hidden; }
-    .files-layout { display:grid; grid-template-columns:minmax(300px, 38%) minmax(0,1fr); min-height:580px; }
+    .files-layout { display:grid; grid-template-columns:minmax(380px, 46%) minmax(0,1fr); min-height:720px; }
     .file-pane { border-right:1px solid var(--line); min-width:0; }
     .pane-head { padding:12px; border-bottom:1px solid var(--line); display:flex; gap:8px; align-items:center; }
-    .file-list { max-height:650px; overflow:auto; position:relative; contain:strict; min-height:220px; }
+    .file-list { height:clamp(500px,68vh,820px); max-height:none; overflow:auto; position:relative; contain:strict; min-height:500px; }
     .tree-spacer { width:1px; pointer-events:none; }
     .job-actions { display:flex; gap:8px; align-items:center; margin-top:8px; }
     .file-row { width:100%; display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:8px; align-items:center; padding:9px 12px; border:0; border-bottom:1px solid rgba(255,255,255,.045); background:transparent; color:var(--text); text-align:left; cursor:pointer; }
@@ -182,6 +190,55 @@
     .tool-card h3 { margin:0 0 7px; font-size:13px; }
     .tool-card p { margin:0 0 10px; color:var(--muted); font-size:11px; line-height:1.45; }
     .doctor-output { margin-top:12px; max-height:230px; overflow:auto; white-space:pre-wrap; background:#080c12; border:1px solid var(--line); border-radius:10px; padding:12px; color:var(--muted); font:11px/1.5 var(--mono); }
+    .health-modal { width:min(1120px,100%); }
+    .health-toolbar { display:grid; grid-template-columns:minmax(0,1fr) 150px auto auto auto; gap:8px; align-items:center; }
+    .health-summary { margin-top:14px; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+    .health-stat { border:1px solid var(--line); border-radius:11px; padding:10px; background:rgba(255,255,255,.018); }
+    .health-stat strong { display:block; font:700 18px var(--mono); margin-top:4px; }
+    .health-status { text-transform:uppercase; letter-spacing:.08em; }
+    .health-status.healthy { color:var(--success); }.health-status.partial,.health-status.attention { color:var(--warning); }.health-status.failed,.health-status.critical { color:var(--danger); }
+    .health-section-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-top:12px; }
+    .health-section { border:1px solid var(--line); border-radius:11px; background:rgba(255,255,255,.018); overflow:hidden; }
+    .health-section summary { cursor:pointer; padding:11px 12px; display:flex; justify-content:space-between; gap:10px; font-weight:700; }
+    .health-section-body { padding:0 12px 12px; color:var(--muted); font:10px/1.55 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; }
+    .health-findings { display:grid; gap:8px; margin-top:12px; max-height:360px; overflow:auto; }
+    .health-finding { border:1px solid var(--line); border-left:3px solid var(--muted); border-radius:10px; padding:10px 12px; background:#080c12; }
+    .health-finding.critical,.health-finding.error { border-left-color:var(--danger); }.health-finding.warning { border-left-color:var(--warning); }.health-finding.info { border-left-color:var(--accent-2); }
+    .health-finding-head { display:flex; justify-content:space-between; gap:12px; align-items:start; }
+    .health-finding code { color:var(--accent-2); font-size:9px; }
+    .health-finding p { margin:6px 0; color:var(--muted); font-size:11px; line-height:1.45; }
+    .health-history { margin-top:12px; display:flex; gap:7px; flex-wrap:wrap; }
+    .health-history button { font:9px var(--mono); }
+    .restore-control-row { display:grid; grid-template-columns:minmax(0,1fr) 150px auto auto; gap:8px; align-items:center; }
+    .restore-impact-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; margin-top:10px; }
+    .restore-impact { border:1px solid var(--line); border-radius:9px; padding:8px; color:var(--muted); font-size:10px; }
+    .restore-impact strong { display:block; margin-top:3px; color:var(--text); font:700 13px var(--mono); }
+    .restore-history { display:grid; gap:7px; margin-top:10px; max-height:210px; overflow:auto; }
+    .restore-history-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; border:1px solid var(--line); border-radius:9px; padding:9px 10px; background:rgba(255,255,255,.015); }
+    .restore-history-row strong { display:block; font:700 10px var(--mono); overflow-wrap:anywhere; }
+    .restore-history-row span { display:block; margin-top:4px; color:var(--muted); font-size:9px; line-height:1.4; }
+    .security-modal { width:min(1120px,100%); }
+    .security-filter-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; margin-top:14px; }
+    .security-filter-grid .wide { grid-column:span 2; }
+    .security-event-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin:12px 0; }
+    .security-event-list { display:grid; max-height:520px; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#080c12; }
+    .security-event-row { display:grid; grid-template-columns:62px minmax(0,1fr) auto; gap:12px; padding:13px 14px; border-bottom:1px solid rgba(255,255,255,.055); align-items:start; }
+    .security-event-row:last-child { border-bottom:0; }
+    .security-event-sequence { color:var(--subtle); font:10px var(--mono); }
+    .security-event-action { font:700 12px var(--mono); overflow-wrap:anywhere; }
+    .security-event-meta { color:var(--muted); font-size:10px; line-height:1.55; margin-top:5px; }
+    .security-event-details { margin:8px 0 0; padding:8px 9px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.018); color:var(--subtle); font:10px/1.45 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; }
+    .security-event-badge { display:inline-flex; border:1px solid var(--line); border-radius:999px; padding:4px 7px; color:var(--muted); font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.07em; }
+    .security-event-badge.warning { color:var(--warning); border-color:rgba(245,201,109,.3); }
+    .security-event-badge.error, .security-event-badge.critical { color:var(--danger); border-color:rgba(255,119,134,.35); }
+    .security-history-panel { display:grid; gap:12px; margin-top:12px; padding:13px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.018); }
+    .security-history-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; }
+    .security-history-stat { border:1px solid var(--line); border-radius:9px; padding:9px; background:#080c12; }
+    .security-history-stat strong { display:block; margin-top:4px; font:700 13px var(--mono); overflow-wrap:anywhere; }
+    .security-history-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:end; }
+    .security-history-list { display:grid; gap:7px; max-height:220px; overflow:auto; }
+    .security-history-item { border:1px solid var(--line); border-radius:9px; padding:9px; color:var(--muted); font:10px/1.5 var(--mono); overflow-wrap:anywhere; }
+    .security-integrity.failed { border-color:rgba(255,119,134,.38); background:rgba(255,119,134,.07); color:#ffdbe0; }
 
     .pr-layout { display:grid; grid-template-columns:340px minmax(0,1fr); min-height:610px; }
     .pr-list-pane { border-right:1px solid var(--line); min-width:0; }
@@ -212,8 +269,77 @@
     .diff-head { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; background:rgba(255,255,255,.025); border-bottom:1px solid var(--line); font:11px var(--mono); }
     .diff { margin:0; padding:13px; background:#070b10; color:#cbd6e5; max-height:360px; overflow:auto; white-space:pre; font:11px/1.5 var(--mono); }
     .review-card { border:1px solid var(--line); border-radius:10px; padding:10px; margin-top:8px; color:var(--muted); font-size:11px; }
+    .review-conversation-summary { display:flex; gap:7px; flex-wrap:wrap; margin:10px 0; }
+    .review-conversation-create { margin-top:12px; padding:13px; border:1px solid rgba(139,181,255,.22); border-radius:11px; background:rgba(139,181,255,.035); }
+    .review-conversation-grid { display:grid; grid-template-columns:minmax(0,1fr) 110px 110px; gap:8px; }
+    .review-thread-list { display:grid; gap:11px; margin-top:12px; }
+    .review-thread { border:1px solid var(--line); border-radius:11px; overflow:hidden; background:rgba(0,0,0,.16); }
+    .review-thread.resolved { opacity:.76; }
+    .review-thread.outdated { border-style:dashed; }
+    .review-thread-head { display:flex; justify-content:space-between; gap:10px; padding:10px 11px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.022); }
+    .review-thread-path { font:11px/1.45 var(--mono); overflow-wrap:anywhere; }
+    .review-thread-badges { display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; }
+    .review-thread-badge { border:1px solid var(--line); border-radius:999px; padding:3px 6px; color:var(--muted); font:800 8px var(--mono); text-transform:uppercase; letter-spacing:.07em; white-space:nowrap; }
+    .review-thread-badge.open { color:var(--warning); border-color:rgba(245,201,109,.34); }
+    .review-thread-badge.resolved { color:var(--success); border-color:rgba(115,245,209,.3); }
+    .review-thread-badge.outdated { color:var(--accent-2); border-color:rgba(139,181,255,.3); }
+    .review-thread-context { margin:0; padding:11px; max-height:240px; overflow:auto; white-space:pre-wrap; background:#070b10; color:#cbd6e5; border-bottom:1px solid var(--line); font:10px/1.5 var(--mono); }
+    .review-thread-comments { display:grid; gap:7px; padding:10px 11px; }
+    .review-thread-comment { padding:8px 9px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.023); }
+    .review-thread-comment.contributor { border-color:rgba(245,201,109,.2); }
+    .review-thread-comment-head { display:flex; justify-content:space-between; gap:8px; color:var(--muted); font-size:9px; margin-bottom:5px; }
+    .review-thread-comment-body { white-space:pre-wrap; overflow-wrap:anywhere; color:var(--text); font-size:11px; line-height:1.5; }
+    .review-thread-controls { display:grid; gap:7px; padding:0 11px 11px; }
+    .review-thread-empty { padding:15px; color:var(--muted); text-align:center; border:1px dashed var(--line); border-radius:10px; }
+    .conflict-resolution-list { display:grid; gap:13px; margin-top:12px; }
+    .conflict-resolution-card { border:1px solid rgba(245,201,109,.3); border-radius:12px; overflow:hidden; background:rgba(245,201,109,.025); }
+    .conflict-resolution-card.stale { border-style:dashed; }
+    .conflict-resolution-head { display:flex; justify-content:space-between; gap:10px; padding:11px 12px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.022); }
+    .conflict-resolution-path { font:700 11px/1.45 var(--mono); overflow-wrap:anywhere; }
+    .conflict-resolution-meta { color:var(--muted); font-size:9px; line-height:1.5; margin-top:4px; }
+    .conflict-evidence-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; background:var(--line); }
+    .conflict-evidence-pane { min-width:0; background:#080c12; }
+    .conflict-evidence-label { display:flex; justify-content:space-between; gap:8px; padding:8px 9px; border-bottom:1px solid var(--line); color:var(--muted); font:800 9px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
+    .conflict-evidence-code { margin:0; padding:10px; min-height:110px; max-height:280px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; color:#cbd6e5; font:10px/1.5 var(--mono); }
+    .conflict-evidence-meta { min-height:110px; padding:12px; color:var(--muted); font:10px/1.55 var(--mono); overflow-wrap:anywhere; }
+    .conflict-resolution-controls { display:grid; gap:9px; padding:12px; border-top:1px solid var(--line); }
+    .conflict-resolution-controls-grid { display:grid; grid-template-columns:minmax(0,220px) minmax(0,1fr); gap:9px; align-items:start; }
+    .conflict-resolution-result { border:1px solid var(--line); border-radius:9px; padding:9px 10px; color:var(--muted); font-size:10px; line-height:1.5; }
+    .conflict-resolution-result strong { color:var(--text); }
+    @media (max-width:700px) { .review-conversation-grid { grid-template-columns:1fr; } .review-thread-head { display:block; } .review-thread-badges { justify-content:flex-start; margin-top:7px; } .conflict-evidence-grid,.conflict-resolution-controls-grid { grid-template-columns:1fr; } }
     .invite-link { width:100%; min-height:74px; resize:vertical; font:11px/1.45 var(--mono); }
     .invite-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+
+    .git-shell { display:grid; gap:14px; padding:16px; }
+    .git-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .git-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .git-card { border:1px solid var(--line); background:rgba(255,255,255,.018); border-radius:12px; padding:12px; min-width:0; }
+    .git-card h3 { margin:0 0 8px; font-size:13px; }
+    .git-card strong { display:block; font-size:18px; overflow-wrap:anywhere; }
+    .git-card span, .git-muted { color:var(--muted); font-size:12px; }
+    .git-columns { display:grid; grid-template-columns:minmax(260px,.85fr) minmax(0,1.5fr); gap:14px; min-height:420px; }
+    .git-list { display:grid; gap:7px; max-height:520px; overflow:auto; }
+    .git-row { width:100%; text-align:left; border:1px solid var(--line); background:var(--panel-2); color:var(--text); border-radius:9px; padding:10px; cursor:pointer; }
+    .git-row:hover { border-color:var(--accent); }
+    .git-row code { color:var(--accent-2); font-family:var(--mono); }
+    .git-row-meta { display:flex; gap:8px; flex-wrap:wrap; margin-top:5px; color:var(--muted); font-size:11px; }
+    .git-detail { min-width:0; }
+    .git-code { margin:0; max-height:600px; overflow:auto; white-space:pre; tab-size:2; font:12px/1.55 var(--mono); color:#d9e1ee; background:#080b10; border:1px solid var(--line); border-radius:10px; padding:14px; }
+    .git-ref-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .git-ref-list { max-height:220px; overflow:auto; display:grid; gap:5px; }
+    .git-ref { border-bottom:1px solid var(--line); padding:7px 0; overflow-wrap:anywhere; font-size:12px; }
+    .git-status-pill { display:inline-flex; padding:2px 7px; border-radius:999px; background:rgba(110,168,254,.12); color:var(--accent-2); font-size:10px; font-family:var(--mono); }
+
+    .git-write-panel { display:grid; gap:10px; margin-bottom:14px; }
+    .git-write-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .git-write-boundary { padding:9px 11px; border:1px solid var(--line); border-radius:9px; background:rgba(110,168,254,.06); font-size:12px; color:var(--muted); }
+    .git-select-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; }
+    .git-select-main { display:flex; align-items:flex-start; gap:9px; min-width:0; }
+    .git-select-main input { margin-top:3px; accent-color:var(--accent); }
+    .git-select-copy { min-width:0; overflow-wrap:anywhere; }
+    .git-receipts { display:grid; gap:6px; max-height:190px; overflow:auto; }
+    .git-receipt { border-top:1px solid var(--line); padding-top:7px; font-size:12px; }
+
     @media (max-width:820px) { .pr-layout { grid-template-columns:1fr; } .pr-list-pane { border-right:0; border-bottom:1px solid var(--line); } .pr-list { max-height:250px; } }
     .toast-region { position:fixed; right:18px; bottom:18px; z-index:100; display:grid; gap:8px; width:min(390px,calc(100vw - 36px)); }
     .toast { padding:12px 14px; border-radius:11px; background:#121923; border:1px solid var(--line-strong); box-shadow:var(--shadow); font-size:12px; animation:toast-in .2s ease; }
@@ -226,6 +352,54 @@
       .topbar { grid-template-columns:220px minmax(0,1fr) auto; }
       .author-input { display:none; }
     }
+
+    .git-shell { display:grid; gap:14px; padding:16px; }
+    .git-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .git-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .git-card { border:1px solid var(--line); background:rgba(255,255,255,.018); border-radius:12px; padding:12px; min-width:0; }
+    .git-card h3 { margin:0 0 8px; font-size:13px; }
+    .git-card strong { display:block; font-size:18px; overflow-wrap:anywhere; }
+    .git-card span, .git-muted { color:var(--muted); font-size:12px; }
+    .git-columns { display:grid; grid-template-columns:minmax(260px,.85fr) minmax(0,1.5fr); gap:14px; min-height:420px; }
+    .git-list { display:grid; gap:7px; max-height:520px; overflow:auto; }
+    .git-row { width:100%; text-align:left; border:1px solid var(--line); background:var(--panel-2); color:var(--text); border-radius:9px; padding:10px; cursor:pointer; }
+    .git-row:hover { border-color:var(--accent); }
+    .git-row code { color:var(--accent-2); font-family:var(--mono); }
+    .git-row-meta { display:flex; gap:8px; flex-wrap:wrap; margin-top:5px; color:var(--muted); font-size:11px; }
+    .git-detail { min-width:0; }
+    .git-code { margin:0; max-height:600px; overflow:auto; white-space:pre; tab-size:2; font:12px/1.55 var(--mono); color:#d9e1ee; background:#080b10; border:1px solid var(--line); border-radius:10px; padding:14px; }
+    .git-ref-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .git-ref-list { max-height:220px; overflow:auto; display:grid; gap:5px; }
+    .git-ref { border-bottom:1px solid var(--line); padding:7px 0; overflow-wrap:anywhere; font-size:12px; }
+    .git-status-pill { display:inline-flex; padding:2px 7px; border-radius:999px; background:rgba(110,168,254,.12); color:var(--accent-2); font-size:10px; font-family:var(--mono); }
+
+    .project-toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:14px; border-bottom:1px solid var(--line); }
+    .project-toolbar .input,.project-toolbar .select { width:auto; min-width:150px; }
+    .project-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; padding:14px; border-bottom:1px solid var(--line); }
+    .project-stat { border:1px solid var(--line); border-radius:12px; padding:12px; background:rgba(255,255,255,.025); }
+    .project-stat strong { display:block; font-size:22px; } .project-stat span { color:var(--muted); font-size:11px; }
+    .project-layout { display:grid; grid-template-columns:minmax(280px,38%) minmax(0,1fr); min-height:520px; }
+    .project-list { border-right:1px solid var(--line); max-height:720px; overflow:auto; }
+    .project-item { width:100%; text-align:left; border:0; border-bottom:1px solid var(--line); background:transparent; color:var(--text); padding:13px 14px; cursor:pointer; }
+    .project-item:hover,.project-item.active { background:rgba(115,245,209,.06); }
+    .project-item strong { display:block; } .project-item-meta { color:var(--muted); font-size:11px; margin-top:5px; }
+    .project-label { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line-strong); border-radius:999px; padding:2px 7px; font-size:10px; margin:5px 4px 0 0; }
+    .project-detail { padding:18px; min-width:0; overflow:auto; }
+    .project-detail-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+    .project-detail-actions { display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end; }
+    .project-body { border:1px solid var(--line); border-radius:12px; padding:15px; margin:14px 0; line-height:1.6; background:rgba(255,255,255,.02); overflow-wrap:anywhere; }
+    .project-body pre { overflow:auto; background:#05070a; padding:12px; border-radius:8px; } .project-body code { font-family:var(--mono); }
+    .project-meta-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:12px 0; }
+    .project-label-options { display:flex; flex-wrap:wrap; gap:6px; padding:8px 0; }
+    .project-comment { border:1px solid var(--line); border-radius:12px; margin-top:10px; overflow:hidden; }
+    .project-comment-head { display:flex; justify-content:space-between; gap:10px; padding:9px 12px; background:rgba(255,255,255,.035); color:var(--muted); font-size:11px; }
+    .project-comment-body { padding:12px; line-height:1.55; }
+    .project-comment-compose { margin-top:14px; display:grid; gap:8px; }
+
+    .board-shell{border-top:1px solid var(--line);margin-top:12px}.board-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:14px;border-bottom:1px solid var(--line)}
+    .board-toolbar .input,.board-toolbar .select{width:auto;min-width:150px}.board-empty{padding:28px;color:var(--muted);text-align:center}
+    .board-kanban{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,1fr);gap:12px;padding:14px;overflow:auto;min-height:360px}.board-column{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02);min-width:260px}.board-column-head{display:flex;justify-content:space-between;padding:11px 12px;border-bottom:1px solid var(--line);font-size:12px}.board-card{margin:9px;padding:11px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.18)}.board-card strong{display:block}.board-card-meta{font-size:10px;color:var(--muted);margin-top:5px}.board-card-actions{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}.board-table{width:100%;border-collapse:collapse}.board-table th,.board-table td{padding:10px;border-bottom:1px solid var(--line);text-align:left;font-size:11px}.board-roadmap{padding:14px;display:grid;gap:9px}.roadmap-row{display:grid;grid-template-columns:220px 1fr;gap:12px;align-items:center}.roadmap-track{height:28px;border:1px solid var(--line);border-radius:8px;position:relative;background:rgba(255,255,255,.02)}.roadmap-bar{position:absolute;left:8%;right:8%;top:5px;height:16px;border-radius:6px;background:rgba(115,245,209,.24);border:1px solid rgba(115,245,209,.5)}
+
     @media (max-width:820px) {
       .topbar { grid-template-columns:1fr auto; }
       .repo-select-wrap { grid-column:1/-1; grid-row:2; padding-bottom:9px; }
@@ -237,7 +411,8 @@
       .hero-actions { justify-content:flex-start; }
       .files-layout { grid-template-columns:1fr; }
       .file-pane { border-right:0; border-bottom:1px solid var(--line); }
-      .file-list { max-height:280px; }
+      .files-layout { min-height:0; }
+      .file-list { height:clamp(320px,44vh,520px); max-height:none; min-height:320px; }
       .code-editor { min-height:420px; }
     }
     @media (max-width:560px) {
@@ -252,7 +427,17 @@
       .field.full { grid-column:auto; }
       .repo-source-grid { grid-template-columns:1fr; }
       .editor-head { align-items:flex-start; flex-direction:column; }
-      .tool-grid, .filter-row { grid-template-columns:1fr; }
+      .tool-grid, .filter-row, .security-filter-grid, .health-section-grid, .health-summary { grid-template-columns:1fr; }
+      .health-toolbar { grid-template-columns:1fr; }
+      .git-summary, .git-ref-grid { grid-template-columns:1fr; }
+      .git-columns { grid-template-columns:1fr; }
+      .project-layout { grid-template-columns:1fr; }
+      .project-list { border-right:0; border-bottom:1px solid var(--line); max-height:320px; }
+      .project-stats,.project-meta-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .security-filter-grid .wide { grid-column:auto; }
+      .security-history-grid { grid-template-columns:1fr; }
+      .security-event-row { grid-template-columns:48px minmax(0,1fr); }
+      .security-event-row > :last-child { grid-column:2; }
     }
   </style>
 </head>
@@ -268,6 +453,8 @@
       </div>
       <div class="top-actions">
         <input class="input author-input" id="authorInput" aria-label="Current contributor" placeholder="Contributor name" value="Rooke Poole">
+        <button class="btn" id="healthDashboardBtn">Health</button>
+        <button class="btn" id="securityEventsBtn">Security</button>
         <button class="btn" id="registryToolsBtn">Library</button>
         <button class="btn primary" id="addRepoBtn">+ Repository</button>
       </div>
@@ -319,6 +506,7 @@
                 <button class="btn danger" id="unregisterBtn">Unregister</button>
               </div>
             </article>
+            <div class="read-only-banner hidden" id="readOnlyBanner" role="status" aria-live="polite"></div>
 
             <div class="stats">
               <div class="stat"><strong id="statFiles">0</strong><span>Files</span></div>
@@ -353,6 +541,9 @@
               <button class="tab" data-tab="activity">Contributions</button>
               <button class="tab" data-tab="snapshots">Snapshots</button>
               <button class="tab" data-tab="pullrequests">Pull requests <span id="prTabCount"></span></button>
+              <button class="tab" data-tab="project">Project <span id="projectTabCount"></span></button>
+              <button class="tab" data-tab="releases">Releases</button>
+              <button class="tab" data-tab="git">Git</button>
             </div>
 
             <section class="tab-panel" id="tab-files">
@@ -387,6 +578,44 @@
                   <div class="pr-list" id="pullRequestList"></div>
                 </div>
                 <div class="pr-detail" id="pullRequestDetail"><div class="editor-empty"><div><strong>No pull request selected</strong>Create an invite or select an incoming pull request to review its exact changes.</div></div></div>
+              </div>
+            </section>
+
+
+            <section class="tab-panel hidden" id="tab-project">
+              <div class="panel">
+                <div class="project-toolbar">
+                  <select class="select" id="projectKind"><option value="issue">Issues</option><option value="discussion">Discussions</option></select>
+                  <select class="select" id="projectState"><option value="">Open + closed</option><option value="open">Open</option><option value="closed">Closed</option></select>
+                  <input class="input" id="projectSearch" placeholder="Search project items">
+                  <button class="btn" id="projectRefreshBtn" type="button">Refresh</button>
+                  <button class="btn primary" id="projectNewBtn" type="button">New issue</button>
+                  <button class="btn" id="projectNewLabelBtn" type="button">New label</button>
+                  <button class="btn" id="projectNewMilestoneBtn" type="button">New milestone</button>
+                </div>
+                <div class="project-stats" id="projectStats"></div>
+                <div class="project-layout"><div class="project-list" id="projectList"></div><div class="project-detail" id="projectDetail"><div class="editor-empty"><div><strong>Project workspace</strong>Select an issue or discussion, or create a new one.</div></div></div></div>
+                <div class="board-shell">
+                  <div class="board-toolbar"><strong>Project Boards & Roadmaps</strong><select class="select" id="boardSelect"><option value="">Select a board</option></select><select class="select" id="boardView"><option value="kanban">Kanban</option><option value="table">Table</option><option value="roadmap">Roadmap</option></select><button class="btn" id="boardRefreshBtn">Refresh boards</button><button class="btn primary" id="boardNewBtn">New board</button><button class="btn" id="boardAddCardBtn">Add selected item</button><button class="btn" id="boardAddColumnBtn">Add column</button><button class="btn" id="boardSettingsBtn">Board settings</button></div>
+                  <div id="boardWorkspace"><div class="board-empty">Create or select a board to organize repository issues and discussions.</div></div>
+                </div>
+              </div>
+            </section>
+            <section class="tab-panel hidden" id="tab-releases">
+              <div class="panel">
+                <div class="project-toolbar"><strong>Verified Releases & Artifacts</strong><button class="btn" id="releaseRefreshBtn">Refresh</button><button class="btn primary" id="releaseNewBtn">New release</button></div>
+                <div class="repo-path" style="padding:0 14px 12px">Assets are stored outside repository and Git data, verified by SHA-256, never executed, and are not claimed as externally published.</div>
+                <div class="project-layout"><div class="project-list" id="releaseList"></div><div class="project-detail" id="releaseDetail"><div class="editor-empty"><div><strong>Release workspace</strong>Select a release or create a draft.</div></div></div></div>
+                <input id="releaseAssetInput" type="file" hidden>
+              </div>
+            </section>
+            <section class="tab-panel hidden" id="tab-git">
+              <div class="panel git-shell">
+                <div class="git-toolbar">
+                  <div><strong>Git Intelligence and Transactional Local Writes</strong><div class="repo-path">Owner-only inspection stays inert. Stage, commit, branch, and lightweight-tag writes require a fresh digest-bound preview, exact confirmation, repository and Git locks, rollback evidence, and a writable security ledger. No network, checkout, merge, hooks, signing, shell, credentials, or helpers.</div></div>
+                  <button class="btn" id="gitRefreshBtn" type="button">Refresh Git</button>
+                </div>
+                <div id="gitOverview"><div class="editor-empty"><div><strong>Git data not loaded</strong>Open this tab or refresh to inspect a local Git worktree.</div></div></div>
               </div>
             </section>
           </section>
@@ -444,9 +673,21 @@
           <div class="field full"><label for="settingsDescription">Description</label><textarea class="textarea" id="settingsDescription" rows="3"></textarea></div>
           <div class="field"><label for="settingsUploadLimit">Upload limit (MB)</label><input class="input" id="settingsUploadLimit" type="number" min="1" max="1024" step="1"></div>
           <div class="field"><label>Metadata placement</label><input class="input" value="Embedded (.forgetrace)" disabled></div>
+          <div class="field full access-mode-card">
+            <div class="access-mode-row">
+              <div><label for="settingsAccessMode">Repository access mode</label><select class="select" id="settingsAccessMode"><option value="read_write">Read-write</option><option value="read_only">Read-only</option></select></div>
+              <button class="btn warning" type="button" id="applyAccessModeBtn">Apply mode</button>
+            </div>
+            <div class="access-mode-note" id="settingsAccessModeNote">Mode changes are owner-only, recorded in the security ledger, and enforced by the backend across every repository mutation.</div>
+          </div>
         </div>
         <div class="capability-grid" id="capabilityGrid"></div>
-        <div class="modal-actions"><button type="button" class="btn" data-close-modal="settingsModalBackdrop">Cancel</button><button class="btn primary" type="submit">Save settings</button></div>
+        <div class="danger-zone" id="managedRepositoryDangerZone">
+          <h3>Delete managed repository</h3>
+          <p id="managedRepositoryDeleteNote">This permanently removes the ForgeTrace-managed repository directory, embedded history, and registry entry. Security evidence remains. External linked repositories can only be unregistered.</p>
+          <button class="btn danger" id="deleteManagedRepositoryBtn" type="button">Permanently delete repository</button>
+        </div>
+        <div class="modal-actions"><button type="button" class="btn" data-close-modal="settingsModalBackdrop">Cancel</button><button class="btn primary" id="settingsSaveBtn" type="submit">Save settings</button></div>
       </form>
     </section>
   </div>
@@ -468,8 +709,9 @@
       <div class="modal-head"><div><h2 id="registryToolsTitle">Repository library tools</h2><div class="repo-path">Backup, transport, diagnose, and recover the local registry.</div></div><button class="btn icon" data-close-modal="registryToolsBackdrop">×</button></div>
       <div class="modal-body">
         <div class="tool-grid">
-          <div class="tool-card"><h3>SQLite backup</h3><p>Create an online backup without stopping ForgeTrace.</p><button class="btn" id="backupRegistryBtn">Create backup</button></div>
+          <div class="tool-card"><h3>SQLite backup</h3><p>Create an online, integrity-checked backup without stopping ForgeTrace.</p><button class="btn" id="backupRegistryBtn">Create backup</button></div>
           <div class="tool-card"><h3>Portable registry</h3><p>Export or merge repository registrations, tags, collections, and filters.</p><button class="btn" id="exportRegistryBtn">Export JSON</button> <button class="btn" id="importRegistryBtn">Import JSON</button><input id="registryImportInput" type="file" accept="application/json,.json" hidden></div>
+          <div class="tool-card" style="grid-column:1/-1"><h3>Validated backup restore</h3><p>Preview every consequence before mutation. Replace installs the selected registry exactly; Merge is additive and preserves live settings. Repository folders and the separate security ledger are never replaced.</p><div class="restore-control-row"><select class="select" id="registryBackupSelect" aria-label="Registry backup"><option value="">Loading backups…</option></select><select class="select" id="registryRestoreMode" aria-label="Restore mode"><option value="merge">Merge — additive</option><option value="replace">Replace — exact registry</option></select><button class="btn" id="refreshRegistryRecoveryBtn">Refresh</button><button class="btn primary" id="previewRegistryRestoreBtn">Preview</button></div><div class="doctor-output" id="registryRestorePreview">Select a backup and generate a validated preview.</div><div class="modal-actions" style="margin-top:10px"><button class="btn warning" id="executeRegistryRestoreBtn" disabled>Restore previewed backup</button></div><h3 style="margin-top:14px">Restore and rollback history</h3><div class="restore-history" id="registryRestoreHistory"><div class="repo-path">No restore history loaded.</div></div></div>
           <div class="tool-card" style="grid-column:1/-1"><h3>ForgeTrace doctor</h3><p>Validate SQLite, identities, paths, and metadata. Add a scan root to discover unregistered embedded repositories.</p><input class="input" id="doctorScanRoot" placeholder="Optional absolute folder to scan"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" id="doctorCheckBtn">Run check</button><button class="btn warning" id="doctorRepairBtn">Safe repair</button></div></div>
         </div>
         <div class="doctor-output" id="doctorOutput">No diagnostic run yet.</div>
@@ -511,11 +753,90 @@
             <label class="check full"><input type="checkbox" id="inviteAllowSource" checked><span>Permit a source-only ZIP of normal repository files. ForgeTrace/VCS metadata and machine paths are excluded.</span></label>
             <label class="check full"><input type="checkbox" id="inviteAllowSensitiveSource"><span>Also include files flagged as potentially sensitive. Leave disabled unless the preview has been reviewed.</span></label>
             <label class="check full"><input type="checkbox" id="inviteAllowDeletes" checked><span>Permit the contributor to request file deletions. Deletions still require local review and merge confirmation.</span></label>
+            <label class="check full"><input type="checkbox" id="inviteAllowProject"><span>Permit this invitation to create and comment on repository issues and discussions. Ordinary source-sharing invitations do not receive this access.</span></label>
           </div>
           <div class="modal-actions"><button class="btn primary" id="createInviteBtn" type="submit">Enable sharing + generate token link</button></div>
         </form>
         <div class="tool-card hidden" id="createdInviteCard" style="margin-top:14px"><h3>Copy this link now</h3><p>The raw token is not stored and cannot be shown again.</p><textarea class="input invite-link" id="createdInviteLink" readonly></textarea><button class="btn" id="copyInviteBtn" type="button" style="margin-top:8px">Copy link</button></div>
         <div style="margin-top:18px"><div class="eyebrow">Existing invitations</div><div id="inviteList"></div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="securityEventsBackdrop">
+    <section class="modal security-modal" role="dialog" aria-modal="true" aria-labelledby="securityEventsTitle">
+      <div class="modal-head"><div><h2 id="securityEventsTitle">Security event ledger</h2><div class="repo-path">Owner-only, append-only evidence with canonical SHA-256 hash chaining.</div></div><button class="btn icon" data-close-modal="securityEventsBackdrop">×</button></div>
+      <div class="modal-body">
+        <div class="security-banner security-integrity" id="securityEventIntegrity">Verifying the ledger…</div>
+        <div class="security-history-panel">
+          <div><div class="eyebrow">Segmented retention and owner-controlled anchoring</div><div class="repo-path">Rotation seals a verified prefix outside the active database. No external service is contacted; exported digests become externally evidenced only after the owner records a matching receipt.</div></div>
+          <div class="security-history-grid" id="securityHistorySummary"><div class="security-history-stat" style="grid-column:1/-1"><span class="repo-path">Load security history status.</span></div></div>
+          <div class="security-history-actions">
+            <div class="field"><label for="securityRotateCount">Events to seal</label><input class="input" id="securityRotateCount" type="number" min="1" step="1" value="5"></div>
+            <button class="btn" id="securityHistoryRefreshBtn" type="button">Refresh history</button>
+            <button class="btn" id="securityRotationPreviewBtn" type="button">Preview rotation</button>
+            <button class="btn warning" id="securityRotationExecuteBtn" type="button" disabled>Seal previewed events</button>
+            <button class="btn primary" id="securityAnchorExportBtn" type="button">Create + export digest</button>
+          </div>
+          <div class="doctor-output" id="securityRotationPreview">No rotation preview generated.</div>
+          <div class="security-history-list" id="securitySegmentList"><div class="repo-path">No segment inventory loaded.</div></div>
+          <details class="advanced-share" id="securityRetentionPolicyDetails">
+            <summary>Retention policy</summary>
+            <div class="form-grid" style="margin-top:10px">
+              <div class="field"><label for="securityPolicyMaxActive">Maximum active events</label><input class="input" id="securityPolicyMaxActive" type="number" min="2" step="1"></div>
+              <div class="field"><label for="securityPolicySegmentTarget">Segment target events</label><input class="input" id="securityPolicySegmentTarget" type="number" min="1" step="1"></div>
+              <div class="field"><label for="securityPolicyMaxRetained">Maximum retained events</label><input class="input" id="securityPolicyMaxRetained" type="number" min="2" step="1"></div>
+              <div class="field"><label for="securityPolicyMaxAge">Maximum age (days)</label><input class="input" id="securityPolicyMaxAge" type="number" min="1" step="1"></div>
+              <div class="field"><label for="securityPolicyMaxStorage">Maximum storage (MiB)</label><input class="input" id="securityPolicyMaxStorage" type="number" min="1" step="1"></div>
+              <div class="field"><label for="securityPolicyProtectedEvents">Protected minimum events</label><input class="input" id="securityPolicyProtectedEvents" type="number" min="1" step="1"></div>
+              <div class="field"><label for="securityPolicyProtectedAge">Protected minimum age (days)</label><input class="input" id="securityPolicyProtectedAge" type="number" min="0" step="1"></div>
+            </div>
+            <div class="modal-actions"><button class="btn" id="securityPolicySaveBtn" type="button">Save retention policy</button></div>
+            <div class="repo-path" id="securityPolicyStatus">Policy changes are owner-authorized and security-ledger recorded.</div>
+          </details>
+          <div class="form-grid">
+            <div class="field"><label for="securityAnchorMechanism">Receipt mechanism</label><input class="input" id="securityAnchorMechanism" placeholder="Transparency log, notarized file, signed email"></div>
+            <div class="field"><label for="securityAnchorReference">External reference</label><input class="input" id="securityAnchorReference" placeholder="Optional URL, record ID, or retained filename"></div>
+            <div class="field full"><label for="securityAnchorEvidence">Owner-supplied receipt evidence</label><textarea class="input" id="securityAnchorEvidence" rows="3" placeholder="Paste the receipt or signed evidence returned by the mechanism. ForgeTrace verifies only its binding to the exported digest."></textarea></div>
+          </div>
+          <div class="modal-actions"><button class="btn" id="securityAnchorReceiptBtn" type="button" disabled>Record receipt for last export</button></div>
+          <div class="repo-path" id="securityAnchorStatus">No anchor request created in this session.</div>
+        </div>
+        <div class="security-filter-grid">
+          <div class="field"><label for="securityEventCategory">Category</label><select class="select" id="securityEventCategory"><option value="">All categories</option></select></div>
+          <div class="field"><label for="securityEventSeverity">Severity</label><select class="select" id="securityEventSeverity"><option value="">All severities</option></select></div>
+          <div class="field"><label for="securityEventOutcome">Outcome</label><select class="select" id="securityEventOutcome"><option value="">All outcomes</option></select></div>
+          <div class="field"><label for="securityEventSurface">Surface</label><select class="select" id="securityEventSurface"><option value="">All surfaces</option></select></div>
+          <div class="field wide"><label for="securityEventRepository">Repository</label><select class="select" id="securityEventRepository"><option value="">All repositories</option></select></div>
+          <div class="field wide"><label for="securityEventSearch">Search evidence</label><input class="input" id="securityEventSearch" placeholder="Action, request ID, actor, subject, or detail"></div>
+        </div>
+        <div class="security-event-toolbar">
+          <div class="repo-path" id="securityEventSummary">No events loaded.</div>
+          <div class="actions"><button class="btn" id="securityEventResetBtn" type="button">Reset</button><button class="btn" id="securityEventRefreshBtn" type="button">Apply filters</button><button class="btn primary" id="securityEventExportBtn" type="button">Export JSON</button></div>
+        </div>
+        <div class="security-event-list" id="securityEventList"><div class="editor-empty"><div><strong>No events loaded</strong>Open or refresh the ledger to verify and inspect evidence.</div></div></div>
+      </div>
+    </section>
+  </div>
+
+
+  <div class="modal-backdrop" id="healthDashboardBackdrop">
+    <section class="modal health-modal" role="dialog" aria-modal="true" aria-labelledby="healthDashboardTitle">
+      <div class="modal-head"><div><h2 id="healthDashboardTitle">ForgeTrace health</h2><div class="repo-path">Owner-only, read-first reports over existing integrity and recovery authorities. Generating a report does not repair or mutate repository state.</div></div><button class="btn icon" data-close-modal="healthDashboardBackdrop">×</button></div>
+      <div class="modal-body">
+        <div class="security-banner"><strong style="color:var(--accent)">Assessment and repair stay separate.</strong><br>Every report is request-linked, SHA-256 verified, bounded, and stored in application data. Safe repair invokes the existing Doctor authority only after explicit confirmation and ledger authorization.</div>
+        <div class="health-toolbar" style="margin-top:14px">
+          <select class="select" id="healthRepository" aria-label="Health report repository"><option value="">All registered repositories</option></select>
+          <select class="select" id="healthScope" aria-label="Health report scope"><option value="standard">Standard bounded scan</option><option value="complete">Complete maximum scan</option></select>
+          <button class="btn" id="healthRefreshBtn" type="button">History</button>
+          <button class="btn primary" id="healthGenerateBtn" type="button">Generate report</button>
+          <button class="btn" id="healthExportBtn" type="button" disabled>Export JSON</button>
+        </div>
+        <div class="health-summary" id="healthSummary"><div class="health-stat" style="grid-column:1/-1"><span class="repo-path">No health report loaded.</span></div></div>
+        <div class="health-section-grid" id="healthSections"></div>
+        <div class="health-findings" id="healthFindings"><div class="editor-empty"><div><strong>No findings loaded</strong>Generate or select a durable report.</div></div></div>
+        <div class="health-history" id="healthHistory"></div>
+        <div class="modal-actions"><button class="btn warning" id="healthDoctorRepairBtn" type="button" disabled>Run confirmed Doctor repair</button></div>
       </div>
     </section>
   </div>
@@ -526,12 +847,15 @@
     'use strict';
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => [...document.querySelectorAll(selector)];
-    const appState = { repositories: [], library: {collections:[],tags:[],savedFilters:[]}, filters: {query:'',tag:'',collectionId:'',status:'',favorite:''}, activeId: '', record: null, data: null, selectedPath: '', selectedFile: null, tab: 'files', busy: 0, pullRequests: [], selectedPr: null, invites: [], gateway: {enabled:false,baseUrls:[],publicBaseUrl:''}, newRepositorySource:'path', pendingRepositoryFiles:[], pendingEmptyFolders:[], pendingFolderRoot:'', expandedFolders:new Set(), selectedEntry:null, treeRows:[], treeRenderPending:false, currentJob:null, pendingLocalFolder:null, expandedMemory:new Map() };
+    const appState = { repositories: [], library: {collections:[],tags:[],savedFilters:[]}, filters: {query:'',tag:'',collectionId:'',status:'',favorite:''}, activeId: '', record: null, data: null, selectedPath: '', selectedFile: null, tab: 'files', busy: 0, pullRequests: [], selectedPr: null, reviewThreads: [], conflictResolution: null, invites: [], gateway: {enabled:false,baseUrls:[],publicBaseUrl:''}, newRepositorySource:'path', pendingRepositoryFiles:[], pendingEmptyFolders:[], pendingFolderRoot:'', expandedFolders:new Set(), selectedEntry:null, treeRows:[], treeRenderPending:false, currentJob:null, pendingLocalFolder:null, expandedMemory:new Map(), securityEvents:null, securityHistory:{status:null,preview:null,lastAnchor:null}, health:{reports:[],selected:null}, registryRestore:{backups:[],restores:[],preview:null}, git:{overview:null,detail:null,writeStatus:null,writeError:'',loading:false,writing:false,repositoryId:'',authorEmail:''}, project:{overview:null,items:[],selected:null,loading:false,repositoryId:'',kind:'issue'}, boards:{items:[],selected:null,detail:null,view:'kanban',loading:false,repositoryId:''}, releases:{items:[],selected:null,loading:false,repositoryId:''} };
 
     function escapeHtml(value='') { return String(value).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
     function encodePath(value) { return encodeURIComponent(value).replace(/%2F/g, '%2F'); }
     function repoBase(id=appState.activeId) { return `/api/v1/repositories/${encodeURIComponent(id)}`; }
     function author() { return ($('#authorInput').value || 'Repository Owner').trim(); }
+    function repositoryAccessPolicy() { return appState.data?.summary?.accessPolicy || appState.record?.accessPolicy || {effectiveMode:appState.record?.accessMode||'read_write',registryMode:appState.record?.accessMode||'read_write',embeddedMode:appState.record?.accessMode||'read_write',consistent:true,writable:appState.record?.accessMode!=='read_only'}; }
+    function isReadOnly() { return repositoryAccessPolicy().effectiveMode==='read_only'; }
+    function requireWritableUi(action='change this repository') { if(!isReadOnly())return true;toast(`This repository is read-only. Return it to read-write mode before you ${action}.`,true);return false; }
     function formatBytes(bytes=0) { if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'; const units=['B','KB','MB','GB','TB']; const i=Math.min(Math.floor(Math.log(bytes)/Math.log(1024)),units.length-1); return `${(bytes/1024**i).toFixed(i?1:0)} ${units[i]}`; }
     function formatDate(value) { if (!value) return '—'; const date=new Date(value); return Number.isNaN(date.valueOf()) ? value : new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(date); }
     function toast(message, error=false) { const el=document.createElement('div'); el.className=`toast${error?' error':''}`; el.textContent=message; $('#toastRegion').append(el); setTimeout(()=>el.remove(),4500); }
@@ -601,13 +925,13 @@
 
     function renderRepositoryNavigation() {
       $('#activeRepoSelect').innerHTML = appState.repositories.length
-        ? appState.repositories.map(r=>`<option value="${r.id}" ${r.id===appState.activeId?'selected':''}>${r.favorite?'★ ':''}${escapeHtml(r.name)} — ${r.status}</option>`).join('')
+        ? appState.repositories.map(r=>`<option value="${r.id}" ${r.id===appState.activeId?'selected':''}>${r.favorite?'★ ':''}${r.accessMode==='read_only'?'🔒 ':''}${escapeHtml(r.name)} — ${r.status}${r.accessMode==='read_only'?' · read-only':''}</option>`).join('')
         : '<option value="">No repositories registered</option>';
       const visible=filteredRepositories();
       $('#repoList').innerHTML = visible.length ? visible.map(r=>`
         <button class="repo-item ${r.id===appState.activeId?'active':''}" data-repository-id="${r.id}">
           <span class="status-dot ${r.status}"></span>
-          <span><strong>${escapeHtml(r.name)}</strong><span class="repo-path">${escapeHtml(r.path)}</span>${r.tags?.length?`<span class="repo-path">${r.tags.map(escapeHtml).join(' · ')}</span>`:''}</span>
+          <span><strong>${r.accessMode==='read_only'?'🔒 ':''}${escapeHtml(r.name)}</strong><span class="repo-path">${escapeHtml(r.path)}</span>${r.managed?'<span class="repo-path">ForgeTrace-managed</span>':''}${r.accessMode==='read_only'?'<span class="repo-path">Service-enforced read-only</span>':''}${r.tags?.length?`<span class="repo-path">${r.tags.map(escapeHtml).join(' · ')}</span>`:''}</span>
           <span class="favorite">${r.favorite?'★':''}</span>
         </button>`).join('') : '<div class="repo-path" style="padding:12px">No repositories match this filter.</div>';
     }
@@ -615,7 +939,7 @@
     async function activateRepository(id) {
       if (!id || id===appState.activeId) return;
       await api('/api/v1/active-repository',{method:'POST',body:{repositoryId:id}});
-      appState.activeId=id; appState.selectedPath=''; appState.selectedFile=null; appState.selectedEntry=null; appState.pullRequests=[]; appState.selectedPr=null;
+      appState.activeId=id; appState.selectedPath=''; appState.selectedFile=null; appState.selectedEntry=null; appState.pullRequests=[]; appState.selectedPr=null; appState.reviewThreads=[]; appState.conflictResolution=null; appState.git={overview:null,detail:null,loading:false,repositoryId:id};appState.project={overview:null,items:[],selected:null,loading:false,repositoryId:id,kind:'issue'};
       renderRepositoryNavigation();
       await loadActiveRepository();
     }
@@ -623,7 +947,7 @@
     async function loadActiveRepository() {
       $('#welcomeView').classList.toggle('hidden', Boolean(appState.activeId));
       $('#workspaceView').classList.add('hidden'); $('#offlineView').classList.add('hidden');
-      appState.data=null; appState.record=appState.repositories.find(r=>r.id===appState.activeId)||null;
+      appState.data=null; appState.record=appState.repositories.find(r=>r.id===appState.activeId)||null; if(appState.git.repositoryId!==appState.activeId)appState.git={overview:null,detail:null,loading:false,repositoryId:appState.activeId};if(appState.project.repositoryId!==appState.activeId)appState.project={overview:null,items:[],selected:null,loading:false,repositoryId:appState.activeId,kind:'issue'};if(appState.releases.repositoryId!==appState.activeId)appState.releases={items:[],selected:null,loading:false,repositoryId:appState.activeId};
       loadExpandedFolders();
       if (!appState.record) return;
       if (appState.record.status!=='online') { renderOffline(); return; }
@@ -647,7 +971,7 @@
 
     function renderOffline() {
       const r=appState.record;
-      $('#offlineView').innerHTML=`<article class="offline-card"><div class="repo-title-row"><h2>${escapeHtml(r.name)}</h2><span class="badge ${r.status}">${escapeHtml(r.status)}</span></div><p>${escapeHtml(r.statusMessage||'This repository is unavailable.')}</p><div class="path-chip">${escapeHtml(r.path)}</div><div class="hero-actions" style="justify-content:flex-start;margin-top:18px">${r.status==='uninitialized'?'<button class="btn primary" data-offline-action="initialize">Initialize repository</button>':'<button class="btn primary" data-offline-action="relink">Relink repository</button>'}<button class="btn" data-offline-action="refresh">Check again</button><button class="btn danger" data-offline-action="unregister">Unregister only</button></div></article>`;
+      $('#offlineView').innerHTML=`<article class="offline-card"><div class="repo-title-row"><h2>${escapeHtml(r.name)}</h2><span class="badge ${r.status}">${escapeHtml(r.status)}</span></div><p>${escapeHtml(r.statusMessage||'This repository is unavailable.')}</p><div class="path-chip">${escapeHtml(r.path)}</div><div class="hero-actions" style="justify-content:flex-start;margin-top:18px">${r.status==='uninitialized'?'<button class="btn primary" data-offline-action="initialize">Initialize repository</button>':'<button class="btn primary" data-offline-action="relink">Relink repository</button>'}<button class="btn" data-offline-action="refresh">Check again</button><button class="btn danger" data-offline-action="unregister">Unregister only</button>${r.managed?'<button class="btn danger" data-offline-action="delete-managed">Permanently remove managed repository</button>':''}</div></article>`;
       $('#offlineView').classList.remove('hidden');
     }
 
@@ -662,6 +986,10 @@
       $('#repoOrganization').innerHTML=[...(appState.record.collections||[]).map(item=>`<span class="meta-chip collection">${escapeHtml(item.name)}</span>`),...(appState.record.tags||[]).map(item=>`<span class="meta-chip tag">#${escapeHtml(item)}</span>`)].join('') || '<span class="meta-chip">No tags or collections</span>';
       $('#statFiles').textContent=stats.files; $('#statFolders').textContent=stats.folders; $('#statBytes').textContent=formatBytes(stats.bytes);
       $('#statCommits').textContent=stats.commits; $('#statContributions').textContent=stats.contributions; $('#statDirty').textContent=stats.dirtyFiles;
+      const policy=repositoryAccessPolicy(); const readOnly=policy.effectiveMode==='read_only';
+      $('#readOnlyBanner').classList.toggle('hidden',!readOnly);
+      $('#readOnlyBanner').innerHTML=readOnly?`<strong>🔒 Service-enforced read-only repository</strong>${policy.consistent?'Browsing, search, history, verification, exports, source downloads, and quarantined contribution review remain available. Repository content, snapshots, embedded settings, and pull-request merges are blocked by the backend.':`Registry mode (${escapeHtml(policy.registryMode)}) and embedded mode (${escapeHtml(policy.embeddedMode)}) do not agree. ForgeTrace fails closed until the owner deliberately reconciles them through Settings.`}`:'';
+      ['uploadFilesBtn','importLocalFolderBtn','uploadFolderBtn','newFileBtn','newFolderBtn','snapshotBtn'].forEach(id=>$('#'+id).disabled=readOnly);
       renderFiles(); renderActivity(); renderSnapshots(); renderPullRequests(); renderEditor(); setTab(appState.tab);
     }
 
@@ -703,7 +1031,9 @@
     function renderEditor() {
       const file=appState.selectedFile; const entry=appState.selectedEntry;
       $('#editorPath').textContent=appState.selectedPath||'Select a file or folder';
-      $('#renameBtn').disabled=!entry; $('#deleteBtn').disabled=!entry; $('#downloadBtn').disabled=!file; $('#saveBtn').disabled=!file?.editable;
+      const readOnly=isReadOnly();
+      $('#renameBtn').disabled=!entry||readOnly; $('#deleteBtn').disabled=!entry||readOnly; $('#downloadBtn').disabled=!file; $('#saveBtn').disabled=!file?.editable||readOnly;
+      $('#code').readOnly=readOnly;
       $('#editorEmpty').classList.toggle('hidden',Boolean(file)); $('#code').classList.add('hidden'); $('#binaryCard').classList.add('hidden');
       if (!file) {
         $('#editorEmpty').innerHTML=entry?.type==='folder'
@@ -711,7 +1041,7 @@
           : '<div><strong>Select a file or folder</strong>Choose an entry from the repository tree to inspect or edit it.</div>';
         return;
       }
-      if (file.editable) { $('#code').value=file.content||''; $('#code').classList.remove('hidden'); }
+      if (file.editable) { $('#code').value=file.content||''; $('#code').classList.remove('hidden'); $('#code').title=readOnly?'Read-only repository: content editing is disabled.':''; }
       else { $('#binaryCard').innerHTML=`<div class="empty-mark" style="width:52px;height:52px">↓</div><h3>${escapeHtml(file.name)}</h3><p style="color:var(--muted)">${escapeHtml(file.mime||'Binary file')} · ${formatBytes(file.size)}</p><button class="btn primary" data-binary-download>Download file</button>`; $('#binaryCard').classList.remove('hidden'); }
     }
 
@@ -732,17 +1062,17 @@
     }
     function renderSnapshots() {
       const commits=appState.data?.commits||[];
-      $('#commits').innerHTML=commits.length?commits.map(commit=>`<article class="feed-item"><div class="feed-symbol">◆</div><div><div class="feed-title">${escapeHtml(commit.message)}</div><div class="feed-meta"><span style="font-family:var(--mono)">${escapeHtml(commit.id)}</span> · ${escapeHtml(commit.author)} · ${commit.fileCount} files · ${formatBytes(commit.totalBytes)}</div><div class="change-list"><span class="change added">+${commit.changes?.added?.length||0}</span><span class="change modified">~${commit.changes?.modified?.length||0}</span><span class="change deleted">−${commit.changes?.deleted?.length||0}</span></div></div><div><time class="feed-time">${formatDate(commit.timestamp)}</time><br><button class="btn warning" style="margin-top:8px" data-restore-id="${commit.id}">Restore</button></div></article>`).join(''):'<div class="editor-empty"><div><strong>No snapshots yet</strong>Create a snapshot to preserve the current repository state.</div></div>';
+      $('#commits').innerHTML=commits.length?commits.map(commit=>`<article class="feed-item"><div class="feed-symbol">◆</div><div><div class="feed-title">${escapeHtml(commit.message)}</div><div class="feed-meta"><span style="font-family:var(--mono)">${escapeHtml(commit.id)}</span> · ${escapeHtml(commit.author)} · ${commit.fileCount} files · ${formatBytes(commit.totalBytes)}</div><div class="change-list"><span class="change added">+${commit.changes?.added?.length||0}</span><span class="change modified">~${commit.changes?.modified?.length||0}</span><span class="change deleted">−${commit.changes?.deleted?.length||0}</span></div></div><div><time class="feed-time">${formatDate(commit.timestamp)}</time><br><button class="btn warning" style="margin-top:8px" data-restore-id="${commit.id}" ${isReadOnly()?'disabled title="Read-only repository"':''}>Restore</button></div></article>`).join(''):'<div class="editor-empty"><div><strong>No snapshots yet</strong>Create a snapshot to preserve the current repository state.</div></div>';
     }
 
     async function loadPullRequests(showToast=false) {
-      if(!appState.activeId || appState.record?.status!=='online'){appState.pullRequests=[];renderPullRequests();return;}
+      if(!appState.activeId || appState.record?.status!=='online'){appState.pullRequests=[];appState.reviewThreads=[];appState.conflictResolution=null;renderPullRequests();return;}
       try {
         const payload=await api(`${repoBase()}/pull-requests`);
         appState.pullRequests=payload.pullRequests||[];
         if(appState.selectedPr){
           const stillExists=appState.pullRequests.some(item=>item.id===appState.selectedPr.id);
-          if(stillExists) await selectPullRequest(appState.selectedPr.id,false); else appState.selectedPr=null;
+          if(stillExists) await selectPullRequest(appState.selectedPr.id,false); else {appState.selectedPr=null;appState.reviewThreads=[];appState.conflictResolution=null;}
         }
         renderPullRequests();
         if(showToast)toast('Pull requests refreshed.');
@@ -757,8 +1087,57 @@
       if(!appState.selectedPr)$('#pullRequestDetail').innerHTML='<div class="editor-empty"><div><strong>No pull request selected</strong>Create an invite or select an incoming pull request to review its exact changes.</div></div>';
     }
 
+    function reviewConversationPaths(pr) { return [...new Set([...(pr.files||[]).map(item=>item.path),...(pr.deletions||[]).map(item=>item.path)])].sort((a,b)=>a.localeCompare(b)); }
+    function reviewConversationEligible(pr) { return Boolean(pr&&['open','approved','changes_requested','conflict'].includes(pr.status)&&Number(pr.revision)>0); }
+    function reviewThreadMarkup(thread,pr) {
+      const range=thread.startLine?` · lines ${thread.startLine}${thread.endLine!==thread.startLine?`–${thread.endLine}`:''}`:'';
+      const excerpt=(thread.context?.excerpt||[]).map(line=>`${String(line.line).padStart(4,' ')} │ ${line.text}`).join('\n');
+      const comments=(thread.comments||[]).map(comment=>`<div class="review-thread-comment ${comment.authorRole}"><div class="review-thread-comment-head"><strong>${escapeHtml(comment.authorName)} · ${escapeHtml(comment.authorRole)}</strong><span>${escapeHtml(formatDate(comment.createdAt))}</span></div><div class="review-thread-comment-body">${escapeHtml(comment.body)}</div></div>`).join('');
+      const terminal=['merged','closed'].includes(pr.status);
+      const controls=!terminal?`<div class="review-thread-controls">${!thread.resolved?`<textarea class="textarea owner-review-reply-body" rows="2" maxlength="8000" placeholder="Reply as repository owner"></textarea>`:''}<div class="actions">${!thread.resolved?'<button class="btn" data-owner-review-reply type="button">Reply</button>':''}<button class="btn ${thread.resolved?'warning':''}" data-owner-review-state="${thread.resolved?'reopen':'resolve'}" type="button">${thread.resolved?'Reopen':'Resolve'}</button></div></div>`:'';
+      return `<article class="review-thread ${thread.resolved?'resolved':''} ${thread.outdated?'outdated':''}" data-review-thread-id="${escapeHtml(thread.id)}" data-review-thread-version="${thread.version}"><div class="review-thread-head"><div><div class="review-thread-path">${escapeHtml(thread.path)}${escapeHtml(range)}</div><div class="feed-meta">Revision ${thread.submittedRevision} · opened by ${escapeHtml(thread.createdByName)} · ${escapeHtml(formatDate(thread.createdAt))}</div></div><div class="review-thread-badges"><span class="review-thread-badge ${thread.resolved?'resolved':'open'}">${thread.resolved?'resolved':'open'}</span>${thread.outdated?'<span class="review-thread-badge outdated">outdated revision</span>':''}</div></div>${excerpt?`<pre class="review-thread-context">${escapeHtml(excerpt)}</pre>`:`<div class="feed-meta" style="padding:9px 11px;border-bottom:1px solid var(--line)">Immutable context · SHA-256 ${escapeHtml((thread.context?.sha256||'').slice(0,16))}${thread.context?.kind==='deletion'?' · deletion':''} · active rendering disabled</div>`}<div class="review-thread-comments">${comments||'<div class="feed-meta">No comments loaded.</div>'}</div>${controls}</article>`;
+    }
+    async function loadSelectedReviewThreads(showErrors=false) {
+      const pr=appState.selectedPr;
+      if(!reviewConversationEligible(pr)){appState.reviewThreads=[];return;}
+      try { const payload=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/review-threads?limit=100&commentLimit=100`); appState.reviewThreads=payload.threads||[]; }
+      catch(error){appState.reviewThreads=[];if(showErrors)toast(error.message,true);}
+    }
+    function conflictResolutionEligible(pr) { return Boolean(pr&&['open','approved','changes_requested','conflict'].includes(pr.status)&&(pr.conflicts||[]).length); }
+    async function loadSelectedConflictResolutions(showErrors=false) {
+      const pr=appState.selectedPr;
+      if(!conflictResolutionEligible(pr)){appState.conflictResolution=null;return;}
+      try { appState.conflictResolution=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/conflict-resolutions?content=1`); }
+      catch(error){appState.conflictResolution=null;if(showErrors)toast(error.message,true);}
+    }
+    function conflictEvidenceMarkup(label,item={}) {
+      const kind=item.kind||'unavailable',hash=(item.sha256||'').slice(0,16),size=Number(item.size||0);
+      const body=kind==='file'&&Object.prototype.hasOwnProperty.call(item,'textContent')
+        ? `<pre class="conflict-evidence-code">${escapeHtml(item.textContent)}</pre>`
+        : `<div class="conflict-evidence-meta">${kind==='absent'?'Path absent in this side of the comparison.':kind==='file'?`Binary or oversized evidence · ${formatBytes(size)}<br>SHA-256 ${escapeHtml(hash)}…<br>Active rendering disabled.`:'Verified evidence is unavailable; ForgeTrace will not allow this draft.'}</div>`;
+      return `<section class="conflict-evidence-pane"><div class="conflict-evidence-label"><span>${escapeHtml(label)}</span><span>${kind==='file'?formatBytes(size):escapeHtml(kind)}</span></div>${body}</section>`;
+    }
+    function conflictResolutionCardMarkup(item,pr) {
+      const draft=item.draft,terminal=['merged','closed'].includes(pr.status);
+      if(!draft)return `<article class="conflict-resolution-card"><div class="conflict-resolution-head"><div><div class="conflict-resolution-path">${escapeHtml(item.path)}</div><div class="conflict-resolution-meta">${escapeHtml(item.reason)} · immutable evidence has not been prepared</div></div><span class="review-thread-badge open">resolution required</span></div><div class="conflict-resolution-controls"><div class="conflict-resolution-result">Prepare a quarantine-side draft before choosing how this path should merge. No live repository bytes will be changed.</div></div></article>`;
+      const stale=(draft.staleReasons||[]).length||draft.status==='stale';
+      const evidence=draft.evidence||{};
+      const decision=draft.decision||'incoming';
+      const manualAllowed=Boolean(draft.inlineEligible);
+      const resolved=draft.resultKind?`<div class="conflict-resolution-result"><strong>Saved result:</strong> ${escapeHtml(draft.resultKind)}${draft.resolvedHash?` · SHA-256 ${escapeHtml(draft.resolvedHash.slice(0,16))}… · ${formatBytes(draft.resolvedSize)}`:''}<br>Status ${escapeHtml(draft.status)} · version ${draft.version}</div>`:'';
+      const controls=!terminal&&!stale&&draft.status!=='applied'?`<div class="conflict-resolution-controls"><div class="conflict-resolution-controls-grid"><div class="field"><label>Resolution decision</label><select class="select conflict-decision" data-conflict-decision><option value="current" ${decision==='current'?'selected':''}>Keep current repository version</option><option value="incoming" ${decision==='incoming'?'selected':''}>Accept submitted version</option><option value="manual" ${decision==='manual'?'selected':''} ${manualAllowed?'':'disabled'}>Manual text resolution</option><option value="delete" ${decision==='delete'?'selected':''}>Delete this path</option></select></div><div class="field conflict-manual-field ${decision==='manual'?'':'hidden'}"><label>Resolved text (stored only in quarantine)</label><textarea class="textarea conflict-manual-text" rows="8" maxlength="524288" ${manualAllowed?'':'disabled'}>${escapeHtml(decision==='manual'?(evidence.resolvedTextContent||''):'')}</textarea></div></div>${resolved}<div class="actions"><button class="btn" data-conflict-save type="button">Save decision</button><button class="btn primary" data-conflict-confirm type="button" ${!draft.decision||draft.status==='confirmed'?'disabled':''}>${draft.status==='confirmed'?'Confirmed':'Confirm resolution'}</button></div></div>`:`<div class="conflict-resolution-controls">${resolved}${stale?`<div class="conflict-resolution-result"><strong>Stale draft:</strong> ${escapeHtml((draft.staleReasons||[]).join(', ')||'binding changed')}. Prepare fresh evidence before approval.</div>`:''}</div>`;
+      return `<article class="conflict-resolution-card ${stale?'stale':''}" data-conflict-draft-id="${escapeHtml(draft.id)}" data-conflict-draft-version="${draft.version}"><div class="conflict-resolution-head"><div><div class="conflict-resolution-path">${escapeHtml(item.path)}</div><div class="conflict-resolution-meta">${escapeHtml(item.reason)} · revision ${draft.submittedRevision} · repository ${escapeHtml(draft.repositoryDigest.slice(0,12))}…${item.renameFrom?` · rename from ${escapeHtml(item.renameFrom)}`:''}${item.renameTo?` · rename to ${escapeHtml(item.renameTo)}`:''}</div></div><span class="review-thread-badge ${draft.status==='confirmed'||draft.status==='applied'?'resolved':'open'}">${escapeHtml(draft.status)}</span></div><div class="conflict-evidence-grid">${conflictEvidenceMarkup('Base',evidence.base)}${conflictEvidenceMarkup('Current',evidence.current)}${conflictEvidenceMarkup('Submitted',evidence.incoming)}</div>${controls}</article>`;
+    }
+    function conflictResolutionMarkup(pr) {
+      const model=appState.conflictResolution;
+      if(!(pr.conflicts||[]).length)return '';
+      if(!model)return '<div class="review-thread-empty">Conflict evidence could not be loaded. Refresh before reviewing or approving.</div>';
+      const requiresPrepare=(model.conflicts||[]).some(item=>!item.draft||item.draft.status==='stale'||(item.draft.staleReasons||[]).length);
+      return `<div class="security-banner conflict-banner"><strong>Quarantine-only resolution authority.</strong><br>Base, current, submitted, and resolved bytes remain outside the live workspace. ForgeTrace revalidates the full repository digest, pull-request revision, review gate, access mode, hashes, and security ledger under the repository lock immediately before transactional merge.</div><div class="review-conversation-summary"><span class="meta-chip">${model.conflictCount||0} conflicts</span><span class="meta-chip">${model.confirmedConflictCount||0} confirmed</span><span class="meta-chip" style="color:${model.complete?'var(--success)':'var(--warning)'}">${model.complete?'ready for approval':'resolution required'}</span></div>${requiresPrepare?'<div class="actions"><button class="btn primary" data-conflict-prepare type="button">Prepare current conflict evidence</button></div>':''}<div class="conflict-resolution-list">${(model.conflicts||[]).map(item=>conflictResolutionCardMarkup(item,pr)).join('')}</div>`;
+    }
+
     async function selectPullRequest(id,showErrors=true) {
-      try { appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(id)}`); renderPullRequests(); renderPullRequestDetail(); }
+      try { appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(id)}`); appState.reviewThreads=[]; appState.conflictResolution=null; await Promise.all([loadSelectedReviewThreads(showErrors),loadSelectedConflictResolutions(showErrors)]); renderPullRequests(); renderPullRequestDetail(); }
       catch(error){if(showErrors)toast(error.message,true);}
     }
 
@@ -768,40 +1147,89 @@
       const conflicts=(pr.conflicts||[]).map(item=>`<div class="review-card"><strong>${escapeHtml(item.path)}</strong><br>${escapeHtml(item.reason)}<br><span style="font-family:var(--mono)">base ${escapeHtml((item.baseHash||'new').slice(0,12))} · current ${escapeHtml((item.currentHash||'missing').slice(0,12))}</span></div>`).join('');
       const files=(pr.files||[]).map(file=>`<article class="diff-card"><div class="diff-head"><span>${escapeHtml(file.path)}</span><span>${file.risky?'<strong style="color:var(--warning)">RISKY FILE</strong> · ':''}${formatBytes(file.size)}</span></div>${file.diff?`<pre class="diff">${escapeHtml(file.diff)}</pre>`:`<div class="feed-meta" style="padding:14px">Binary, large, or unchanged text preview. SHA-256: <span style="font-family:var(--mono)">${escapeHtml(file.sha256)}</span></div>`}</article>`).join('');
       const deletions=(pr.deletions||[]).map(item=>`<article class="diff-card"><div class="diff-head"><span>${escapeHtml(item.path)}</span><strong style="color:var(--danger)">DELETE</strong></div><div class="feed-meta" style="padding:14px">This baseline file will be deleted only if the pull request is merged locally.</div></article>`).join('');
-      const reviews=(pr.reviews||[]).map(review=>`<div class="review-card"><strong>${escapeHtml(review.reviewer)}</strong> · ${escapeHtml(review.verdict.replaceAll('_',' '))}<br>${escapeHtml(review.comment||'No comment')}<br><span class="feed-time">${formatDate(review.created_at)}</span></div>`).join('')||'<div class="feed-meta">No reviews yet.</div>';
-      const reviewable=['open','approved','changes_requested'].includes(pr.status);const mergeable=pr.status==='approved'&&!(pr.conflicts||[]).length;
+      const reviews=(pr.reviews||[]).map(review=>`<div class="review-card"><strong>${escapeHtml(review.reviewer)}</strong> · ${escapeHtml(review.verdict.replaceAll('_',' '))}<br>${escapeHtml(review.comment||'No comment')}<br><span class="feed-time">${formatDate(review.created_at)}</span></div>`).join('')||'<div class="feed-meta">No broad reviews yet.</div>';
+      const summary=pr.reviewConversation||{};
+      const unresolvedCurrent=Number(summary.unresolvedCurrentRevisionCount||0);
+      const resolutionRequired=Boolean((pr.conflicts||[]).length);
+      const resolutionComplete=!resolutionRequired||Boolean(appState.conflictResolution?.complete);
+      const reviewable=['open','approved','changes_requested','conflict'].includes(pr.status);
+      const mergeable=pr.status==='approved'&&resolutionComplete&&!isReadOnly()&&!unresolvedCurrent;
+      const paths=reviewConversationPaths(pr);
+      const threadCreate=reviewConversationEligible(pr)&&paths.length?`<div class="review-conversation-create"><div class="review-conversation-grid"><div class="field"><label for="ownerReviewPath">Submitted path</label><select class="select" id="ownerReviewPath">${paths.map(path=>`<option value="${escapeHtml(path)}">${escapeHtml(path)}</option>`).join('')}</select></div><div class="field"><label for="ownerReviewStartLine">Start line</label><input class="input" id="ownerReviewStartLine" type="number" min="1" placeholder="Optional"></div><div class="field"><label for="ownerReviewEndLine">End line</label><input class="input" id="ownerReviewEndLine" type="number" min="1" placeholder="Optional"></div></div><div class="field" style="margin-top:8px"><label for="ownerReviewBody">Start a revision-bound thread</label><textarea class="textarea" id="ownerReviewBody" rows="3" maxlength="8000" placeholder="Describe the exact issue, question, or required change"></textarea></div><label class="checkbox" style="margin-top:9px"><input id="ownerReviewRequestChanges" type="checkbox"> Mark the pull request as changes requested</label><div class="actions" style="margin-top:9px"><button class="btn" data-owner-review-create type="button">Start thread</button></div></div>`:'';
+      const threadList=(appState.reviewThreads||[]).map(thread=>reviewThreadMarkup(thread,pr)).join('')||'<div class="review-thread-empty">No inline review threads yet.</div>';
       $('#pullRequestDetail').innerHTML=`
         <div class="repo-title-row"><h2>#${pr.number} ${escapeHtml(pr.title)}</h2><span class="pr-status ${status}">${escapeHtml(status.replaceAll('_',' '))}</span></div>
         <div class="feed-meta">Opened by ${escapeHtml(pr.authorName)} · base snapshot <span style="font-family:var(--mono)">${escapeHtml(pr.baseCommitId)}</span> · revision ${pr.revision}</div>
         <p style="color:var(--muted);line-height:1.55">${escapeHtml(pr.description||'No description provided.')}</p>
         <div class="pr-summary"><span class="meta-chip">${pr.fileCount} uploads</span><span class="meta-chip">${pr.deletionCount} deletions</span><span class="meta-chip">${formatBytes(pr.totalBytes)}</span>${pr.riskyFileCount?`<span class="meta-chip" style="color:var(--warning)">${pr.riskyFileCount} risky files</span>`:''}</div>
         <div class="security-banner">The files below are in ForgeTrace’s application-data quarantine, not the live repository. Merge creates a safety snapshot, rechecks baseline hashes, applies changes under the repository lock, and creates a merge snapshot.</div>
+        ${isReadOnly()?'<div class="security-banner conflict-banner" style="margin-top:10px"><strong>Merge is blocked by repository policy.</strong> Review and quarantine remain available, but no pull request can mutate this repository until the owner returns it to read-write mode.</div>':''}
         ${(pr.conflicts||[]).length?`<div class="security-banner conflict-banner" style="margin-top:10px"><strong>Merge conflict detected.</strong> The owner changed one or more affected paths after this pull request began.${conflicts}</div>`:''}
-        <div class="actions" style="margin-top:12px">${reviewable?'<button class="btn primary" data-pr-review="approved">Approve</button><button class="btn warning" data-pr-review="changes_requested">Request changes</button><button class="btn" data-pr-review="comment">Comment</button>':''}${mergeable?'<button class="btn primary" data-pr-merge>Merge locally</button>':''}${!['merged','closed'].includes(pr.status)?'<button class="btn danger" data-pr-close>Close</button>':''}</div>
+        ${unresolvedCurrent?`<div class="security-banner conflict-banner" style="margin-top:10px"><strong>${unresolvedCurrent} unresolved current-revision thread${unresolvedCurrent===1?'':'s'}.</strong> Approval and merge remain blocked until each is resolved or the contributor submits a newer revision.</div>`:''}
+        <div class="actions" style="margin-top:12px">${reviewable?`<button class="btn primary" data-pr-review="approved" ${unresolvedCurrent||!resolutionComplete?`disabled title="${unresolvedCurrent?'Resolve current-revision threads':'Confirm every current conflict resolution'} before approval"`:''}>Approve</button><button class="btn warning" data-pr-review="changes_requested">Request changes</button><button class="btn" data-pr-review="comment">Broad comment</button>`:''}${mergeable?'<button class="btn primary" data-pr-merge>Merge locally</button>':''}${!['merged','closed'].includes(pr.status)?'<button class="btn danger" data-pr-close>Close</button>':''}</div>
+        ${resolutionRequired?`<h3 style="margin-top:20px">Visual conflict resolution</h3>${conflictResolutionMarkup(pr)}`:''}
+        <h3 style="margin-top:20px">Inline review conversations</h3><div class="feed-meta">Every thread is pinned to immutable quarantined bytes from one submitted revision. Historical threads remain visible and never retarget to newer code.</div><div class="review-conversation-summary"><span class="meta-chip">${summary.threadCount||0} threads</span><span class="meta-chip">${summary.commentCount||0} comments</span><span class="meta-chip" style="color:${unresolvedCurrent?'var(--warning)':'var(--success)'}">${unresolvedCurrent} unresolved on revision ${pr.revision}</span></div>${threadCreate}<div class="review-thread-list">${threadList}</div>
         <h3 style="margin-top:20px">Changes</h3>${files}${deletions||''}${!files&&!deletions?'<div class="editor-empty"><div>No staged changes.</div></div>':''}
-        <h3 style="margin-top:20px">Reviews</h3>${reviews}`;
+        <h3 style="margin-top:20px">Broad review history</h3>${reviews}`;
+    }
+
+    async function createOwnerReviewThread() {
+      const pr=appState.selectedPr;if(!pr)return;
+      const body=$('#ownerReviewBody')?.value.trim(),path=$('#ownerReviewPath')?.value;
+      if(!body||!path){toast('Choose a submitted path and enter a review comment.',true);return;}
+      try { await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/review-threads`,{method:'POST',body:{actorName:author(),body,path,submittedRevision:pr.revision,expectedPullRequestRevision:pr.revision,startLine:$('#ownerReviewStartLine').value||null,endLine:$('#ownerReviewEndLine').value||null,requestChanges:$('#ownerReviewRequestChanges').checked}}); await loadPullRequests(false); toast('Revision-bound review thread created.'); }
+      catch(error){toast(error.message,true);await selectPullRequest(pr.id,false);}
+    }
+    async function replyOwnerReviewThread(button) {
+      const pr=appState.selectedPr,card=button.closest('[data-review-thread-id]'),body=card?.querySelector('.owner-review-reply-body')?.value.trim();if(!pr||!card||!body){toast('Enter a reply first.',true);return;}
+      try { await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/review-threads/${encodeURIComponent(card.dataset.reviewThreadId)}/comments`,{method:'POST',body:{actorName:author(),body,expectedVersion:Number(card.dataset.reviewThreadVersion)}}); await selectPullRequest(pr.id,false); toast('Review reply added.'); }
+      catch(error){toast(error.message,true);await selectPullRequest(pr.id,false);}
+    }
+    async function setOwnerReviewThreadState(button) {
+      const pr=appState.selectedPr,card=button.closest('[data-review-thread-id]'),action=button.dataset.ownerReviewState;if(!pr||!card||!['resolve','reopen'].includes(action))return;
+      try { await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/review-threads/${encodeURIComponent(card.dataset.reviewThreadId)}/${action}`,{method:'POST',body:{actorName:author(),expectedVersion:Number(card.dataset.reviewThreadVersion)}}); await loadPullRequests(false); toast(`Review thread ${action==='resolve'?'resolved':'reopened'}.`); }
+      catch(error){toast(error.message,true);await selectPullRequest(pr.id,false);}
+    }
+
+    async function prepareConflictResolutions() {
+      const pr=appState.selectedPr;if(!pr)return;
+      try { appState.conflictResolution=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/conflict-resolutions`,{method:'POST',body:{actorName:author(),expectedPullRequestRevision:pr.revision}}); renderPullRequestDetail(); toast('Current conflict evidence prepared in quarantine.'); }
+      catch(error){toast(error.message,true);await selectPullRequest(pr.id,false);}
+    }
+    async function saveConflictResolution(button) {
+      const pr=appState.selectedPr,card=button.closest('[data-conflict-draft-id]');if(!pr||!card)return;
+      const decision=card.querySelector('[data-conflict-decision]')?.value||'';
+      const manualText=decision==='manual'?card.querySelector('.conflict-manual-text')?.value:null;
+      try { await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/conflict-resolutions/${encodeURIComponent(card.dataset.conflictDraftId)}/decision`,{method:'POST',body:{actorName:author(),decision,manualText,expectedVersion:Number(card.dataset.conflictDraftVersion)}}); await selectPullRequest(pr.id,false); toast('Conflict decision saved in quarantine.'); }
+      catch(error){toast(error.message,true);await selectPullRequest(pr.id,false);}
+    }
+    async function confirmConflictResolution(button) {
+      const pr=appState.selectedPr,card=button.closest('[data-conflict-draft-id]');if(!pr||!card)return;
+      if(!confirm('Confirm this resolution against the preserved evidence? Any repository, review, mode, or revision change will invalidate it before merge.'))return;
+      try { await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/conflict-resolutions/${encodeURIComponent(card.dataset.conflictDraftId)}/confirm`,{method:'POST',body:{actorName:author(),expectedVersion:Number(card.dataset.conflictDraftVersion)}}); await selectPullRequest(pr.id,false); toast('Conflict resolution confirmed.'); }
+      catch(error){toast(error.message,true);await selectPullRequest(pr.id,false);}
     }
 
     async function reviewPullRequest(verdict) {
       const pr=appState.selectedPr;if(!pr)return;const promptText=verdict==='approved'?'Approval note (optional):':verdict==='changes_requested'?'What must the contributor change?':'Review comment:';const comment=prompt(promptText,'');if(comment===null)return;
-      try{appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/review`,{method:'POST',body:{reviewer:author(),verdict,comment}});await loadPullRequests(false);renderPullRequestDetail();toast(`Review recorded: ${verdict.replaceAll('_',' ')}.`);}catch(error){toast(error.message,true);}
+      try{appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/review`,{method:'POST',body:{reviewer:author(),verdict,comment,expectedRevision:pr.revision}});await loadPullRequests(false);toast(`Review recorded: ${verdict.replaceAll('_',' ')}.`);}catch(error){toast(error.message,true);await selectPullRequest(pr.id,false);}
     }
 
-    async function mergePullRequest() {
+    async function mergePullRequest() { if(!requireWritableUi('merge pull requests'))return;
       const pr=appState.selectedPr;if(!pr)return;const phrase=`MERGE #${pr.number}`;const confirmation=prompt(`Type ${phrase} to merge this quarantined change set into the local repository:`);if(confirmation===null)return;const allowRisky=pr.riskyFileCount?confirm(`This pull request contains ${pr.riskyFileCount} executable or script-like file(s). ForgeTrace will not run them. Approve these files for merge?`):false;
       try{appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/merge`,{method:'POST',body:{mergedBy:author(),confirmation,expectedRevision:pr.revision,allowRiskyFiles:allowRisky}});await loadRepositories(appState.activeId);appState.tab='pullrequests';setTab('pullrequests');toast(`Pull request #${pr.number} merged with a safety snapshot.`);}catch(error){toast(error.message,true);await selectPullRequest(pr.id,false);}
     }
 
-    async function closePullRequest() { const pr=appState.selectedPr;if(!pr||!confirm(`Close pull request #${pr.number} without merging?`))return;try{appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/close`,{method:'POST'});await loadPullRequests(false);renderPullRequestDetail();toast(`Pull request #${pr.number} closed.`);}catch(error){toast(error.message,true);} }
+    async function closePullRequest() { const pr=appState.selectedPr;if(!pr||!confirm(`Close pull request #${pr.number} without merging?`))return;try{appState.selectedPr=await api(`${repoBase()}/pull-requests/${encodeURIComponent(pr.id)}/close`,{method:'POST'});await loadPullRequests(false);toast(`Pull request #${pr.number} closed.`);}catch(error){toast(error.message,true);} }
 
     function renderSharingStatus(){const gateway=appState.gateway||{enabled:false};const enabled=Boolean(gateway.enabled);$('#gatewayStatusPill').textContent=enabled?'On':'Off';$('#gatewayStatusPill').className=`gateway-status ${enabled?'on':'off'}`;$('#gatewayOffControls').classList.toggle('hidden',enabled);$('#gatewayOnControls').classList.toggle('hidden',!enabled);$('#createInviteBtn').textContent=enabled?'Generate secure token link':'Enable sharing + generate token link';if(enabled){const base=gateway.publicBaseUrl||gateway.baseUrls?.[0]||'';$('#gatewayStatusText').textContent=`Restricted contributor listener is active on port ${gateway.port}. Owner APIs remain unreachable from this port.`;$('#gatewayBaseUrl').textContent=base||'Sharing is active, but ForgeTrace could not detect a LAN address. Add a custom VPN/tunnel address below.';$('#gatewayPort').value=gateway.port||8766;}else{$('#gatewayStatusText').textContent='Sharing is off. No contributor listener is accepting network connections.';$('#gatewayBaseUrl').textContent='';}}
     async function loadSharingStatus(){appState.gateway=await api('/api/v1/sharing');renderSharingStatus();return appState.gateway;}
     async function startSharing(showMessage=true){const port=Number($('#gatewayPort').value||8766);appState.gateway=await api('/api/v1/sharing/start',{method:'POST',body:{port}});renderSharingStatus();if(showMessage)toast('Secure contribution sharing enabled.');return appState.gateway;}
     async function stopSharing(){if(!confirm('Stop accepting contributor connections? Existing invitations and pull requests remain stored, but links will be unreachable until sharing is enabled again.'))return;try{appState.gateway=await api('/api/v1/sharing/stop',{method:'POST',body:{}});renderSharingStatus();toast('Contribution sharing stopped.');}catch(error){toast(error.message,true);}}
     function sharingBaseUrl(){const override=$('#shareAddressOverride').value.trim().replace(/\/$/,'');if(override){localStorage.setItem('forgetrace-share-override',override);return override;}localStorage.removeItem('forgetrace-share-override');const detected=appState.gateway?.publicBaseUrl||appState.gateway?.baseUrls?.[0]||'';if(!detected)throw new Error('Sharing is running, but no LAN address was detected. Open Advanced and enter a private VPN or tunnel base URL.');return detected.replace(/\/$/,'');}
-    async function openCollaboration() { if(!appState.activeId)return;$('#inviteAllowSensitiveSource').checked=false;$('#shareAddressOverride').value=localStorage.getItem('forgetrace-share-override')||'';$('#createdInviteCard').classList.add('hidden');openModal('collaborationModalBackdrop');try{await Promise.all([loadInvites(),loadSharingStatus()]);}catch(error){toast(error.message,true);} }
+    async function openCollaboration() { if(!appState.activeId)return;$('#inviteAllowSensitiveSource').checked=false;$('#inviteAllowProject').checked=false;$('#shareAddressOverride').value=localStorage.getItem('forgetrace-share-override')||'';$('#createdInviteCard').classList.add('hidden');openModal('collaborationModalBackdrop');try{await Promise.all([loadInvites(),loadSharingStatus()]);}catch(error){toast(error.message,true);} }
     async function loadInvites(){try{const result=await api(`${repoBase()}/collaboration/invites`);appState.invites=result.invites||[];renderInvites();}catch(error){toast(error.message,true);} }
-    function renderInvites(){const list=appState.invites||[];$('#inviteList').innerHTML=list.length?list.map(item=>`<div class="invite-row"><div><strong>${escapeHtml(item.label||'Unnamed invite')}</strong><div class="feed-meta">${item.active?'Active':item.revoked?'Revoked':item.expired?'Expired':'Exhausted'} · ${item.uses}/${item.maxUses} used · expires ${formatDate(item.expiresAt)} · ${formatBytes(item.maxFileBytes)} per file · source ${item.allowSourceDownload?'enabled':'blocked'}</div></div>${item.active?`<button class="btn danger" data-revoke-invite="${item.id}">Revoke</button>`:''}</div>`).join(''):'<div class="feed-meta" style="padding:12px 0">No invitations created for this repository.</div>';}
+    function renderInvites(){const list=appState.invites||[];$('#inviteList').innerHTML=list.length?list.map(item=>`<div class="invite-row"><div><strong>${escapeHtml(item.label||'Unnamed invite')}</strong><div class="feed-meta">${item.active?'Active':item.revoked?'Revoked':item.expired?'Expired':'Exhausted'} · ${item.uses}/${item.maxUses} used · expires ${formatDate(item.expiresAt)} · ${formatBytes(item.maxFileBytes)} per file · source ${item.allowSourceDownload?'enabled':'blocked'} · project ${item.allowProjectParticipation?'enabled':'blocked'}</div></div>${item.active?`<button class="btn danger" data-revoke-invite="${item.id}">Revoke</button>`:''}</div>`).join(''):'<div class="feed-meta" style="padding:12px 0">No invitations created for this repository.</div>';}
     async function createInvite(event){
       event.preventDefault();
       try{
@@ -826,6 +1254,7 @@
           allowDeletes:$('#inviteAllowDeletes').checked,
           allowSourceDownload:allowSource,
           allowSensitiveSource:allowSensitive,
+          allowProjectParticipation:$('#inviteAllowProject').checked,
         }});
         const link=`${base}${result.sharePath}`;
         $('#createdInviteLink').value=link;
@@ -837,7 +1266,94 @@
     async function copyInvite(){try{await navigator.clipboard.writeText($('#createdInviteLink').value);toast('Invite link copied.');}catch{ $('#createdInviteLink').select();document.execCommand('copy');toast('Invite link copied.');}}
     async function revokeInvite(id){if(!confirm('Revoke this invitation? Existing pull requests remain reviewable, but the token can no longer create new requests.'))return;try{await api(`${repoBase()}/collaboration/invites/${encodeURIComponent(id)}`,{method:'DELETE'});await loadInvites();toast('Invite revoked.');}catch(error){toast(error.message,true);}}
 
-    function setTab(name) { appState.tab=name; $$('.tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===name)); $$('.tab-panel').forEach(panel=>panel.classList.toggle('hidden',panel.id!==`tab-${name}`)); }
+
+    function projectResource(kind=appState.project.kind){return kind==='discussion'?'discussions':'issues';}
+    function renderProjectStats(){const c=appState.project.overview?.counts||{};$('#projectStats').innerHTML=[['Open issues',c.issueOpen||0],['Closed issues',c.issueClosed||0],['Open discussions',c.discussionOpen||0],['Closed discussions',c.discussionClosed||0]].map(([label,value])=>`<div class="project-stat"><strong>${Number(value)}</strong><span>${label}</span></div>`).join('');$('#projectTabCount').textContent=(Number(c.issueOpen||0)+Number(c.discussionOpen||0))?`(${Number(c.issueOpen||0)+Number(c.discussionOpen||0)})`:'';}
+    function renderProjectList(){const selected=appState.project.selected;$('#projectList').innerHTML=appState.project.items.length?appState.project.items.map(item=>`<button class="project-item ${selected?.id===item.id?'active':''}" data-project-item="${escapeHtml(item.id)}"><strong>${item.pinned?'◆ ':''}#${item.number} ${escapeHtml(item.title)}</strong><div class="project-item-meta">${escapeHtml(item.state)} · ${item.commentCount} comment${item.commentCount===1?'':'s'} · updated ${escapeHtml(formatDate(item.updatedAt))}</div><div>${(item.labels||[]).map(label=>`<span class="project-label" style="border-color:${escapeHtml(label.color)}">${escapeHtml(label.name)}</span>`).join('')}</div></button>`).join(''):'<div class="editor-empty"><div><strong>No project items</strong>Create the first item for this repository.</div></div>';}
+    function renderProjectDetail(){const item=appState.project.selected,host=$('#projectDetail');if(!item){host.innerHTML='<div class="editor-empty"><div><strong>Project workspace</strong>Select an issue or discussion, or create a new one.</div></div>';return;}const labels=appState.project.overview?.labels||[],milestones=appState.project.overview?.milestones||[];const selectedLabels=new Set((item.labels||[]).map(label=>label.id));const comments=(item.comments||[]).map(comment=>`<article class="project-comment" data-comment-id="${escapeHtml(comment.id)}" data-comment-version="${comment.version}"><div class="project-comment-head"><span>${escapeHtml(comment.authorName)} · ${escapeHtml(comment.authorRole)} · ${escapeHtml(formatDate(comment.createdAt))}</span><span>${comment.hidden?'moderated':item.acceptedCommentId===comment.id?'accepted answer':''}</span></div><div class="project-comment-body">${comment.bodyHtml}</div><div class="project-detail-actions" style="padding:0 10px 10px">${item.kind==='discussion'&&!comment.hidden&&item.acceptedCommentId!==comment.id?'<button class="btn" data-project-accept>Accept answer</button>':''}${!comment.hidden?'<button class="btn danger" data-project-moderate>Moderate</button>':''}</div></article>`).join('');host.innerHTML=`<div class="project-detail-head"><div><div class="eyebrow">${escapeHtml(item.kind)} #${item.number}</div><h2 style="margin:5px 0">${escapeHtml(item.title)}</h2><div class="repo-path">${escapeHtml(item.authorName)} · ${escapeHtml(formatDate(item.createdAt))} · version ${item.version}</div></div><div class="project-detail-actions"><button class="btn" data-project-edit>Edit</button><button class="btn" data-project-state>${item.state==='open'?'Close':'Reopen'}</button><button class="btn" data-project-lock>${item.locked?'Unlock':'Lock'}</button><button class="btn" data-project-pin>${item.pinned?'Unpin':'Pin'}</button><button class="btn danger" data-project-delete>Delete</button></div></div><div class="project-body">${item.bodyHtml||'<span class="repo-path">No description.</span>'}</div><div class="project-meta-grid"><div class="field"><label>Assignee</label><input class="input" id="projectAssignee" value="${escapeHtml(item.assignee||'')}"></div><div class="field"><label>Due date</label><input class="input" id="projectDueAt" type="datetime-local" value="${item.dueAt?escapeHtml(item.dueAt.slice(0,16)):''}"></div><div class="field"><label>Milestone</label><select class="select" id="projectMilestone"><option value="">No milestone</option>${milestones.map(m=>`<option value="${m.id}" ${item.milestone?.id===m.id?'selected':''}>${escapeHtml(m.title)}</option>`).join('')}</select></div><div class="field"><label>Labels</label><div class="project-label-options">${labels.map(label=>`<label class="check"><input type="checkbox" data-project-label="${label.id}" ${selectedLabels.has(label.id)?'checked':''}><span>${escapeHtml(label.name)}</span></label>`).join('')||'<span class="repo-path">No labels yet.</span>'}</div></div></div><div class="project-detail-actions" style="justify-content:flex-start"><button class="btn" data-project-save-meta>Save assignment and labels</button></div><h3 style="margin:20px 0 8px">Conversation</h3>${comments||'<div class="repo-path">No comments yet.</div>'}${item.locked?'<div class="security-banner" style="margin-top:14px">This item is locked. Contributors cannot add comments.</div>':`<div class="project-comment-compose"><textarea class="code-editor" id="projectCommentBody" style="min-height:100px" maxlength="8000" placeholder="Add an inert Markdown comment"></textarea><button class="btn primary" data-project-comment>Add comment</button></div>`}`;}
+    function renderProjectWorkspace(){renderProjectStats();renderProjectList();renderProjectDetail();const kind=$('#projectKind').value||appState.project.kind;$('#projectNewBtn').textContent=`New ${kind}`;}
+    async function loadProjectWorkspace(showMessage=false){if(!appState.activeId)return;appState.project.loading=true;try{appState.project.kind=$('#projectKind')?.value||appState.project.kind||'issue';const resource=projectResource();const [overview,list]=await Promise.all([api(`${repoBase()}/project`),api(`${repoBase()}/project/${resource}?state=${encodeURIComponent($('#projectState')?.value||'')}&query=${encodeURIComponent($('#projectSearch')?.value||'')}&limit=100`)]);appState.project.overview=overview;appState.project.items=list.items||[];appState.project.repositoryId=appState.activeId;if(appState.project.selected&&!appState.project.items.some(item=>item.id===appState.project.selected.id))appState.project.selected=null;if(showMessage)toast('Project workspace refreshed.');}catch(error){toast(error.message,true);}finally{appState.project.loading=false;renderProjectWorkspace();}}
+    async function selectProjectItem(id){const summary=appState.project.items.find(item=>item.id===id);if(!summary)return;try{appState.project.selected=await api(`${repoBase()}/project/${summary.kind==='discussion'?'discussions':'issues'}/${encodeURIComponent(id)}?commentLimit=100`);renderProjectWorkspace();}catch(error){toast(error.message,true);}}
+    async function createProjectItem(){const kind=$('#projectKind').value||'issue';const title=prompt(`New ${kind} title:`);if(!title)return;const body=prompt('Description (inert Markdown; optional):','')??'';try{const item=await api(`${repoBase()}/project/${projectResource(kind)}`,{method:'POST',body:{title,body,authorName:author()}});appState.project.selected=item;await loadProjectWorkspace();await selectProjectItem(item.id);toast(`${kind[0].toUpperCase()+kind.slice(1)} #${item.number} created.`);}catch(error){toast(error.message,true);}}
+    async function createProjectLabel(){const name=prompt('Label name:');if(!name)return;const color=prompt('Six-digit label color:','#6e7681')||'#6e7681';try{await api(`${repoBase()}/project/labels`,{method:'POST',body:{name,color,actor:author()}});await loadProjectWorkspace();toast('Label created.');}catch(error){toast(error.message,true);}}
+    async function createProjectMilestone(){const title=prompt('Milestone title:');if(!title)return;const dueAt=prompt('Due date in ISO format (optional):','')||'';try{await api(`${repoBase()}/project/milestones`,{method:'POST',body:{title,dueAt,actor:author()}});await loadProjectWorkspace();toast('Milestone created.');}catch(error){toast(error.message,true);}}
+    async function updateSelectedProject(changes,message='Project item updated.'){const item=appState.project.selected;if(!item)return;try{appState.project.selected=await api(`${repoBase()}/project/${item.kind==='discussion'?'discussions':'issues'}/${encodeURIComponent(item.id)}`,{method:'PUT',body:{expectedVersion:item.version,actor:author(),...changes}});await loadProjectWorkspace();await selectProjectItem(item.id);toast(message);}catch(error){toast(error.message,true);await selectProjectItem(item.id);}}
+    async function addProjectComment(){const body=$('#projectCommentBody')?.value.trim(),item=appState.project.selected;if(!body||!item)return;try{appState.project.selected=await api(`${repoBase()}/project/${item.kind==='discussion'?'discussions':'issues'}/${encodeURIComponent(item.id)}/comments`,{method:'POST',body:{body,expectedVersion:item.version,authorName:author()}});await loadProjectWorkspace();await selectProjectItem(item.id);toast('Comment added.');}catch(error){toast(error.message,true);}}
+    async function projectDetailAction(button){const item=appState.project.selected;if(!item)return;if(button.matches('[data-project-edit]')){const title=prompt('Title:',item.title);if(!title)return;const body=prompt('Description:',item.body||'');if(body===null)return;return updateSelectedProject({title,body});}if(button.matches('[data-project-state]'))return updateSelectedProject({state:item.state==='open'?'closed':'open'});if(button.matches('[data-project-lock]'))return updateSelectedProject({locked:!item.locked});if(button.matches('[data-project-pin]'))return updateSelectedProject({pinned:!item.pinned});if(button.matches('[data-project-save-meta]')){const labelIds=[...document.querySelectorAll('[data-project-label]:checked')].map(node=>node.dataset.projectLabel);const due=$('#projectDueAt').value;return updateSelectedProject({assignee:$('#projectAssignee').value,milestoneId:$('#projectMilestone').value,labelIds,dueAt:due?new Date(due).toISOString():''});}if(button.matches('[data-project-comment]'))return addProjectComment();if(button.matches('[data-project-delete]')){if(!confirm(`Delete ${item.kind} #${item.number}? It will be soft-deleted and retained for recovery.`))return;try{await api(`${repoBase()}/project/${projectResource(item.kind)}/${encodeURIComponent(item.id)}?actor=${encodeURIComponent(author())}&reason=${encodeURIComponent('Deleted from owner project workspace')}`,{method:'DELETE'});appState.project.selected=null;await loadProjectWorkspace();toast('Project item deleted.');}catch(error){toast(error.message,true);}return;}const comment=button.closest('.project-comment');if(comment&&button.matches('[data-project-accept]'))return updateSelectedProject({acceptedCommentId:comment.dataset.commentId},'Accepted answer updated.');if(comment&&button.matches('[data-project-moderate]')){const reason=prompt('Moderation reason:');if(!reason)return;try{await api(`${repoBase()}/project/comments/${encodeURIComponent(comment.dataset.commentId)}/moderate`,{method:'POST',body:{expectedVersion:Number(comment.dataset.commentVersion),actor:author(),reason}});await selectProjectItem(item.id);toast('Comment moderated.');}catch(error){toast(error.message,true);}}}
+
+
+    function gitChangeLabel(item){const codes=[];if(item.index&&item.index!=='.'&&item.index!=='?')codes.push(`index ${item.index}`);if(item.worktree&&item.worktree!=='.')codes.push(`worktree ${item.worktree}`);if(item.kind==='untracked')codes.push('untracked');return codes.join(' · ')||item.kind||'changed';}
+    function gitWriteReceiptRows(status){const receipts=status?.receipts||[];if(!receipts.length)return '<div class="git-muted">No transactional Git write receipts yet.</div>';return receipts.slice(0,8).map(item=>{const result=item.details?.result||{};const label=result.operation||item.operation||'write';const detail=result.commitOid?` · ${String(result.commitOid).slice(0,12)}`:result.ref?` · ${result.ref}`:result.paths?` · ${result.paths.length} path${result.paths.length===1?'':'s'}`:'';return `<div class="git-receipt"><strong>${escapeHtml(label.replaceAll('_',' '))}</strong><div class="git-row-meta"><span>${escapeHtml(item.outcome||'unknown')}${item.verified?' · receipt verified':' · receipt verification failed'}</span><span>${escapeHtml(formatDate(item.createdAt||item.committedAt||''))}</span><code>${escapeHtml(String(item.transactionId||'').slice(0,20))}</code></div><div class="git-muted">${escapeHtml(detail)}</div></div>`}).join('');}
+    function gitWriteRecoveryRows(status){const pending=status?.pendingTransactions||[],warnings=status?.maintenanceWarnings||[],unassigned=status?.unassignedTransactions||[];if(!pending.length&&!warnings.length&&!unassigned.length)return '';const transactions=pending.map(item=>`<div class="git-receipt"><strong>${escapeHtml((item.operation||'transaction').replaceAll('_',' '))} · ${escapeHtml(item.status||'unknown')}</strong><div class="git-row-meta"><span>${escapeHtml(item.integrity||'unknown')} journal · ${escapeHtml(item.receiptIntegrity||'missing')} receipt</span><span>${escapeHtml((item.recoveryDisposition||'manual_inspection_required').replaceAll('_',' '))}</span><code>${escapeHtml(String(item.transactionId||'').slice(0,20))}</code></div><div class="git-muted">Last durable checkpoint: ${escapeHtml(item.lastCheckpoint||'none recorded')}. ${escapeHtml(item.nextStep||'Preserve the journal and inspect it before manual repair.')}</div>${item.blockingNativeLocks?.length?`<div class="git-muted">Native locks: ${escapeHtml(item.blockingNativeLocks.join(', '))}</div>`:''}</div>`).join('');const maintenance=warnings.length?`<div class="security-banner">${warnings.length} non-critical evidence cleanup operation${warnings.length===1?' was':'s were'} deferred. This does not reverse a completed Git transaction; close scanners or handles using ForgeTrace application data and restart.</div>`:'';const orphaned=unassigned.length?`<div class="security-banner">${unassigned.length} unreadable journal${unassigned.length===1?' requires':'s require'} manual inspection and could not be safely associated with this repository.</div>`:'';return `<div style="margin-top:14px"><h3>Recovery diagnostics</h3><div class="git-receipts">${transactions||'<div class="git-muted">No repository-specific pending journals.</div>'}${maintenance}${orphaned}</div></div>`;}
+    function gitWritePanel(status,branch){
+      if(appState.git.writeError)return `<div class="git-card git-write-panel"><h3>Transactional local writes</h3><div class="security-banner">Write authority unavailable: ${escapeHtml(appState.git.writeError)}. Read-only Git inspection remains available.</div></div>`;
+      if(!status)return '<div class="git-card git-write-panel"><h3>Transactional local writes</h3><div class="git-muted">Loading write authority status…</div></div>';
+      const disabled=!status.writable||appState.git.writing?'disabled':'';
+      const pending=status.pendingTransactions?.length||0;
+      const locks=status.nativeLocks?.length?`Native Git locks: ${status.nativeLocks.join(', ')}`:'No native Git lock files detected.';
+      return `<div class="git-card git-write-panel"><div class="git-toolbar"><div><h3 style="margin-bottom:4px">Transactional local writes</h3><div class="git-muted">${status.writable?'Writable owner repository':'Repository access policy is read-only'} · ${pending} pending transaction${pending===1?'':'s'} · ${escapeHtml(locks)}</div></div><div class="git-write-actions"><button class="btn primary" data-git-write="stage" ${disabled}>Stage selected</button><button class="btn" data-git-write="commit" ${disabled}>Commit staged</button><button class="btn" data-git-write="create_branch" ${disabled||!branch.oid?'disabled':''}>Create branch</button><button class="btn" data-git-write="create_tag" ${disabled||!branch.oid?'disabled':''}>Create tag</button></div></div><div class="git-write-boundary">Every write is previewed against exact Git and selected-file state, expires after ${Math.round(Number(status.previewTtlSeconds||0)/60)} minutes, requires typed confirmation, records security events, and produces a digest-verified transaction receipt. Branch and tag creation never switch HEAD. Remotes and network actions remain unavailable.</div>${gitWriteRecoveryRows(status)}<div><h3>Recent write receipts</h3><div class="git-receipts">${gitWriteReceiptRows(status)}</div></div></div>`;
+    }
+    function renderGitOverview(){
+      const host=$('#gitOverview');const data=appState.git.overview;
+      if(appState.git.loading){host.innerHTML='<div class="editor-empty"><div><strong>Inspecting Git</strong>Running bounded local inspection and loading transactional write evidence…</div></div>';return;}
+      if(!data){host.innerHTML='<div class="editor-empty"><div><strong>Git data not loaded</strong>Refresh to inspect this repository.</div></div>';return;}
+      const probe=data.probe||{};
+      if(!probe.detected){host.innerHTML='<div class="editor-empty"><div><strong>No root-level .git worktree detected</strong>This ForgeTrace repository remains fully usable without Git. ForgeTrace does not search parent directories.</div></div>';return;}
+      if(!probe.supported){host.innerHTML=`<div class="editor-empty"><div><strong>Git layout not inspected</strong>${escapeHtml(probe.reason||'The Git worktree could not be inspected safely.')}<br><span class="repo-path">Layout: ${escapeHtml(probe.kind||'unknown')}</span></div></div>`;return;}
+      const status=data.status||{};const branch=status.branch||{};const changes=status.changes||[];const commits=data.commits||[];
+      const changeRows=changes.length?changes.map(item=>{const stageable=(item.kind==='untracked'||(item.worktree&&item.worktree!=='.'));return `<div class="git-row git-select-row"><label class="git-select-main">${stageable?`<input type="checkbox" data-git-stage-path="${escapeHtml(item.path)}" aria-label="Select ${escapeHtml(item.path)} for staging">`:'<span class="git-status-pill">staged</span>'}<span class="git-select-copy"><strong>${escapeHtml(item.path)}</strong>${item.originalPath?`<div class="git-muted">from ${escapeHtml(item.originalPath)}</div>`:''}<div class="git-row-meta"><span class="git-status-pill">${escapeHtml(gitChangeLabel(item))}</span><span>${escapeHtml(item.submodule||'')}</span></div></span></label><button class="btn" data-git-diff-path="${escapeHtml(item.path)}" data-git-diff-scope="${item.index&&item.index!=='.'&&item.index!=='?'?'staged':'working'}">Inspect</button></div>`}).join(''):'<div class="git-muted">Working tree is clean.</div>';
+      const commitRows=commits.length?commits.map(item=>`<button class="git-row" data-git-commit="${item.oid}"><strong>${escapeHtml(item.subject||'(no subject)')}</strong><div class="git-row-meta"><code>${escapeHtml(item.shortOid)}</code><span>${escapeHtml(item.authorName)}</span><span>${formatDate(item.authoredAt)}</span></div></button>`).join(''):'<div class="git-muted">No commits were returned.</div>';
+      const refs=(items,empty)=>items?.length?items.map(item=>`<div class="git-ref"><strong>${item.current?'● ':''}${escapeHtml(item.name)}</strong><div class="git-muted"><code>${escapeHtml((item.oid||'').slice(0,12))}</code>${item.upstream?` · ${escapeHtml(item.upstream)}`:''}${item.tracking?` · ${escapeHtml(item.tracking)}`:''}</div></div>`).join(''):`<div class="git-muted">${empty}</div>`;
+      const remotes=data.remotes?.length?data.remotes.map(item=>`<div class="git-ref"><strong>${escapeHtml(item.name)}</strong><div class="git-muted">${escapeHtml(item.url)}${item.redacted?' · credentials/query redacted':''}</div></div>`).join(''):'<div class="git-muted">No local remote URLs.</div>';
+      host.innerHTML=`${gitWritePanel(appState.git.writeStatus,branch)}<div class="git-summary"><div class="git-card"><h3>HEAD</h3><strong>${escapeHtml(branch.detached?'Detached HEAD':branch.head||'unborn')}</strong><span>${escapeHtml((branch.oid||'').slice(0,16))}</span></div><div class="git-card"><h3>Working tree</h3><strong>${status.dirty?'Dirty':'Clean'}</strong><span>${Number(status.stagedCount||0)} staged · ${Number(status.unstagedCount||0)} unstaged · ${Number(status.untrackedCount||0)} untracked</span></div><div class="git-card"><h3>Upstream</h3><strong>${escapeHtml(branch.upstream||'None')}</strong><span>${Number(branch.ahead||0)} ahead · ${Number(branch.behind||0)} behind</span></div><div class="git-card"><h3>Safety boundary</h3><strong>Transactional local only</strong><span>${formatBytes(data.limits?.diffBytes||0)} diff cap · no network</span></div></div><div class="git-columns"><div><div class="git-card"><h3>Changed paths</h3><div class="git-list">${changeRows}</div></div><div class="git-card" style="margin-top:14px"><h3>Recent commits</h3><div class="git-list">${commitRows}</div></div></div><div class="git-detail"><div class="git-card"><h3>Inspection detail</h3><div id="gitDetail"><div class="git-muted">Select a changed path for a bounded diff or a commit for immutable metadata.</div></div></div><div class="git-ref-grid" style="margin-top:14px"><div class="git-card"><h3>Branches</h3><div class="git-ref-list">${refs(data.branches,'No local branches.')}</div></div><div class="git-card"><h3>Tags</h3><div class="git-ref-list">${refs(data.tags,'No local tags.')}</div></div><div class="git-card"><h3>Remotes</h3><div class="git-ref-list">${remotes}</div></div></div></div></div>`;
+      if(appState.git.detail)renderGitDetail();
+    }
+    function renderGitDetail(){const target=$('#gitDetail');if(!target)return;const detail=appState.git.detail;if(!detail){target.innerHTML='<div class="git-muted">Select a changed path or commit.</div>';return;}if(detail.kind==='diff'){const item=detail.payload;target.innerHTML=`<div class="git-row-meta"><span class="git-status-pill">${escapeHtml(item.scope)} diff</span><span>${escapeHtml(item.path||'all paths')}</span><span>${formatBytes(item.bytes||0)}${item.truncated?' · truncated':''}${item.binary?' · binary metadata only':''}</span></div><pre class="git-code">${escapeHtml(item.binary?'Binary diff content is intentionally not rendered.':item.text||'No textual differences.')}</pre>`;return;}const item=detail.payload;const commit=item.commit||{};target.innerHTML=`<div class="git-card" style="padding:0;border:0;background:transparent"><strong>${escapeHtml(commit.message||'(no message)')}</strong><div class="git-row-meta"><code>${escapeHtml(commit.oid||'')}</code><span>${escapeHtml(commit.authorName||'')}</span><span>${formatDate(commit.authoredAt)}</span></div><div class="git-ref-list" style="margin-top:10px">${(item.files||[]).map(file=>`<div class="git-ref"><span class="git-status-pill">${escapeHtml(file.status)}</span> ${escapeHtml(file.path)}${file.newPath?` → ${escapeHtml(file.newPath)}`:''}</div>`).join('')||'<div class="git-muted">No changed paths.</div>'}</div></div>`;}
+    async function loadGitOverview(showMessage=false){
+      if(!appState.activeId)return;appState.git.loading=true;appState.git.detail=null;appState.git.writeError='';renderGitOverview();
+      try{appState.git.overview=await api(`${repoBase()}/git?commitLimit=75`);appState.git.repositoryId=appState.activeId;}catch(error){appState.git.overview={probe:{detected:true,supported:false,reason:error.message,kind:error.code||'error'}};toast(error.message,true);}
+      try{appState.git.writeStatus=await api(`${repoBase()}/git/writes?receiptLimit=25`);}catch(error){appState.git.writeStatus=null;appState.git.writeError=error.message;}
+      appState.git.loading=false;renderGitOverview();if(showMessage)toast(appState.git.writeError?'Git inspection refreshed; transactional write status is degraded.':'Git inspection and write evidence refreshed.',Boolean(appState.git.writeError));
+    }
+    function gitPreviewSummary(preview){const input=preview.input||{},state=preview.state||{};if(preview.operation==='stage')return `${input.paths?.length||0} selected path${input.paths?.length===1?'':'s'}`;if(preview.operation==='commit')return `${state.staged?.count||0} staged path${state.staged?.count===1?'':'s'} · ${input.message?.split('\n')[0]||'(no subject)'}`;return `${input.fullRef||input.name} → ${String(input.targetOid||'').slice(0,12)}`;}
+    async function executeGitWrite(operation,input){
+      if(appState.git.writing)return;appState.git.writing=true;renderGitOverview();
+      try{
+        const preview=await api(`${repoBase()}/git/writes/preview`,{method:'POST',body:{operation,...input}});
+        const required=preview.requiredConfirmation||'';
+        const confirmation=prompt(`Preview verified: ${gitPreviewSummary(preview)}\n\nThis local-only write uses locks, rollback journaling, security evidence, and no network/hooks/helpers. Type ${required} exactly to execute:`,'');
+        if(confirmation===null)return;
+        const outcome=await api(`${repoBase()}/git/writes/execute`,{method:'POST',body:{previewId:preview.previewId,confirmation,actor:author()}});
+        const result=outcome.result||{};const subject=result.commitOid?`commit ${String(result.commitOid).slice(0,12)}`:result.ref||`${result.paths?.length||0} path${result.paths?.length===1?'':'s'}`;
+        toast(`Transactional Git ${operation.replaceAll('_',' ')} completed: ${subject}.`);
+      }catch(error){toast(error.message,true);}finally{appState.git.writing=false;await loadGitOverview();}
+    }
+    async function gitWriteAction(operation){
+      if(operation==='stage'){const paths=[...document.querySelectorAll('[data-git-stage-path]:checked')].map(node=>node.dataset.gitStagePath);if(!paths.length)return toast('Select at least one unstaged or untracked path.',true);return executeGitWrite('stage',{paths});}
+      if(operation==='commit'){const message=prompt('Commit message:','');if(!message?.trim())return;const authorName=author();const authorEmail=prompt('Commit author email:',appState.git.authorEmail||'owner@forgetrace.local');if(!authorEmail)return;appState.git.authorEmail=authorEmail.trim();return executeGitWrite('commit',{message,authorName,authorEmail:appState.git.authorEmail});}
+      if(operation==='create_branch'||operation==='create_tag'){const label=operation==='create_branch'?'branch':'lightweight tag';const name=prompt(`New local ${label} name:`,'');if(!name?.trim())return;return executeGitWrite(operation,{name:name.trim(),targetOid:''});}
+    }
+    async function loadGitDiff(path,scope){try{const payload=await api(`${repoBase()}/git/diff?scope=${encodeURIComponent(scope||'working')}&path=${encodeURIComponent(path||'')}`);appState.git.detail={kind:'diff',payload};renderGitDetail();}catch(error){toast(error.message,true);}}
+    async function loadGitCommit(oid){try{const payload=await api(`${repoBase()}/git/commits/${encodeURIComponent(oid)}`);appState.git.detail={kind:'commit',payload};renderGitDetail();}catch(error){toast(error.message,true);}}
+
+
+    function renderBoards(){const state=appState.boards,select=$('#boardSelect'),host=$('#boardWorkspace');if(!select||!host)return;select.innerHTML='<option value="">Select a board</option>'+state.items.map(board=>`<option value="${escapeHtml(board.id)}" ${state.selected===board.id?'selected':''}>${escapeHtml(board.name)}</option>`).join('');$('#boardView').value=state.view||state.detail?.board?.defaultView||'kanban';const detail=state.detail;if(!detail){host.innerHTML='<div class="board-empty">Create or select a board to organize repository issues and discussions.</div>';return}const cardsByColumn=new Map(detail.columns.map(c=>[c.id,[]]));for(const card of detail.cards||[]){if(cardsByColumn.has(card.columnId))cardsByColumn.get(card.columnId).push(card)}const cardHtml=card=>`<article class="board-card" data-board-card="${escapeHtml(card.id)}"><strong>#${card.topic.number} ${escapeHtml(card.topic.title)}</strong><div class="board-card-meta">${escapeHtml(card.topic.kind)} · ${escapeHtml(card.topic.state)}${card.priority?' · '+escapeHtml(card.priority):''}${card.owner?' · '+escapeHtml(card.owner):''}</div><div class="board-card-actions">${detail.columns.map(column=>column.id===card.columnId?'':`<button class="btn" data-board-move="${escapeHtml(column.id)}" data-card-version="${card.version}">→ ${escapeHtml(column.name)}</button>`).join('')}</div></article>`;if(state.view==='table'){host.innerHTML=`<table class="board-table"><thead><tr><th>Item</th><th>Column</th><th>State</th><th>Owner</th><th>Target</th></tr></thead><tbody>${(detail.cards||[]).map(card=>`<tr><td>#${card.topic.number} ${escapeHtml(card.topic.title)}</td><td>${escapeHtml(detail.columns.find(c=>c.id===card.columnId)?.name||'')}</td><td>${escapeHtml(card.topic.state)}</td><td>${escapeHtml(card.owner||card.topic.assignee||'')}</td><td>${escapeHtml(card.targetAt||card.topic.dueAt||'')}</td></tr>`).join('')}</tbody></table>`;return}if(state.view==='roadmap'){host.innerHTML=`<div class="board-roadmap">${(detail.cards||[]).map(card=>`<div class="roadmap-row"><div><strong>#${card.topic.number} ${escapeHtml(card.topic.title)}</strong><div class="board-card-meta">${escapeHtml(card.startAt||'Unscheduled')} → ${escapeHtml(card.targetAt||card.topic.dueAt||'No target')}</div></div><div class="roadmap-track"><div class="roadmap-bar"></div></div></div>`).join('')||'<div class="board-empty">Add items to visualize the roadmap.</div>'}</div>`;return}host.innerHTML=`<div class="board-kanban">${detail.columns.map(column=>`<section class="board-column"><div class="board-column-head"><strong>${escapeHtml(column.name)}</strong><span>${(cardsByColumn.get(column.id)||[]).length}</span></div>${(cardsByColumn.get(column.id)||[]).map(cardHtml).join('')||'<div class="board-empty">No cards</div>'}</section>`).join('')}</div>`;}
+    async function loadBoards(selectId=''){if(!appState.activeId||appState.boards.loading)return;appState.boards.loading=true;try{const list=await api(`${repoBase()}/boards`);appState.boards.items=list.boards||[];appState.boards.repositoryId=appState.activeId;if(selectId)appState.boards.selected=selectId;if(appState.boards.selected&&!appState.boards.items.some(b=>b.id===appState.boards.selected))appState.boards.selected='';appState.boards.detail=appState.boards.selected?await api(`${repoBase()}/boards/${encodeURIComponent(appState.boards.selected)}`):null;if(appState.boards.detail&&!appState.boards.view)appState.boards.view=appState.boards.detail.board.defaultView;}catch(error){toast(error.message,true)}finally{appState.boards.loading=false;renderBoards()}}
+    async function createBoard(){const name=prompt('Board name:','Delivery roadmap');if(!name)return;const description=prompt('Board description (optional):','');if(description===null)return;const contributorView=confirm('Allow explicitly permissioned project contributors to view this board?');const contributorMove=contributorView&&confirm('Also allow those contributors to move cards?');try{const board=await api(`${repoBase()}/boards`,{method:'POST',body:{name,description,defaultView:$('#boardView').value,contributorView,contributorMove,actor:author()}});appState.boards.selected=board.id;await loadBoards(board.id);toast('Project board created.')}catch(error){toast(error.message,true)}}
+    async function selectBoard(){appState.boards.selected=$('#boardSelect').value;await loadBoards(appState.boards.selected)}
+    async function addSelectedToBoard(){const boardId=appState.boards.selected,item=appState.project.selected;if(!boardId)return toast('Select a board first.',true);if(!item)return toast('Select an issue or discussion first.',true);try{appState.boards.detail=await api(`${repoBase()}/boards/${encodeURIComponent(boardId)}/cards`,{method:'POST',body:{topicId:item.id,actor:author()}});renderBoards();toast('Project item added to board.')}catch(error){toast(error.message,true)}}
+    async function addBoardColumn(){const boardId=appState.boards.selected;if(!boardId)return toast('Select a board first.',true);const name=prompt('Column name:');if(!name)return;try{await api(`${repoBase()}/boards/${encodeURIComponent(boardId)}/columns`,{method:'POST',body:{name,actor:author()}});await loadBoards(boardId);toast('Board column added.')}catch(error){toast(error.message,true)}}
+    async function boardSettings(){const detail=appState.boards.detail;if(!detail)return toast('Select a board first.',true);const board=detail.board,name=prompt('Board name:',board.name);if(!name)return;const contributorView=confirm('Allow project contributors to view this board?');const contributorMove=contributorView&&confirm('Allow contributors to move cards?');try{await api(`${repoBase()}/boards/${encodeURIComponent(board.id)}`,{method:'PUT',body:{expectedVersion:board.version,name,description:board.description,defaultView:$('#boardView').value,contributorView,contributorMove,actor:author()}});await loadBoards(board.id);toast('Board settings updated.')}catch(error){toast(error.message,true)}}
+    async function moveBoardCard(button){const card=button.closest('[data-board-card]'),boardId=appState.boards.selected;if(!card||!boardId)return;try{appState.boards.detail=await api(`${repoBase()}/boards/${encodeURIComponent(boardId)}/cards/${encodeURIComponent(card.dataset.boardCard)}/move`,{method:'POST',body:{columnId:button.dataset.boardMove,expectedVersion:Number(button.dataset.cardVersion),actor:author()}});renderBoards()}catch(error){toast(error.message,true);await loadBoards(boardId)}}
+
+    function renderReleases(){const selected=appState.releases.selected;$('#releaseList').innerHTML=appState.releases.items.length?appState.releases.items.map(r=>`<button class="project-item ${selected?.id===r.id?'active':''}" data-release-id="${escapeHtml(r.id)}"><strong>${escapeHtml(r.version)} · ${escapeHtml(r.name)}</strong><div class="project-item-meta">${escapeHtml(r.state)} · ${r.assets.length} asset${r.assets.length===1?'':'s'} · ${escapeHtml(formatDate(r.updatedAt))}</div></button>`).join(''):'<div class="editor-empty"><div><strong>No releases</strong>Create a draft release and attach verified assets.</div></div>';const host=$('#releaseDetail');if(!selected){host.innerHTML='<div class="editor-empty"><div><strong>Release workspace</strong>Select a release or create a draft.</div></div>';return;}host.innerHTML=`<div class="project-detail-head"><div><div class="eyebrow">${escapeHtml(selected.state)}</div><h2 style="margin:5px 0">${escapeHtml(selected.version)} · ${escapeHtml(selected.name)}</h2><div class="repo-path">tag ${escapeHtml(selected.tagRef||'—')} · commit ${escapeHtml(selected.commitRef||'—')} · version ${selected.recordVersion}</div></div><div class="project-detail-actions">${selected.state==='draft'?'<button class="btn" data-release-edit>Edit</button><button class="btn" data-release-asset>Add asset</button><button class="btn primary" data-release-publish>Publish</button>':''}<button class="btn" data-release-export>Export verified ZIP</button></div></div><div class="project-body">${selected.notesHtml||'<span class="repo-path">No release notes.</span>'}</div><div class="security-banner" style="margin-top:12px">Artifact execution: blocked · Git mutation: none · External publication verified: no · Contributor access: ${selected.contributorAccess?'enabled':'disabled'}</div><h3>Assets</h3>${selected.assets.length?selected.assets.map(a=>`<div class="invite-row"><div><strong>${escapeHtml(a.filename)}</strong><div class="feed-meta">${formatBytes(a.sizeBytes)} · SHA-256 ${escapeHtml(a.sha256)}</div></div><button class="btn" data-release-download="${escapeHtml(a.id)}">Download</button></div>`).join(''):'<div class="repo-path">No assets attached.</div>'}`;}
+    async function loadReleases(show=false){if(!appState.activeId)return;try{const data=await api(`${repoBase()}/releases`);appState.releases.items=data.items||[];if(appState.releases.selected){const found=appState.releases.items.find(x=>x.id===appState.releases.selected.id);appState.releases.selected=found||null;}appState.releases.repositoryId=appState.activeId;renderReleases();if(show)toast('Releases refreshed.');}catch(e){toast(e.message,true)}}
+    async function createRelease(){const version=prompt('Release version:','v1.0.0');if(!version)return;const name=prompt('Release name:',version);if(!name)return;const notes=prompt('Release notes (inert Markdown):','')??'';const contributorAccess=confirm('Allow explicitly permissioned project contributors to download this published release?');try{const r=await api(`${repoBase()}/releases`,{method:'POST',body:{version,name,notes,contributorAccess,actor:author()}});appState.releases.selected=r;await loadReleases();appState.releases.selected=appState.releases.items.find(x=>x.id===r.id);renderReleases();}catch(e){toast(e.message,true)}}
+    async function selectRelease(id){try{appState.releases.selected=await api(`${repoBase()}/releases/${encodeURIComponent(id)}`);renderReleases();}catch(e){toast(e.message,true)}}
+    async function releaseAction(button){const r=appState.releases.selected;if(!r)return;if(button.matches('[data-release-edit]')){const name=prompt('Release name:',r.name);if(!name)return;const notes=prompt('Release notes:',r.notes);if(notes===null)return;try{appState.releases.selected=await api(`${repoBase()}/releases/${encodeURIComponent(r.id)}`,{method:'PUT',body:{expectedVersion:r.recordVersion,name,notes,tagRef:r.tagRef,commitRef:r.commitRef,contributorAccess:r.contributorAccess}});await loadReleases();await selectRelease(r.id)}catch(e){toast(e.message,true)}}else if(button.matches('[data-release-asset]')){$('#releaseAssetInput').click()}else if(button.matches('[data-release-publish]')){if(!confirm('Publish this release? Published records and assets become immutable.'))return;try{appState.releases.selected=await api(`${repoBase()}/releases/${encodeURIComponent(r.id)}/publish`,{method:'POST',body:{expectedVersion:r.recordVersion}});await loadReleases();await selectRelease(r.id)}catch(e){toast(e.message,true)}}else if(button.matches('[data-release-export]')){window.location=`${repoBase()}/releases/${encodeURIComponent(r.id)}/export`}else if(button.dataset.releaseDownload){window.location=`${repoBase()}/releases/${encodeURIComponent(r.id)}/assets/${encodeURIComponent(button.dataset.releaseDownload)}/download`}}
+    async function uploadReleaseAsset(file){const r=appState.releases.selected;if(!r||!file)return;const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));try{appState.releases.selected=await api(`${repoBase()}/releases/${encodeURIComponent(r.id)}/assets`,{method:'POST',body:{filename:file.name,contentType:file.type||'application/octet-stream',contentBase64:btoa(binary)}});await loadReleases();await selectRelease(r.id)}catch(e){toast(e.message,true)}finally{$('#releaseAssetInput').value=''}}
+
+    function setTab(name) { appState.tab=name; $$('.tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===name)); $$('.tab-panel').forEach(panel=>panel.classList.toggle('hidden',panel.id!==`tab-${name}`)); if(name==='git'&&(!appState.git.overview||appState.git.repositoryId!==appState.activeId)&&!appState.git.loading)loadGitOverview();if(name==='project'&&(!appState.project.overview||appState.project.repositoryId!==appState.activeId)&&!appState.project.loading){loadProjectWorkspace();loadBoards();}if(name==='releases'&&appState.releases.repositoryId!==appState.activeId)loadReleases(); }
     async function refreshState(message='') { if (message) toast(message); appState.selectedFile=null; appState.selectedEntry=null; await loadRepositories(appState.activeId); }
 
     function normalizeRepositoryRelativePath(value='') {
@@ -976,6 +1492,7 @@
       return {completed,verified,createdFolders,errors,missingFiles:verification.missingFiles,missingFolders:verification.missingFolders,expectedPaths:[...filePaths,...folderPaths]};
     }
     async function uploadSelection(selection) {
+      if(!requireWritableUi('upload files or folders'))return;
       const items=selection?.items||[];if((!items.length&&!selection?.emptyFolders?.length)||!appState.activeId)return;
       const result=await uploadFilesToRepository(appState.activeId,items,'preserve','Uploaded from ForgeTrace',selection.emptyFolders||[]);
       await refreshState(`Verified ${result.verified} of ${items.length} selected file${items.length===1?'':'s'}.`);
@@ -983,13 +1500,13 @@
       else if(result.errors.length)toast(`All selected files were verified, but some upload attempts required recovery: ${result.errors.slice(0,3).join(' · ')}`,true);
     }
     async function uploadFiles(files) { return uploadSelection(selectionFromFileList(files,false)); }
-    async function saveSelectedFile() { if (!appState.selectedFile?.editable) return; try { await api(`${repoBase()}/file`,{method:'PUT',body:{path:appState.selectedPath,content:$('#code').value,author:author(),message:`Updated ${appState.selectedPath}`}}); await refreshState(`Saved ${appState.selectedPath}.`); } catch(error){toast(error.message,true);} }
-    async function createFile() { const path=prompt('New file path (for example src/main.py):'); if (!path) return; try { await api(`${repoBase()}/file`,{method:'PUT',body:{path,content:'',author:author(),message:`Created ${path}`}}); await refreshState(`Created ${path}.`); await selectPath(path,'file'); } catch(error){toast(error.message,true);} }
-    async function createFolder() { const path=prompt('New folder path:'); if (!path) return; try { await api(`${repoBase()}/folder`,{method:'POST',body:{path,author:author()}}); await refreshState(`Created folder ${path}.`); } catch(error){toast(error.message,true);} }
-    async function renameSelected() { if (!appState.selectedPath) return; const next=prompt('New repository-relative path:',appState.selectedPath); if (!next||next===appState.selectedPath) return; try { await api(`${repoBase()}/rename`,{method:'POST',body:{path:appState.selectedPath,newPath:next,author:author()}}); appState.selectedPath=''; appState.selectedEntry=null; await refreshState(`Renamed path to ${next}.`); } catch(error){toast(error.message,true);} }
-    async function deleteSelected() { if (!appState.selectedPath||!confirm(`Delete ${appState.selectedPath}? This removes it from disk. A prior snapshot can restore it.`)) return; try { await api(`${repoBase()}/path?path=${encodePath(appState.selectedPath)}&author=${encodeURIComponent(author())}`,{method:'DELETE'}); appState.selectedPath=''; appState.selectedEntry=null; await refreshState('Path deleted.'); } catch(error){toast(error.message,true);} }
-    async function createSnapshot() { const message=prompt('Snapshot message:'); if (!message) return; try { await api(`${repoBase()}/commit`,{method:'POST',body:{message,author:author()}}); await refreshState('Repository snapshot created.'); setTab('snapshots'); } catch(error){toast(error.message,true);} }
-    async function restoreSnapshot(id) { if (!confirm(`Restore snapshot ${id}? Current working files will be replaced by the snapshot contents.`)) return; try { await api(`${repoBase()}/checkout`,{method:'POST',body:{commitId:id,author:author()}}); appState.selectedPath=''; appState.selectedEntry=null; await refreshState(`Restored snapshot ${id}.`); } catch(error){toast(error.message,true);} }
+    async function saveSelectedFile() { if (!appState.selectedFile?.editable||!requireWritableUi('save files')) return; try { await api(`${repoBase()}/file`,{method:'PUT',body:{path:appState.selectedPath,content:$('#code').value,author:author(),message:`Updated ${appState.selectedPath}`}}); await refreshState(`Saved ${appState.selectedPath}.`); } catch(error){toast(error.message,true);} }
+    async function createFile() { if(!requireWritableUi('create files'))return; const path=prompt('New file path (for example src/main.py):'); if (!path) return; try { await api(`${repoBase()}/file`,{method:'PUT',body:{path,content:'',author:author(),message:`Created ${path}`}}); await refreshState(`Created ${path}.`); await selectPath(path,'file'); } catch(error){toast(error.message,true);} }
+    async function createFolder() { if(!requireWritableUi('create folders'))return; const path=prompt('New folder path:'); if (!path) return; try { await api(`${repoBase()}/folder`,{method:'POST',body:{path,author:author()}}); await refreshState(`Created folder ${path}.`); } catch(error){toast(error.message,true);} }
+    async function renameSelected() { if (!appState.selectedPath||!requireWritableUi('rename paths')) return; const next=prompt('New repository-relative path:',appState.selectedPath); if (!next||next===appState.selectedPath) return; try { await api(`${repoBase()}/rename`,{method:'POST',body:{path:appState.selectedPath,newPath:next,author:author()}}); appState.selectedPath=''; appState.selectedEntry=null; await refreshState(`Renamed path to ${next}.`); } catch(error){toast(error.message,true);} }
+    async function deleteSelected() { if (!appState.selectedPath||!requireWritableUi('delete paths')||!confirm(`Delete ${appState.selectedPath}? This removes it from disk. A prior snapshot can restore it.`)) return; try { await api(`${repoBase()}/path?path=${encodePath(appState.selectedPath)}&author=${encodeURIComponent(author())}`,{method:'DELETE'}); appState.selectedPath=''; appState.selectedEntry=null; await refreshState('Path deleted.'); } catch(error){toast(error.message,true);} }
+    async function createSnapshot() { if(!requireWritableUi('create snapshots'))return; const message=prompt('Snapshot message:'); if (!message) return; try { await api(`${repoBase()}/commit`,{method:'POST',body:{message,author:author()}}); await refreshState('Repository snapshot created.'); setTab('snapshots'); } catch(error){toast(error.message,true);} }
+    async function restoreSnapshot(id) { if(!requireWritableUi('restore snapshots')||!confirm(`Restore snapshot ${id}? Current working files will be replaced by the snapshot contents.`)) return; try { await api(`${repoBase()}/checkout`,{method:'POST',body:{commitId:id,author:author()}}); appState.selectedPath=''; appState.selectedEntry=null; await refreshState(`Restored snapshot ${id}.`); } catch(error){toast(error.message,true);} }
     function downloadSelected() { if (appState.selectedFile) window.location.href=appState.selectedFile.downloadUrl; }
     async function exportRepository() {
       try{
@@ -1031,7 +1548,7 @@
       if(picked.cancelled)return null;
       return picked;
     }
-    async function importCompleteFolder(){
+    async function importCompleteFolder(){if(!requireWritableUi('import folders'))return;
       if(!appState.activeId)return;
       try{
         const picked=await pickLocalFolder();if(!picked)return;
@@ -1120,6 +1637,25 @@
     async function toggleFavorite() { try { const updated=await api(`${repoBase()}/favorite`,{method:'POST',body:{favorite:!appState.record.favorite}}); appState.record=updated; await loadRepositories(appState.activeId); } catch(error){toast(error.message,true);} }
     async function relinkRepository() { const path=prompt('New absolute path for this repository:',appState.record.path); if (!path||path===appState.record.path) return; try { await api(`${repoBase()}/relink`,{method:'POST',body:{path}}); await loadRepositories(appState.activeId); toast('Repository relinked.'); } catch(error){toast(error.message,true);} }
     async function unregisterRepository() { if (!confirm(`Unregister ${appState.record.name}? ForgeTrace will remove only the registry entry. Repository files and .forgetrace history will remain on disk.`)) return; try { const result=await api(repoBase(),{method:'DELETE'}); appState.activeId=''; await loadRepositories(); toast(`${result.name} was unregistered. No files were deleted.`); } catch(error){toast(error.message,true);} }
+    async function deleteManagedRepository() {
+      const record=appState.record;if(!record?.managed)return toast('Only ForgeTrace-managed repositories can be permanently deleted. Unregister linked external repositories instead.',true);
+      const unavailable=record.status!=='online';
+      const warning=unavailable
+        ? `Permanently remove ${record.name} from ForgeTrace? Its managed folder is currently unavailable, so ForgeTrace will tombstone the repository identity and remove the registry entry to stop automatic recovery.`
+        : `Permanently delete ${record.name}? This removes the entire managed repository directory, every file, embedded .forgetrace history, and the registry entry. This cannot be restored from ForgeTrace unless you have an external backup.`;
+      if(!confirm(warning))return;
+      const typed=prompt(`Type the repository name exactly to confirm permanent deletion:
+
+${record.name}`,'');
+      if(typed!==record.name)return toast('Repository name did not match. Nothing was deleted.',true);
+      try{
+        const result=await api(`${repoBase()}/delete-managed?actor=${encodeURIComponent(author())}`,{method:'DELETE'});
+        closeModal('settingsModalBackdrop');appState.activeId='';appState.record=null;await loadRepositories();
+        if(result.cleanupPending)toast(`${result.name} was removed from ForgeTrace and moved outside discovery. Filesystem cleanup will finish on the next startup.`,true);
+        else if(result.pathWasMissing)toast(`${result.name} was permanently removed and tombstoned so the missing repository cannot auto-return.`);
+        else toast(`${result.name} and its managed repository directory were permanently deleted.`);
+      }catch(error){toast(error.message,true);}
+    }
     async function initializeRegisteredRepository() { try { await api(`${repoBase()}/initialize`,{method:'POST',body:{name:appState.record.name,description:appState.record.description,author:author()}}); await loadRepositories(appState.activeId); toast('Repository initialized.'); } catch(error){toast(error.message,true);} }
 
     function openModal(id) { $('#'+id).classList.add('open'); }
@@ -1131,18 +1667,51 @@
       $('#settingsDescription').value=appState.record.description||'';
       $('#settingsAuthor').value=appState.record.defaultAuthor||author();
       $('#settingsUploadLimit').value=Math.round((appState.record.uploadLimitBytes||1073741824)/(1024*1024));
+      const policy=repositoryAccessPolicy(); const readOnly=policy.effectiveMode==='read_only';
+      $('#settingsAccessMode').value=appState.record.accessMode||policy.registryMode||'read_write';
+      $('#settingsAccessModeNote').textContent=policy.consistent
+        ? `Effective mode: ${policy.effectiveMode.replace('_','-')}. Mode changes are owner-only, security-audited, and enforced by both registry and embedded repository state.`
+        : `Fail-closed mismatch: registry=${policy.registryMode}, embedded=${policy.embeddedMode}. Apply a mode deliberately to reconcile both copies.`;
+      ['settingsName','settingsDescription','settingsAuthor','settingsUploadLimit'].forEach(id=>$('#'+id).disabled=readOnly);
+      $('#settingsSaveBtn').disabled=readOnly;
+      const managed=Boolean(appState.record.managed);
+      $('#managedRepositoryDangerZone').classList.toggle('hidden',!managed);
+      $('#deleteManagedRepositoryBtn').disabled=readOnly;
+      $('#managedRepositoryDeleteNote').textContent=readOnly
+        ? 'Return this managed repository to read-write mode before permanent deletion. This prevents a stale or mismatched policy from bypassing the central mutation boundary.'
+        : 'This permanently removes the ForgeTrace-managed repository directory, every file, embedded .forgetrace history, and its registry entry. A deletion tombstone prevents automatic startup or Doctor recovery. Security evidence remains.';
       const caps=appState.record.capabilities||{};
       $('#capabilityGrid').innerHTML=[
         ['Workspace',caps.exists&&caps.directory?'Available':'Unavailable'],
         ['Read access',caps.readable?'Granted':'Unavailable'],
-        ['Write access',caps.writable?'Granted':'Read-only'],
+        ['Filesystem write capability',caps.writable?'Granted':'Unavailable'],
+        ['Repository policy',policy.effectiveMode==='read_only'?'Read-only':'Read-write'],
         ['Free space',caps.freeBytes==null?'Unknown':formatBytes(caps.freeBytes)],
       ].map(([label,value])=>`<div class="capability"><strong>${label}</strong>${escapeHtml(value)}</div>`).join('');
       openModal('settingsModalBackdrop');
     }
 
+    async function applyAccessMode() {
+      if(!appState.record)return;
+      const selected=$('#settingsAccessMode').value; const current=appState.record.accessMode||repositoryAccessPolicy().registryMode;
+      if(selected===current&&repositoryAccessPolicy().consistent)return toast(`Repository is already ${selected.replace('_','-')}.`);
+      const message=selected==='read_only'
+        ? 'Enable service-enforced read-only mode? Repository mutations and pull-request merges will be blocked until an owner returns it to read-write mode.'
+        : 'Return this repository to read-write mode? This deliberately re-enables repository mutations after both policy copies are reconciled.';
+      if(!confirm(message))return;
+      $('#applyAccessModeBtn').disabled=true;
+      try{
+        await api(`${repoBase()}/access-mode`,{method:'POST',body:{mode:selected,actor:author()}});
+        await loadRepositories(appState.activeId);
+        openSettings();
+        toast(`Repository mode changed to ${selected.replace('_','-')}.`);
+      }catch(error){toast(error.message,true);}
+      finally{$('#applyAccessModeBtn').disabled=false;}
+    }
+
     async function submitSettings(event) {
       event.preventDefault();
+      if(!requireWritableUi('change embedded repository settings'))return;
       try {
         const updated=await api(`${repoBase()}/settings`,{method:'POST',body:{
           name:$('#settingsName').value,description:$('#settingsDescription').value,
@@ -1237,7 +1806,100 @@
       toast(`Applied ${item.name}.`);
     }
 
-    function openRegistryTools() { openModal('registryToolsBackdrop'); }
+    function openRegistryTools() { openModal('registryToolsBackdrop'); loadRegistryRecovery(); }
+
+    function invalidateRegistryRestorePreview() {
+      appState.registryRestore.preview=null;
+      $('#executeRegistryRestoreBtn').disabled=true;
+      $('#registryRestorePreview').textContent='Selection changed. Generate a new validated preview.';
+    }
+
+    function renderRegistryRecovery() {
+      const selected=$('#registryBackupSelect').value;
+      const backups=appState.registryRestore.backups||[];
+      $('#registryBackupSelect').innerHTML=backups.length
+        ? backups.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)} — ${formatBytes(item.bytes)} — ${formatDate(item.modified*1000)}</option>`).join('')
+        : '<option value="">No registry backups available</option>';
+      if(selected&&backups.some(item=>item.name===selected))$('#registryBackupSelect').value=selected;
+      const restores=appState.registryRestore.restores||[];
+      $('#registryRestoreHistory').innerHTML=restores.length?restores.map(item=>`<div class="restore-history-row"><div><strong>${escapeHtml(item.restoreId||'unknown restore')}</strong><span>${escapeHtml(item.mode||'unknown')} · ${escapeHtml(item.state||'unknown')} · ${escapeHtml(item.backupName||'backup')}<br>${escapeHtml(formatDate(item.completedAt||item.createdAt))} · repositories ${item.repositoryCountBefore??'—'} → ${item.repositoryCountAfter??'—'}</span></div>${item.rollbackAvailable?`<button class="btn warning" data-registry-rollback="${escapeHtml(item.restoreId)}">Roll back</button>`:''}</div>`).join(''):'<div class="repo-path">No registry restores have been recorded.</div>';
+    }
+
+    async function loadRegistryRecovery() {
+      try {
+        const [backupPayload,restorePayload]=await Promise.all([api('/api/v1/registry/backups'),api('/api/v1/registry/restores')]);
+        appState.registryRestore.backups=backupPayload.backups||[];
+        appState.registryRestore.restores=restorePayload.restores||[];
+        renderRegistryRecovery();
+      } catch(error) {
+        $('#registryRestorePreview').textContent=`Recovery data could not be loaded: ${error.message}`;
+        toast(error.message,true);
+      }
+    }
+
+    function formatRegistryRestorePreview(result) {
+      const impact=result.impact||{}; const current=result.current||{}; const restored=result.restored||{};
+      const lines=[
+        `VALIDATED ${String(result.mode||'').toUpperCase()} PREVIEW`,
+        `Backup: ${result.backupName}`,
+        `SHA-256: ${result.backupSha256}`,
+        `Semantics: ${result.semantics}`,
+        `Registry repositories: ${current.repositoryCount} → ${restored.repositoryCount}`,
+        `SQLite integrity: ${restored.integrity}; schema ${restored.schemaVersion}; foreign-key errors ${restored.foreignKeyErrors}`,
+        `Path state: ${Object.entries(restored.pathStatus||{}).map(([key,value])=>`${key}=${value}`).join(', ')}`,
+        '',
+        `Repositories added: ${impact.repositoriesAdded||0}`,
+        `Repositories removed: ${impact.repositoriesRemoved||0}`,
+        `Existing registrations preserved: ${impact.repositoriesPreserved||0}`,
+        `Changed registrations installed: ${impact.repositoriesChanged||0}`,
+        `Path conflicts skipped: ${impact.pathConflicts||0}`,
+        `Active selection: ${impact.activeRepositoryAction||'preserve'}`,
+      ];
+      for(const warning of result.warnings||[])lines.push(`WARNING: ${warning}`);
+      return lines.join('\n');
+    }
+
+    async function previewRegistryRestore() {
+      const backupName=$('#registryBackupSelect').value; const mode=$('#registryRestoreMode').value;
+      if(!backupName){toast('Create or select a registry backup first.',true);return;}
+      try {
+        const result=await api('/api/v1/registry/restore/preview',{method:'POST',body:{backupName,mode}});
+        appState.registryRestore.preview=result;
+        $('#registryRestorePreview').textContent=formatRegistryRestorePreview(result);
+        $('#executeRegistryRestoreBtn').disabled=!result.canRestore;
+        toast('Validated restore preview is ready.');
+      } catch(error) { invalidateRegistryRestorePreview(); $('#registryRestorePreview').textContent=`Preview failed: ${error.message}`; toast(error.message,true); }
+    }
+
+    async function executeRegistryRestore() {
+      const preview=appState.registryRestore.preview;
+      if(!preview){toast('Generate a current restore preview first.',true);return;}
+      const consequence=preview.mode==='replace'
+        ? `Replace the live registry with ${preview.backupName}? ${preview.impact.repositoriesRemoved||0} live registration(s) will be removed from the registry, but repository folders will not be deleted.`
+        : `Merge ${preview.backupName} into the live registry using additive semantics?`;
+      if(!confirm(`${consequence}
+
+ForgeTrace will create an exact pre-restore backup and rollback journal first.`))return;
+      $('#executeRegistryRestoreBtn').disabled=true;
+      try {
+        const result=await api('/api/v1/registry/restore',{method:'POST',body:{backupName:preview.backupName,mode:preview.mode,previewId:preview.previewId}});
+        appState.registryRestore.preview=null;
+        $('#registryRestorePreview').textContent=`Restore ${result.restoreId} completed and verified. Rollback is ${result.rollbackAvailable?'available':'unavailable'}.`;
+        await Promise.all([loadLibrary(),loadRepositories(result.after?.activeRepositoryId||''),loadRegistryRecovery()]);
+        toast(`Registry ${result.mode} restore completed and verified.`);
+      } catch(error) { $('#executeRegistryRestoreBtn').disabled=false; toast(error.message,true); }
+    }
+
+    async function rollbackRegistryRestore(restoreId) {
+      if(!confirm(`Roll back ${restoreId}? ForgeTrace will first back up the current post-restore registry and will refuse if later registry work has occurred.`))return;
+      try {
+        const result=await api(`/api/v1/registry/restores/${encodeURIComponent(restoreId)}/rollback`,{method:'POST',body:{}});
+        appState.registryRestore.preview=null;
+        $('#registryRestorePreview').textContent=`${restoreId} was rolled back and verified.`;
+        await Promise.all([loadLibrary(),loadRepositories(result.restored?.activeRepositoryId||''),loadRegistryRecovery()]);
+        toast('Registry restore was rolled back safely.');
+      } catch(error){toast(error.message,true);}
+    }
 
     function downloadJson(payload,name) {
       const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
@@ -1246,7 +1908,7 @@
     }
 
     async function backupRegistry() {
-      try { const result=await api('/api/v1/registry/backup',{method:'POST',body:{label:'ui'}}); toast(`Registry backup created: ${result.name}`); }
+      try { const result=await api('/api/v1/registry/backup',{method:'POST',body:{label:'ui'}}); await loadRegistryRecovery(); toast(`Registry backup created and verified: ${result.name}`); }
       catch(error){toast(error.message,true);}
     }
 
@@ -1285,6 +1947,267 @@
       } catch(error){toast(error.message,true);}
     }
 
+    function renderSecurityHistory() {
+      const status=appState.securityHistory.status;
+      if(!status)return;
+      const integrity=status.integrity||{}; const pressure=status.pressure||{}; const anchors=status.anchors||{}; const policy=status.policy||{};
+      const policyFields={securityPolicyMaxActive:'maxActiveEvents',securityPolicySegmentTarget:'segmentEventTarget',securityPolicyMaxRetained:'maxRetainedEvents',securityPolicyMaxAge:'maxRetentionAgeDays',securityPolicyProtectedEvents:'minimumProtectedEvents',securityPolicyProtectedAge:'minimumProtectedAgeDays'};
+      Object.entries(policyFields).forEach(([id,key])=>{const field=$(`#${id}`);if(field&&document.activeElement!==field&&policy[key]!==undefined)field.value=String(policy[key]);});
+      const storageField=$('#securityPolicyMaxStorage');if(storageField&&document.activeElement!==storageField&&policy.maxStorageBytes!==undefined)storageField.value=String(Math.max(1,Math.round(Number(policy.maxStorageBytes)/1048576)));
+      $('#securityPolicyStatus').textContent=status.policyError?`Policy error: ${status.policyError}`:`Policy hash ${policy.policyHash||'unavailable'} · updated ${policy.updatedAt||'unknown'}.`;
+      $('#securityHistorySummary').innerHTML=`<div class="security-history-stat"><span class="eyebrow">Active</span><strong>${Number(integrity.activeEventCount||0)} events</strong></div><div class="security-history-stat"><span class="eyebrow">Sealed</span><strong>${Number(integrity.segmentCount||0)} segments</strong></div><div class="security-history-stat"><span class="eyebrow">Retained chain</span><strong>#${Number(integrity.retainedStartSequence||1)}–#${Number(integrity.lastSequence||0)}</strong></div><div class="security-history-stat"><span class="eyebrow">Anchor receipts</span><strong>${Number(anchors.coveredSegmentCount||0)} covered</strong></div>`;
+      const segments=status.segments||[];
+      $('#securitySegmentList').innerHTML=segments.length?segments.map(item=>`<article class="security-history-item" data-security-segment="${escapeHtml(item.segmentId)}"><strong>${escapeHtml(item.segmentId)}</strong><br>#${Number(item.firstSequence)}–#${Number(item.lastSequence)} · ${Number(item.eventCount)} events · ${formatBytes(Number(item.bytes||0))}<br>SHA-256 ${escapeHtml(item.fileSha256)}<br>${item.anchoredReceiptRecorded?'receipt recorded':'no recorded external receipt'}</article>`).join(''):'<div class="repo-path">No sealed segments yet. The active ledger remains fully verified.</div>';
+      const incomplete=(status.incompleteRotationJournals||[]).length;
+      if(!appState.securityHistory.lastAnchor)$('#securityAnchorStatus').textContent=`${anchors.unanchoredSegmentCount||0} unanchored segment(s) · ${anchors.invalid?.length||0} invalid receipt(s) · ${incomplete} incomplete rotation journal(s)${pressure.pressure?' · retention pressure':''}.`;
+    }
+
+    async function loadSecurityHistory() {
+      try {
+        appState.securityHistory.status=await api('/api/v1/security-events/segments');
+        renderSecurityHistory();
+        const errors=appState.securityHistory.status?.errors||[];
+        if(appState.securityHistory.status?.degraded&&errors.length){
+          $('#securityAnchorStatus').textContent=`Security history controls are degraded: ${errors.map(item=>item.component).join(', ')}. The primary event ledger remains independently available above.`;
+        }
+        return true;
+      } catch(error) {
+        appState.securityHistory.status=null;
+        $('#securityHistorySummary').innerHTML='<div class="security-history-stat"><span class="eyebrow">History controls</span><strong>Unavailable</strong></div>';
+        $('#securitySegmentList').innerHTML='<div class="repo-path">Segment, retention, and anchor status could not be loaded. The primary event list remains available.</div>';
+        $('#securityAnchorStatus').textContent=`Security history controls unavailable: ${error.message}`;
+        toast(`Security history controls: ${error.message}`,true);
+        return false;
+      }
+    }
+
+    async function previewSecurityRotation() {
+      setBusy(true);
+      try{
+        const rotateCount=Number($('#securityRotateCount').value||0);
+        const preview=await api('/api/v1/security-events/rotation-preview',{method:'POST',body:{rotateCount}});
+        appState.securityHistory.preview=preview;
+        $('#securityRotationExecuteBtn').disabled=!preview.canRotate;
+        $('#securityRotationPreview').textContent=`Preview ${preview.previewId}
+Seal #${preview.firstSequence??'—'}–#${preview.lastSequence??'—'} (${preview.rotateCount} events)
+Active ${preview.activeEventCountBefore} → ${preview.activeEventCountAfter}
+Estimated segment ${formatBytes(preview.estimatedSegmentBytes||0)}
+Prune ${preview.retention?.pruneSegmentIds?.length||0} verified old segment(s)
+Protected minimum ${preview.retention?.protectedMinimumEvents||0} events / ${preview.retention?.protectedMinimumAgeDays||0} days
+Free space ${preview.spaceAvailable?'verified':'insufficient'}`;
+      }catch(error){appState.securityHistory.preview=null;$('#securityRotationExecuteBtn').disabled=true;$('#securityRotationPreview').textContent=error.message;toast(error.message,true);}finally{setBusy(false);}
+    }
+
+    async function executeSecurityRotation() {
+      const preview=appState.securityHistory.preview;if(!preview)return;
+      if(!confirm(`Seal security events #${preview.firstSequence}–#${preview.lastSequence}? This uses a rollback journal and preserves the logical chain.`))return;
+      setBusy(true);
+      try{
+        const result=await api('/api/v1/security-events/rotate',{method:'POST',body:{previewId:preview.previewId,rotateCount:preview.rotateCount}});
+        toast(`Security segment ${result.segment.segmentId} sealed.`);
+        appState.securityHistory.preview=null;$('#securityRotationExecuteBtn').disabled=true;
+        await Promise.all([loadSecurityHistory(),loadSecurityEvents()]);
+        $('#securityRotationPreview').textContent=`Rotation ${result.rotationId} completed. Segment ${result.segment.segmentId} covers #${result.segment.firstSequence}–#${result.segment.lastSequence}.`;
+      }catch(error){toast(error.message,true);}finally{setBusy(false);}
+    }
+
+    async function createAndExportSecurityAnchor() {
+      setBusy(true);
+      try{
+        const anchor=await api('/api/v1/security-events/anchors',{method:'POST',body:{}});
+        appState.securityHistory.lastAnchor=anchor;
+        const response=await fetch(`/api/v1/security-events/anchors/${encodeURIComponent(anchor.anchorId)}/export`,{cache:'no-store'});
+        if(!response.ok){const payload=await response.json().catch(()=>({}));throw new Error(payload.error||`Anchor export failed (${response.status})`);}
+        const blob=await response.blob();const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=`forgetrace-${anchor.anchorId}.json`;document.body.append(link);link.click();link.remove();URL.revokeObjectURL(url);
+        $('#securityAnchorReceiptBtn').disabled=false;
+        $('#securityAnchorStatus').textContent=`Exported ${anchor.anchorId}. Digest ${anchor.anchorDigest}. This local export is not proof of external publication.`;
+        toast('Security chain-head digest exported.');
+        await loadSecurityHistory();
+      }catch(error){toast(error.message,true);}finally{setBusy(false);}
+    }
+
+    async function recordSecurityAnchorReceipt() {
+      const anchor=appState.securityHistory.lastAnchor;if(!anchor)return;
+      const mechanism=$('#securityAnchorMechanism').value.trim();const evidence=$('#securityAnchorEvidence').value;
+      if(!mechanism||!evidence.trim()){toast('Enter the external mechanism and returned receipt evidence.',true);return;}
+      setBusy(true);
+      try{
+        const receipt=await api(`/api/v1/security-events/anchors/${encodeURIComponent(anchor.anchorId)}/receipt`,{method:'POST',body:{anchoredDigest:anchor.anchorDigest,mechanism,externalReference:$('#securityAnchorReference').value.trim(),evidence}});
+        $('#securityAnchorStatus').textContent=`Receipt recorded for ${receipt.anchorId}. Local digest binding verified; external publication remains owner-attested, not independently verified by ForgeTrace.`;
+        $('#securityAnchorReceiptBtn').disabled=true;await loadSecurityHistory();toast('Owner-supplied anchor receipt recorded.');
+      }catch(error){toast(error.message,true);}finally{setBusy(false);}
+    }
+
+    async function saveSecurityRetentionPolicy() {
+      const values={
+        maxActiveEvents:Number($('#securityPolicyMaxActive').value),
+        segmentEventTarget:Number($('#securityPolicySegmentTarget').value),
+        maxRetainedEvents:Number($('#securityPolicyMaxRetained').value),
+        maxRetentionAgeDays:Number($('#securityPolicyMaxAge').value),
+        maxStorageBytes:Number($('#securityPolicyMaxStorage').value)*1048576,
+        minimumProtectedEvents:Number($('#securityPolicyProtectedEvents').value),
+        minimumProtectedAgeDays:Number($('#securityPolicyProtectedAge').value),
+      };
+      if(Object.values(values).some(value=>!Number.isFinite(value))){toast('Complete every retention policy field with a valid number.',true);return;}
+      if(!confirm('Save this security-event retention policy? The change is recorded in the security ledger.'))return;
+      setBusy(true);
+      try{
+        const policy=await api('/api/v1/security-events/retention-policy',{method:'POST',body:values});
+        appState.securityHistory.preview=null;$('#securityRotationExecuteBtn').disabled=true;
+        $('#securityRotationPreview').textContent='Retention policy changed. Generate a new rotation preview before sealing events.';
+        $('#securityPolicyStatus').textContent=`Policy saved with hash ${policy.policyHash}.`;
+        await Promise.all([loadSecurityHistory(),loadSecurityEvents()]);
+        toast('Security retention policy saved.');
+      }catch(error){toast(error.message,true);}finally{setBusy(false);}
+    }
+
+    function securityEventQueryString() {
+      const params=new URLSearchParams();
+      const values={
+        category:$('#securityEventCategory').value,
+        severity:$('#securityEventSeverity').value,
+        outcome:$('#securityEventOutcome').value,
+        surface:$('#securityEventSurface').value,
+        repositoryId:$('#securityEventRepository').value,
+        search:$('#securityEventSearch').value.trim(),
+      };
+      Object.entries(values).forEach(([key,value])=>{if(value)params.set(key,value);});
+      params.set('limit','100');
+      return params.toString();
+    }
+
+    function populateSecurityEventSelect(id,values,emptyLabel) {
+      const select=$('#'+id); const selected=select.value;
+      select.innerHTML=`<option value="">${escapeHtml(emptyLabel)}</option>`+(values||[]).map(value=>`<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('');
+      if([...select.options].some(option=>option.value===selected))select.value=selected;
+    }
+
+    function renderSecurityEvents() {
+      const result=appState.securityEvents;
+      if(!result)return;
+      const integrity=result.integrity||{healthy:false,issues:[]};
+      const integrityEl=$('#securityEventIntegrity');
+      integrityEl.classList.toggle('failed',!integrity.healthy);
+      integrityEl.innerHTML=integrity.healthy
+        ? `<strong style="color:var(--accent)">Chain verified.</strong><br>${integrity.eventCount} event${integrity.eventCount===1?'':'s'} verified through sequence ${integrity.lastSequence}. Last hash ${escapeHtml((integrity.lastHash||'').slice(0,16))}…`
+        : `<strong>Integrity verification failed.</strong><br>${escapeHtml((integrity.issues||[]).map(item=>item.code).join(', ')||'The ledger could not be verified. Protected actions are blocked.')}`;
+      populateSecurityEventSelect('securityEventCategory',result.facets?.categories,'All categories');
+      populateSecurityEventSelect('securityEventSeverity',result.facets?.severities,'All severities');
+      populateSecurityEventSelect('securityEventOutcome',result.facets?.outcomes,'All outcomes');
+      populateSecurityEventSelect('securityEventSurface',result.facets?.surfaces,'All surfaces');
+      const repositorySelect=$('#securityEventRepository'); const selectedRepository=repositorySelect.value;
+      repositorySelect.innerHTML='<option value="">All repositories</option>'+appState.repositories.map(record=>`<option value="${escapeHtml(record.id)}">${escapeHtml(record.name)}</option>`).join('');
+      if([...repositorySelect.options].some(option=>option.value===selectedRepository))repositorySelect.value=selectedRepository;
+      $('#securityEventSummary').textContent=`Showing ${result.events.length} of ${result.total} matching event${result.total===1?'':'s'} · newest first`;
+      $('#securityEventList').innerHTML=result.events.length?result.events.map(event=>{
+        const repository=appState.repositories.find(record=>record.id===event.repositoryId);
+        const subject=[event.surface,event.category,event.outcome,repository?.name||event.repositoryId,event.actor,event.subjectId].filter(Boolean).join(' · ');
+        const details=JSON.stringify(event.details||{},null,2);
+        return `<article class="security-event-row" data-security-sequence="${event.sequence}"><div class="security-event-sequence">#${event.sequence}</div><div><div class="security-event-action">${escapeHtml(event.action)}</div><div class="security-event-meta">${escapeHtml(subject||'system event')}<br>${escapeHtml(formatDate(event.occurredAt))}${event.requestId?` · ${escapeHtml(event.requestId)}`:''}<br>hash ${escapeHtml((event.eventHash||'').slice(0,16))}…</div>${details&&details!=='{}'?`<pre class="security-event-details">${escapeHtml(details)}</pre>`:''}</div><span class="security-event-badge ${escapeHtml(event.severity)}">${escapeHtml(event.severity)}</span></article>`;
+      }).join(''):'<div class="editor-empty"><div><strong>No matching events</strong>Change the filters or generate a security-relevant action.</div></div>';
+    }
+
+    async function loadSecurityEvents() {
+      try {
+        appState.securityEvents=await api(`/api/v1/security-events?${securityEventQueryString()}`);
+        renderSecurityEvents();
+      } catch(error) {
+        $('#securityEventIntegrity').classList.add('failed');
+        $('#securityEventIntegrity').textContent=error.message;
+        toast(error.message,true);
+      }
+    }
+
+    async function openSecurityEvents() {
+      openModal('securityEventsBackdrop');
+      // Both requests verify the same logical chain. Load them sequentially so a
+      // mature ledger cannot self-contend on the cross-process integrity lock.
+      await loadSecurityEvents();
+      await loadSecurityHistory();
+    }
+
+    async function exportSecurityEvents() {
+      setBusy(true,30);
+      try {
+        const response=await fetch(`/api/v1/security-events/export?${securityEventQueryString()}`);
+        if(!response.ok){const payload=await response.json().catch(()=>({}));throw new Error(payload.error||`Export failed (${response.status})`);}
+        const blob=await response.blob(); const url=URL.createObjectURL(blob); const link=document.createElement('a');
+        link.href=url; link.download='forgetrace-security-events.json'; document.body.append(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+        toast('Security event export created.');
+        await loadSecurityEvents();
+      } catch(error) { toast(error.message,true); }
+      finally { setBusy(false); }
+    }
+
+    function resetSecurityEventFilters() {
+      ['securityEventCategory','securityEventSeverity','securityEventOutcome','securityEventSurface','securityEventRepository'].forEach(id=>$('#'+id).value='');
+      $('#securityEventSearch').value='';
+      loadSecurityEvents();
+    }
+
+
+    function healthRepositoryOptions() {
+      const selected=$('#healthRepository').value;
+      $('#healthRepository').innerHTML='<option value="">All registered repositories</option>'+appState.repositories.map(repo=>`<option value="${escapeHtml(repo.id)}">${escapeHtml(repo.name)} · ${escapeHtml(repo.status||'unknown')}</option>`).join('');
+      $('#healthRepository').value=appState.repositories.some(repo=>repo.id===selected)?selected:(appState.activeId||'');
+    }
+
+    function healthFindingList(report) {
+      return Object.values(report?.sections||{}).flatMap(section=>section.findings||[]);
+    }
+
+    function renderHealthReport(report) {
+      appState.health.selected=report||null;
+      $('#healthExportBtn').disabled=!report;
+      if(!report){$('#healthSummary').innerHTML='<div class="health-stat" style="grid-column:1/-1"><span class="repo-path">No health report loaded.</span></div>';$('#healthSections').innerHTML='';$('#healthFindings').innerHTML='<div class="editor-empty"><div><strong>No findings loaded</strong>Generate or select a durable report.</div></div>';$('#healthDoctorRepairBtn').disabled=true;return;}
+      const severity=report.summary?.severity||{};
+      $('#healthSummary').innerHTML=`<div class="health-stat"><span class="eyebrow">Status</span><strong class="health-status ${escapeHtml(report.status)}">${escapeHtml(report.status)}</strong></div><div class="health-stat"><span class="eyebrow">Findings</span><strong>${Number(report.summary?.findingCount||0)}</strong></div><div class="health-stat"><span class="eyebrow">Critical + error</span><strong>${Number(severity.critical||0)+Number(severity.error||0)}</strong></div><div class="health-stat"><span class="eyebrow">Coverage</span><strong>${Number(report.summary?.completeSectionCount||0)}/${Number(report.summary?.sectionCount||0)}</strong></div><div class="health-stat"><span class="eyebrow">Generated</span><strong style="font-size:11px">${escapeHtml(formatDate(report.generatedAt))}</strong></div>`;
+      $('#healthSections').innerHTML=Object.entries(report.sections||{}).map(([key,section])=>`<details class="health-section" data-health-section="${escapeHtml(key)}"><summary><span>${escapeHtml(section.name||key)}</span><span class="health-status ${escapeHtml(section.status||'unknown')}">${escapeHtml(section.status||'unknown')} · ${Number(section.findingCount||0)}</span></summary><div class="health-section-body">${escapeHtml(JSON.stringify(section.data||{},null,2))}</div></details>`).join('');
+      const findings=healthFindingList(report);
+      $('#healthFindings').innerHTML=findings.length?findings.map(item=>`<article class="health-finding ${escapeHtml(item.severity||'warning')}" data-health-code="${escapeHtml(item.code||'')}"><div class="health-finding-head"><strong>${escapeHtml(item.title||item.code||'Finding')}</strong><code>${escapeHtml(item.severity||'warning')} · ${escapeHtml(item.code||'')}</code></div><p>${escapeHtml(item.message||'')}</p><div class="repo-path">${escapeHtml(item.nextStep||'Review this finding before taking action.')}${item.repositoryId?` · Repository ${escapeHtml(item.repositoryId)}`:''}${item.path?` · ${escapeHtml(item.path)}`:''}</div></article>`).join(''):'<div class="empty"><div class="empty-mark">✓</div><h1>No findings</h1><p>This report did not identify an issue within its explicit scan limits.</p></div>';
+      $('#healthDoctorRepairBtn').disabled=!findings.some(item=>item.repair?.authority==='doctor');
+    }
+
+    function renderHealthHistory() {
+      const reports=appState.health.reports||[];
+      $('#healthHistory').innerHTML=reports.length?reports.map(item=>`<button class="btn" type="button" data-health-report-id="${escapeHtml(item.reportId)}"><span class="health-status ${escapeHtml(item.status||'unknown')}">${escapeHtml(item.status||'unknown')}</span> · ${escapeHtml(formatDate(item.generatedAt))}</button>`).join(''):'<span class="repo-path">No durable reports yet.</span>';
+    }
+
+    async function loadHealthReports(selectLatest=true) {
+      const data=await api('/api/v1/health/reports?limit=30');
+      appState.health.reports=data.reports||[]; renderHealthHistory();
+      if(selectLatest&&appState.health.reports.length) await loadHealthReport(appState.health.reports[0].reportId);
+    }
+
+    async function loadHealthReport(reportId) {
+      const report=await api(`/api/v1/health/reports/${encodeURIComponent(reportId)}`);
+      renderHealthReport(report);
+    }
+
+    async function openHealthDashboard() {
+      openModal('healthDashboardBackdrop'); healthRepositoryOptions();
+      try{await loadHealthReports(true);}catch(error){toast(error.message,true);}
+    }
+
+    async function generateHealthReport() {
+      try{
+        const report=await api('/api/v1/health/reports',{method:'POST',body:{repositoryId:$('#healthRepository').value,scope:$('#healthScope').value}});
+        renderHealthReport(report); await loadHealthReports(false); toast('Durable health report generated.');
+      }catch(error){toast(error.message,true);}
+    }
+
+    async function exportHealthReport() {
+      const report=appState.health.selected;if(!report)return;
+      setBusy(true,25);
+      try{const response=await fetch(`/api/v1/health/reports/${encodeURIComponent(report.reportId)}/export`,{cache:'no-store'});if(!response.ok){const payload=await response.json().catch(()=>({}));throw new Error(payload.error||`Export failed (${response.status})`);}const blob=await response.blob();const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=`forgetrace-${report.reportId}.json`;document.body.append(link);link.click();link.remove();URL.revokeObjectURL(url);toast('Health report export created.');}catch(error){toast(error.message,true);}finally{setBusy(false);}
+    }
+
+    async function repairHealthWithDoctor() {
+      if($('#healthDoctorRepairBtn').disabled)return;
+      if(!confirm('Run ForgeTrace Doctor safe repair through its existing authority? A registry backup and security evidence will be created when required.'))return;
+      try{const result=await api('/api/v1/doctor',{method:'POST',body:{repair:true,scanRoots:[]}});toast(`Doctor completed ${Number(result.actions?.length||0)} repair action(s).`);await generateHealthReport();await loadRepositories(appState.activeId);}catch(error){toast(error.message,true);}
+    }
+
     document.addEventListener('click', event=>{
       const close=event.target.closest('[data-close-modal]'); if(close){closeModal(close.dataset.closeModal);return;}
       const deleteFilter=event.target.closest('[data-delete-filter-id]'); if(deleteFilter){deleteSavedFilter(deleteFilter.dataset.deleteFilterId);return;}
@@ -1292,18 +2215,30 @@
       const deleteCollectionButton=event.target.closest('[data-delete-collection-id]'); if(deleteCollectionButton){deleteCollection(deleteCollectionButton.dataset.deleteCollectionId);return;}
       const savedFilter=event.target.closest('[data-saved-filter-id]'); if(savedFilter){applySavedFilter(savedFilter.dataset.savedFilterId);return;}
       const revoke=event.target.closest('[data-revoke-invite]'); if(revoke){revokeInvite(revoke.dataset.revokeInvite);return;}
+      const healthReport=event.target.closest('[data-health-report-id]'); if(healthReport){loadHealthReport(healthReport.dataset.healthReportId).catch(error=>toast(error.message,true));return;}
+      if(event.target.closest('[data-conflict-prepare]')){prepareConflictResolutions();return;}
+      const conflictSave=event.target.closest('[data-conflict-save]'); if(conflictSave){saveConflictResolution(conflictSave);return;}
+      const conflictConfirm=event.target.closest('[data-conflict-confirm]'); if(conflictConfirm){confirmConflictResolution(conflictConfirm);return;}
+      const conflictDecision=event.target.closest('[data-conflict-decision]'); if(conflictDecision){const card=conflictDecision.closest('[data-conflict-draft-id]');card?.querySelector('.conflict-manual-field')?.classList.toggle('hidden',conflictDecision.value!=='manual');return;}
+      if(event.target.closest('[data-owner-review-create]')){createOwnerReviewThread();return;}
+      const ownerReply=event.target.closest('[data-owner-review-reply]'); if(ownerReply){replyOwnerReviewThread(ownerReply);return;}
+      const ownerThreadState=event.target.closest('[data-owner-review-state]'); if(ownerThreadState){setOwnerReviewThreadState(ownerThreadState);return;}
       const prReview=event.target.closest('[data-pr-review]'); if(prReview){reviewPullRequest(prReview.dataset.prReview);return;}
       if(event.target.closest('[data-pr-merge]')){mergePullRequest();return;}
       if(event.target.closest('[data-pr-close]')){closePullRequest();return;}
       const prRow=event.target.closest('[data-pr-id]'); if(prRow){selectPullRequest(prRow.dataset.prId);return;}
+      const gitWrite=event.target.closest('[data-git-write]'); if(gitWrite){gitWriteAction(gitWrite.dataset.gitWrite);return;}
+      const gitDiff=event.target.closest('[data-git-diff-path]'); if(gitDiff){loadGitDiff(gitDiff.dataset.gitDiffPath,gitDiff.dataset.gitDiffScope);return;}
+      const gitCommit=event.target.closest('[data-git-commit]'); if(gitCommit){loadGitCommit(gitCommit.dataset.gitCommit);return;}
       const repo=event.target.closest('[data-repository-id]'); if (repo) { activateRepository(repo.dataset.repositoryId); return; }
       const row=event.target.closest('[data-file-path]'); if (row) { selectPath(row.dataset.filePath,row.dataset.fileType); return; }
       const tab=event.target.closest('[data-tab]'); if (tab) { setTab(tab.dataset.tab); return; }
       const restore=event.target.closest('[data-restore-id]'); if (restore) { restoreSnapshot(restore.dataset.restoreId); return; }
       if (event.target.closest('[data-binary-download]')) { downloadSelected(); return; }
-      const offline=event.target.closest('[data-offline-action]'); if (offline) { if(offline.dataset.offlineAction==='relink')relinkRepository(); if(offline.dataset.offlineAction==='initialize')initializeRegisteredRepository(); if(offline.dataset.offlineAction==='refresh')refreshRegistryStatus(); if(offline.dataset.offlineAction==='unregister')unregisterRepository(); }
+      const offline=event.target.closest('[data-offline-action]'); if (offline) { if(offline.dataset.offlineAction==='relink')relinkRepository(); if(offline.dataset.offlineAction==='initialize')initializeRegisteredRepository(); if(offline.dataset.offlineAction==='refresh')refreshRegistryStatus(); if(offline.dataset.offlineAction==='unregister')unregisterRepository(); if(offline.dataset.offlineAction==='delete-managed')deleteManagedRepository(); }
     });
 
+    document.addEventListener('change',event=>{const decision=event.target.closest?.('[data-conflict-decision]');if(!decision)return;const card=decision.closest('[data-conflict-draft-id]');card?.querySelector('.conflict-manual-field')?.classList.toggle('hidden',decision.value!=='manual');});
     $('#activeRepoSelect').addEventListener('change',e=>activateRepository(e.target.value));
     ['addRepoBtn','welcomeAddBtn'].forEach(id=>$('#'+id).addEventListener('click',openRepoModal)); $('#welcomeForkBtn').addEventListener('click',()=>{openRepoModal();setRepositorySource('fork');setTimeout(()=>$('#repoShareLinkInput').focus(),30);});
     $('#closeRepoModalBtn').addEventListener('click',closeRepoModal); $('#cancelRepoModalBtn').addEventListener('click',closeRepoModal); $('#repoModalBackdrop').addEventListener('click',e=>{if(e.target===e.currentTarget)closeRepoModal();});
@@ -1312,6 +2247,21 @@
     $('#newRepoFilesInput').addEventListener('change',event=>{if(event.target.files.length){const selection=selectionFromFileList(event.target.files,false);setRepositorySource('files',selection.items,selection.emptyFolders);}});
     $('#newRepoFolderInput').addEventListener('change',event=>{if(event.target.files.length){try{const selection=selectionFromFileList(event.target.files,true);setRepositorySource('folder',selection.items,selection.emptyFolders,selection.rootName);}catch(error){toast(error.message,true);}}});
     $('#authorInput').addEventListener('change',()=>{try{localStorage.setItem('forgetrace-author',author());}catch(error){toast(`Contributor preference could not be saved: ${error.message}`,true);}});
+    $('#boardRefreshBtn').addEventListener('click',()=>loadBoards(appState.boards.selected));$('#boardNewBtn').addEventListener('click',createBoard);$('#boardSelect').addEventListener('change',selectBoard);$('#boardView').addEventListener('change',()=>{appState.boards.view=$('#boardView').value;renderBoards()});$('#boardAddCardBtn').addEventListener('click',addSelectedToBoard);$('#boardAddColumnBtn').addEventListener('click',addBoardColumn);$('#boardSettingsBtn').addEventListener('click',boardSettings);$('#boardWorkspace').addEventListener('click',event=>{const button=event.target.closest('[data-board-move]');if(button)moveBoardCard(button)});
+    $('#releaseRefreshBtn').addEventListener('click',()=>loadReleases(true));
+    $('#releaseNewBtn').addEventListener('click',createRelease);
+    $('#releaseList').addEventListener('click',e=>{const b=e.target.closest('[data-release-id]');if(b)selectRelease(b.dataset.releaseId)});
+    $('#releaseDetail').addEventListener('click',e=>{const b=e.target.closest('button');if(b)releaseAction(b)});
+    $('#releaseAssetInput').addEventListener('change',e=>uploadReleaseAsset(e.target.files?.[0]));
+    $('#projectRefreshBtn').addEventListener('click',()=>loadProjectWorkspace(true));
+    $('#projectNewBtn').addEventListener('click',createProjectItem);
+    $('#projectNewLabelBtn').addEventListener('click',createProjectLabel);
+    $('#projectNewMilestoneBtn').addEventListener('click',createProjectMilestone);
+    $('#projectKind').addEventListener('change',()=>{appState.project.kind=$('#projectKind').value;appState.project.selected=null;loadProjectWorkspace();});
+    $('#projectState').addEventListener('change',()=>loadProjectWorkspace());
+    $('#projectSearch').addEventListener('change',()=>loadProjectWorkspace());
+    $('#projectList').addEventListener('click',event=>{const item=event.target.closest('[data-project-item]');if(item)selectProjectItem(item.dataset.projectItem);});
+    $('#projectDetail').addEventListener('click',event=>{const button=event.target.closest('button');if(button)projectDetailAction(button);});
     $('#refreshReposBtn').addEventListener('click',()=>loadRepositories(appState.activeId));
     $('#fileSearch').addEventListener('input',()=>{$('#tree').scrollTop=0;renderFiles();}); $('#tree').addEventListener('scroll',()=>{if(appState.treeRenderPending)return;appState.treeRenderPending=true;requestAnimationFrame(()=>{appState.treeRenderPending=false;renderFiles();});});
     $('#fileInput').addEventListener('change',async event=>{const input=event.currentTarget;const files=Array.from(input.files||[]);input.disabled=true;try{await uploadSelection(selectionFromFileList(files,false));}catch(error){toast(error.message,true);}finally{input.value='';input.disabled=false;}});
@@ -1322,16 +2272,20 @@
     $('#collapseAllBtn').addEventListener('click',()=>{appState.expandedFolders.clear();saveExpandedFolders();renderFiles();});
     $('#renameBtn').addEventListener('click',renameSelected); $('#deleteBtn').addEventListener('click',deleteSelected); $('#downloadBtn').addEventListener('click',downloadSelected);
     $('#snapshotBtn').addEventListener('click',createSnapshot); $('#exportBtn').addEventListener('click',exportRepository);
+    $('#gitRefreshBtn').addEventListener('click',()=>loadGitOverview(true));
     $('#favoriteBtn').addEventListener('click',toggleFavorite); $('#relinkBtn').addEventListener('click',relinkRepository); $('#unregisterBtn').addEventListener('click',unregisterRepository);
     $('#collaborationBtn').addEventListener('click',openCollaboration); $('#inviteForm').addEventListener('submit',createInvite); $('#copyInviteBtn').addEventListener('click',copyInvite); $('#startSharingBtn').addEventListener('click',()=>startSharing().catch(error=>toast(error.message,true))); $('#stopSharingBtn').addEventListener('click',stopSharing); $('#refreshSharingBtn').addEventListener('click',()=>loadSharingStatus().catch(error=>toast(error.message,true))); $('#refreshPrBtn').addEventListener('click',()=>loadPullRequests(true));
-    $('#settingsBtn').addEventListener('click',openSettings); $('#settingsForm').addEventListener('submit',submitSettings);
+    $('#settingsBtn').addEventListener('click',openSettings); $('#settingsForm').addEventListener('submit',submitSettings); $('#applyAccessModeBtn').addEventListener('click',applyAccessMode); $('#deleteManagedRepositoryBtn').addEventListener('click',deleteManagedRepository);
     $('#organizeBtn').addEventListener('click',openOrganize); $('#organizeForm').addEventListener('submit',submitOrganization); $('#createCollectionBtn').addEventListener('click',createCollectionFromModal);
+    $('#healthDashboardBtn').addEventListener('click',openHealthDashboard); $('#healthRefreshBtn').addEventListener('click',()=>loadHealthReports(true).catch(error=>toast(error.message,true))); $('#healthGenerateBtn').addEventListener('click',generateHealthReport); $('#healthExportBtn').addEventListener('click',exportHealthReport); $('#healthDoctorRepairBtn').addEventListener('click',repairHealthWithDoctor);
+    $('#securityEventsBtn').addEventListener('click',openSecurityEvents); $('#securityEventRefreshBtn').addEventListener('click',loadSecurityEvents); $('#securityEventExportBtn').addEventListener('click',exportSecurityEvents); $('#securityEventResetBtn').addEventListener('click',resetSecurityEventFilters); $('#securityEventSearch').addEventListener('keydown',event=>{if(event.key==='Enter')loadSecurityEvents();}); $('#securityHistoryRefreshBtn').addEventListener('click',()=>loadSecurityHistory().catch(error=>toast(error.message,true))); $('#securityRotationPreviewBtn').addEventListener('click',previewSecurityRotation); $('#securityRotationExecuteBtn').addEventListener('click',executeSecurityRotation); $('#securityAnchorExportBtn').addEventListener('click',createAndExportSecurityAnchor); $('#securityAnchorReceiptBtn').addEventListener('click',recordSecurityAnchorReceipt); $('#securityRotateCount').addEventListener('input',()=>{appState.securityHistory.preview=null;$('#securityRotationExecuteBtn').disabled=true;}); $('#securityPolicySaveBtn').addEventListener('click',saveSecurityRetentionPolicy);
     $('#registryToolsBtn').addEventListener('click',openRegistryTools); $('#backupRegistryBtn').addEventListener('click',backupRegistry); $('#exportRegistryBtn').addEventListener('click',exportRegistry);
+    $('#refreshRegistryRecoveryBtn').addEventListener('click',loadRegistryRecovery); $('#previewRegistryRestoreBtn').addEventListener('click',previewRegistryRestore); $('#executeRegistryRestoreBtn').addEventListener('click',executeRegistryRestore); $('#registryBackupSelect').addEventListener('change',invalidateRegistryRestorePreview); $('#registryRestoreMode').addEventListener('change',invalidateRegistryRestorePreview); $('#registryRestoreHistory').addEventListener('click',event=>{const button=event.target.closest('[data-registry-rollback]');if(button)rollbackRegistryRestore(button.dataset.registryRollback);});
     $('#importRegistryBtn').addEventListener('click',()=>$('#registryImportInput').click()); $('#registryImportInput').addEventListener('change',event=>{importRegistryFile(event.target.files[0]);event.target.value='';});
     $('#doctorCheckBtn').addEventListener('click',()=>runDoctor(false)); $('#doctorRepairBtn').addEventListener('click',()=>runDoctor(true));
     ['repoSearch','tagFilter','collectionFilter','statusFilter','favoriteFilter'].forEach(id=>$('#'+id).addEventListener(id==='repoSearch'?'input':'change',applyLibraryFilters)); $('#saveFilterBtn').addEventListener('click',saveCurrentFilter);
-    ['settingsModalBackdrop','organizeModalBackdrop','registryToolsBackdrop','collaborationModalBackdrop'].forEach(id=>$('#'+id).addEventListener('click',event=>{if(event.target===event.currentTarget)closeModal(id);}));
-    document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeRepoModal();['settingsModalBackdrop','organizeModalBackdrop','registryToolsBackdrop','collaborationModalBackdrop'].forEach(closeModal);} if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'&&appState.selectedFile?.editable){e.preventDefault();saveSelectedFile();} });
+    ['settingsModalBackdrop','organizeModalBackdrop','registryToolsBackdrop','collaborationModalBackdrop','securityEventsBackdrop','healthDashboardBackdrop'].forEach(id=>$('#'+id).addEventListener('click',event=>{if(event.target===event.currentTarget)closeModal(id);}));
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeRepoModal();['settingsModalBackdrop','organizeModalBackdrop','registryToolsBackdrop','collaborationModalBackdrop','securityEventsBackdrop','healthDashboardBackdrop'].forEach(closeModal);} if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'&&appState.selectedFile?.editable&&!isReadOnly()){e.preventDefault();saveSelectedFile();} });
 
     async function init() {
       try{$('#authorInput').value=localStorage.getItem('forgetrace-author')||'Rooke Poole';}catch{$('#authorInput').value='Rooke Poole';}

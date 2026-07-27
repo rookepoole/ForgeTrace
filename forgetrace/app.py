@@ -12,7 +12,11 @@ from .constants import APP_VERSION
 from .collaboration import CollaborationService
 from .errors import ForgeTraceError
 from .locks import FileLock, LockUnavailable
+from .project_coordination import ProjectCoordinationService
+from .project_boards import ProjectBoardService
+from .releases import ReleaseService
 from .registry import RepositoryRegistry
+from .security_events import SecurityEventLedger
 from .utils import platform_data_dir, utc_now
 from .web import ForgeTraceApplication, configure_logging, create_server
 
@@ -20,9 +24,113 @@ from .web import ForgeTraceApplication, configure_logging, create_server
 def build_application(project_root: Path, data_dir: Path | None = None) -> ForgeTraceApplication:
     resolved_data_dir = platform_data_dir(data_dir)
     registry = RepositoryRegistry(project_root, resolved_data_dir)
-    collaboration = CollaborationService(registry)
-    application = ForgeTraceApplication(project_root, registry, collaboration)
+    security_events = SecurityEventLedger(resolved_data_dir)
+    collaboration = CollaborationService(registry, security_events=security_events)
+    project_coordination = ProjectCoordinationService(
+        registry=registry, collaboration=collaboration, security_events=security_events
+    )
+    project_boards = ProjectBoardService(
+        registry=registry, project_coordination=project_coordination,
+        collaboration=collaboration, security_events=security_events
+    )
+    releases = ReleaseService(registry=registry, collaboration=collaboration, security_events=security_events)
+    application = ForgeTraceApplication(
+        project_root, registry, collaboration, security_events, project_coordination, project_boards, releases
+    )
     application.gateway = CollaborationGatewayManager(application)
+    application.audit(
+        category="application",
+        action="owner_application_initialized",
+        outcome="success",
+        surface="system",
+        details={
+            "version": APP_VERSION,
+            "registryDatabase": registry.db_path.name,
+            "securityLedgerIntegrity": security_events.startup_integrity,
+        },
+    )
+    security_rotation_recovery = security_events.startup_rotation_recovery
+    if security_rotation_recovery.get("actions"):
+        application.audit(
+            category="recovery",
+            action="startup_security_rotation_recovery",
+            outcome="attention_required" if security_rotation_recovery.get("failed") else "success",
+            severity="warning" if not security_rotation_recovery.get("failed") else "critical",
+            surface="system",
+            details={
+                "checked": security_rotation_recovery.get("checked", 0),
+                "rolledBack": security_rotation_recovery.get("rolledBack", 0),
+                "completed": security_rotation_recovery.get("completed", 0),
+                "failed": security_rotation_recovery.get("failed", 0),
+            },
+        )
+    restore_recovery = registry.startup_restore_recovery_report
+    if restore_recovery.get("actions"):
+        application.audit(
+            category="recovery",
+            action="startup_registry_restore_recovery",
+            outcome="success" if not any(item.get("action") == "recovery_failed" for item in restore_recovery.get("actions", [])) else "attention_required",
+            severity="warning",
+            surface="system",
+            details={
+                "checked": restore_recovery.get("checked", 0),
+                "finalized": restore_recovery.get("finalized", 0),
+                "rolledBack": restore_recovery.get("rolledBack", 0),
+                "abandoned": restore_recovery.get("abandoned", 0),
+                "actionCount": len(restore_recovery.get("actions", [])),
+            },
+        )
+    deletion_recovery = registry.startup_repository_deletion_recovery_report
+    if deletion_recovery.get("actions"):
+        application.audit(
+            category="recovery",
+            action="startup_managed_repository_deletion_recovery",
+            outcome="attention_required" if deletion_recovery.get("retained") else "success",
+            severity="warning" if deletion_recovery.get("retained") else "info",
+            surface="system",
+            details={
+                "checked": deletion_recovery.get("checked", 0),
+                "rolledBack": deletion_recovery.get("rolledBack", 0),
+                "finalized": deletion_recovery.get("finalized", 0),
+                "retained": deletion_recovery.get("retained", 0),
+            },
+        )
+    git_write_recovery = application.git_writes.startup_recovery_report
+    if git_write_recovery.get("actions"):
+        application.audit(
+            category="recovery",
+            action="startup_git_write_recovery_summary",
+            outcome="attention_required" if git_write_recovery.get("retained") else "success",
+            severity="warning" if git_write_recovery.get("retained") else "info",
+            surface="system",
+            details={
+                "checked": git_write_recovery.get("checked", 0),
+                "rolledBack": git_write_recovery.get("rolledBack", 0),
+                "cleanedCommitted": git_write_recovery.get("cleanedCommitted", 0),
+                "recoveredReceipts": git_write_recovery.get("recoveredReceipts", 0),
+                "retained": git_write_recovery.get("retained", 0),
+                "deferred": git_write_recovery.get("deferred", 0),
+                "manualInspection": git_write_recovery.get("manualInspection", 0),
+            },
+        )
+    cleanup = registry.startup_cleanup_report
+    if cleanup.get("removedCount"):
+        application.audit(
+            category="recovery",
+            action="startup_artifacts_cleaned",
+            outcome="success",
+            surface="system",
+            details={"removedCount": cleanup.get("removedCount", 0)},
+        )
+    recovery = registry.startup_recovery_report
+    if any(int(recovery.get(key, 0) or 0) for key in ("registered", "relinked")):
+        application.audit(
+            category="recovery",
+            action="startup_repository_recovery",
+            outcome="success",
+            surface="system",
+            details={"registered": recovery.get("registered", 0), "relinked": recovery.get("relinked", 0)},
+        )
     return application
 
 
@@ -122,9 +230,25 @@ class CollaborationGatewayManager:
                     "sharing_already_enabled",
                     {"port": current["port"]},
                 )
+            self.application.audit(
+                required=True,
+                category="sharing",
+                action="gateway_start_authorized",
+                outcome="authorized",
+                surface="owner",
+                details={"bindHost": host, "requestedPort": requested_port},
+            )
             try:
                 server = create_server(self.application, host, requested_port, surface="gateway")
             except OSError as exc:
+                self.application.audit(
+                    category="sharing",
+                    action="gateway_start",
+                    outcome="failure",
+                    severity="error",
+                    surface="owner",
+                    details={"bindHost": host, "requestedPort": requested_port, "errorType": type(exc).__name__},
+                )
                 raise ForgeTraceError(
                     f"Could not start secure sharing on port {requested_port}: {exc}",
                     409,
@@ -140,9 +264,19 @@ class CollaborationGatewayManager:
             self._thread = thread
             self._started_at = utc_now()
             thread.start()
-            return self.status()
+            status = self.status()
+            self.application.audit(
+                category="sharing",
+                action="gateway_started",
+                outcome="success",
+                surface="owner",
+                subject_id=str(status.get("port") or ""),
+                details={"bindHost": status.get("bindHost"), "port": status.get("port")},
+            )
+            return status
 
     def stop(self) -> dict[str, object]:
+        previous = self.status()
         with self._lock:
             server = self._server
             thread = self._thread
@@ -154,7 +288,17 @@ class CollaborationGatewayManager:
             server.server_close()
         if thread is not None and thread is not threading.current_thread():
             thread.join(timeout=3)
-        return self.status()
+        status = self.status()
+        if previous.get("enabled"):
+            self.application.audit(
+                category="sharing",
+                action="gateway_stopped",
+                outcome="success",
+                surface="owner",
+                subject_id=str(previous.get("port") or ""),
+                details={"port": previous.get("port")},
+            )
+        return status
 
 
 def run(
@@ -182,6 +326,8 @@ def run(
                 "Close the older ForgeTrace window before launching this package."
             ) from exc
         app = build_application(project_root, resolved_data_dir)
+        app.owner_instance_lock_path = instance_lock.path
+        app.owner_instance_lock_held = True
         app.owner_url = f"http://{host}:{port}"
         if workspace is not None:
             resolved_workspace = workspace.expanduser().resolve()
@@ -230,6 +376,8 @@ def run(
         except KeyboardInterrupt:
             print("\nStopping ForgeTrace.")
     finally:
+        if app is not None:
+            app.owner_instance_lock_held = False
         if app is not None and app.gateway:
             app.gateway.stop()
         if server is not None:

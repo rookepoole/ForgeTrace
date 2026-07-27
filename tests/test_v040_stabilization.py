@@ -18,6 +18,7 @@ from pathlib import Path
 from unittest import mock
 
 from forgetrace.app import build_application
+from forgetrace.constants import APP_VERSION
 from forgetrace.errors import RepositoryError
 from forgetrace.registry import RepositoryRegistry
 from forgetrace.repository import ForgeTraceRepository
@@ -246,9 +247,9 @@ class StabilizedHttpTest(unittest.TestCase):
 
     def test_head_legacy_version_job_cancel_and_rate_map_pruning(self) -> None:
         status, headers, payload = self.request("HEAD", "/api/v1/version")
-        self.assertEqual(200, status); self.assertIsNone(payload); self.assertEqual("0.4.0", headers["X-ForgeTrace-Version"])
+        self.assertEqual(200, status); self.assertIsNone(payload); self.assertEqual(APP_VERSION, headers["X-ForgeTrace-Version"])
         status, _, payload = self.request("GET", "/api/version")
-        self.assertEqual("0.4.0", payload["version"])
+        self.assertEqual(APP_VERSION, payload["version"])
         job = self.app.jobs.start("wait", lambda context: (time.sleep(1), {"ok": True})[1])
         status, _, cancelled = self.request("DELETE", f"/api/v1/jobs/{job['id']}")
         self.assertTrue(cancelled["cancelRequested"])
